@@ -135,8 +135,22 @@ data class BackupHistoryUiState(
     val isBusy: Boolean get() = working != null || isCapturing || isImporting
 
     /**
-     * Whether [copy] is the one the app is running on right now — because it was the last
-     * one taken, or because the archive was restored from it.
+     * Whether [copy] is the last one the archive was identical to — because it was taken
+     * from the archive, or because the archive was restored from it.
+     *
+     * **It is not *the archive is this copy*, and the row must not say so.** The pointer is
+     * written at those two moments and at no other, so anything entered afterwards leaves
+     * it exactly where it was: there is no reading of the live archive that says which file
+     * it came from ([ArchiveCopy][com.neoutils.finsight.domain.vault.ArchiveCopy]), and
+     * therefore nothing that could move it. What stays true as the archive moves on is the
+     * past tense — this was the last copy the two agreed on — and that is what the row is
+     * allowed to say.
+     *
+     * The divergence is not detectable here either.
+     * [VaultState.markAtLastCapture][com.neoutils.finsight.domain.vault.VaultState.markAtLastCapture]
+     * would answer it after a capture, but a restore gives coverage up on purpose, which is
+     * exactly the case this pointer exists for — so a row gated on coverage would go silent
+     * at the one moment it has something to say.
      *
      * False for every row is a legitimate answer and not a defect: a file the user picked
      * was restored, a restore did not land, or the copy the archive came from has since

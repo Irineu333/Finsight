@@ -7,8 +7,16 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 /**
- * Which of the kept copies the archive in use is a copy of — the one that "is" the app
- * right now, because it was just taken from it or because the app was restored from it.
+ * Which of the kept copies the archive was last identical to, because it was taken from the
+ * archive or because the archive was restored from it.
+ *
+ * **Last identical to, and not still identical to.** It is written at those two moments and
+ * at no other, so an entry made a second later leaves it exactly where it was — and it has
+ * to, because nothing here could detect that: there is no reading of the live archive that
+ * says which file it came from, which is the same reason it is recorded rather than derived
+ * (below). Whoever renders it therefore may say *this was the last copy the two agreed on*
+ * and may not say *the app's data is this copy's*, which stops being true at the first
+ * transaction somebody enters and would go on being displayed.
  *
  * ### Why it is recorded and not derived
  *

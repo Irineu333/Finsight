@@ -1107,8 +1107,8 @@
     <string name="backup_age_days">%1$d days ago</string>
     <string name="backup_age_month">1 month ago</string>
     <string name="backup_age_months">%1$d months ago</string>
-    <string name="backup_history_current_label">current</string>
-    <string name="backup_history_current_subtitle">The app's data is this copy's</string>
+    <string name="backup_history_current_label">reference</string>
+    <string name="backup_history_current_subtitle">The last copy identical to the app</string>
     <string name="backup_history_newest_label">most recent</string>
     <string name="backup_confirm_age">Restoring takes the app back to how it was %1$s.</string>
     <string name="backup_confirm_file_age">This file was created %1$s.</string>

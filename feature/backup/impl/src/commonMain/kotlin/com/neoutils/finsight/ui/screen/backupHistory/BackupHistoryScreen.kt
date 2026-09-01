@@ -762,8 +762,17 @@ private fun MigrationTag() = RowTag(
 )
 
 /**
- * What marks the copy the app is running on — the answer to the question this screen was
- * silent about: after restoring an older copy, the list looked exactly as it had before.
+ * What marks the last copy the archive was identical to — the one to read the others
+ * against, and the answer to a question this screen would otherwise be silent about: which
+ * of these the app is standing on after an older one was restored.
+ *
+ * **It says *was* identical, and that is the whole of what is known.** The pointer behind
+ * it ([ArchiveCopy][com.neoutils.finsight.domain.vault.ArchiveCopy]) is written the moment
+ * a copy is taken or restored from, and nothing entered afterwards moves it — no reading of
+ * the live archive says which file it came from, so there is nothing to move it with. A tag
+ * claiming the app's data *is* this copy's would therefore stop being true at the first
+ * transaction somebody enters and go on being shown, which is the shape of every other
+ * false promise this feature exists not to make.
  */
 @Composable
 private fun CurrentTag() = RowTag(

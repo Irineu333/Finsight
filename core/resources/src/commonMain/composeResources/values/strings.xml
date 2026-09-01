@@ -1108,8 +1108,8 @@
     <string name="backup_age_days">há %1$d dias</string>
     <string name="backup_age_month">há 1 mês</string>
     <string name="backup_age_months">há %1$d meses</string>
-    <string name="backup_history_current_label">atual</string>
-    <string name="backup_history_current_subtitle">Os dados do app são os desta cópia</string>
+    <string name="backup_history_current_label">referência</string>
+    <string name="backup_history_current_subtitle">A última cópia igual ao app</string>
     <string name="backup_history_newest_label">mais recente</string>
     <string name="backup_confirm_age">Restaurar leva o app de volta a como ele estava %1$s.</string>
     <string name="backup_confirm_file_age">Este arquivo foi criado %1$s.</string>

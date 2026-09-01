@@ -27,6 +27,7 @@ import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.restore.RestoreSource
+import com.neoutils.finsight.domain.vault.ArchiveCopy
 import com.neoutils.finsight.domain.vault.BackupRetention
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
@@ -62,6 +63,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -82,8 +84,13 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.LocalDate
 
 /**
- * Which of the kept copies the archive in use *is* — the question the list of copies was
- * silent about, and the one a person asks before restoring an older one.
+ * Which of the kept copies the archive was last identical to — the question the list of
+ * copies was silent about, and the one a person asks before restoring an older one.
+ *
+ * **Last identical to, and not still identical to.** The pointer moves when a copy is taken
+ * or restored from and at no other moment, so it goes on naming a copy the archive has
+ * since moved past — which is why what the row says about it is in the past tense, and why
+ * that is pinned here too.
  *
  * **The archive, the destination and the restore are all real.** What is under test is a
  * claim about two things that only exist as files: a copy the vault wrote, and an archive
@@ -341,6 +348,45 @@ class CurrentCopyTest {
             "a capture that landed says which copy the archive went into",
         )
     }
+
+    /**
+     * The mark stays put while the archive moves on, and that is what the row is allowed to
+     * say about it.
+     *
+     * Nothing here could move it: the pointer is written when a copy is taken or restored
+     * from, and no reading of the live archive says which file it came from, which is why
+     * it is recorded rather than derived ([ArchiveCopy]). So a row rendered from it has to
+     * be a claim about the past — *the last copy the two agreed on* — and may not be the
+     * one it used to make, that the app's data **is** this copy's. That sentence stopped
+     * being true here, at `enter("bus fare")`, and would have gone on being displayed.
+     *
+     * The archive really does move, and the vault's own coverage is the witness: the mark
+     * it records rises with the insert, so a trigger asked now would take a second copy —
+     * while this pointer, correctly, still names the first.
+     */
+    @Test
+    fun `the mark stays on the copy the archive left, once something is entered after it`() =
+        runTest {
+            state.setOn(true)
+            enter("coffee")
+            val copy = capture()
+
+            val covered = state.observe().value.markAtLastCapture
+            enter("bus fare")
+
+            val ui = viewModel().awaitCurrent(copy)
+
+            assertTrue(
+                ui.isCurrent(copy),
+                "the copy stopped being named the moment the archive moved past it",
+            )
+            assertEquals(1, ui.copies.size, "nothing here takes a second copy")
+            assertNotEquals(
+                covered,
+                RoomArchiveMark(live).current(),
+                "the archive did not move, so this proves nothing about the mark standing",
+            )
+        }
 
     /**
      * The report's own case: two copies, the older one restored, and a list that used to

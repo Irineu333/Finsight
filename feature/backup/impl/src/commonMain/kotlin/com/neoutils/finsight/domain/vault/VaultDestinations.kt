@@ -170,6 +170,25 @@ class VaultDestinations(
      * rung it belongs to ([VaultMigration]). So a copy under that name is the migration's,
      * and it is in the one place migrations write.
      */
+    /**
+     * The rung in force, handed over as itself — so a caller holding this addresses one
+     * rung for as long as it holds it, where every call through the router would resolve
+     * again.
+     *
+     * **Reading the rung per operation is right for this class and wrong inside a capture**
+     * (see [BackupDestination.resolved]). Somebody points at a folder while the kept-copies
+     * screen is open and the next listing has to be of the folder; a capture, on the other
+     * hand, writes a file and then sweeps what is past the limit, and those two have to be
+     * the same place. Answering the rung rather than `this` is how a caller says which of
+     * the two it is.
+     *
+     * The copy taken before a migration is not carried over with it, and does not need to
+     * be: a rung answered here is written to and swept, and that copy is neither — it is
+     * read from the app's own storage by [list] and addressed by [holderOf], both of which
+     * stay on the router for every caller that goes on using it.
+     */
+    override fun resolved(): BackupDestination = inForce
+
     private fun holderOf(backup: StoredBackup): BackupDestination =
         if (backup.name == PRE_MIGRATION_BACKUP_NAME) appStorage else inForce
 

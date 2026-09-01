@@ -53,6 +53,15 @@ import kotlinx.datetime.toLocalDateTime
  * that can empty a destination without first having filled it. A failed capture removes
  * nothing because there is no code path in which it could.
  *
+ * **And it is the destination this capture filled, not whichever one is in force by the
+ * time the sweep runs.** The two are the same object here because the destination is
+ * resolved once, when the copy is handed over, and carried through the read-back and the
+ * sweep ([BackupDestination.resolved]). Asked again afterwards it could answer differently
+ * — the rung follows a preference somebody can change and a folder reading that a check
+ * publishes, and a `VACUUM INTO` of the whole archive is long enough for either to move —
+ * and a sweep that resolved for itself would then be removing copies from a place this
+ * capture put nothing in, on the strength of one it did.
+ *
  * **A sweep neither surprises a folder just adopted nor ever moves more than a handful of
  * files at once.** The capture that lands right after a folder is pointed at spends a
  * deferral armed only when that folder already held copies this install never wrote —
@@ -245,13 +254,27 @@ class BackupVault(
     ): CaptureOutcome {
         val at = clock.now()
 
+        // Resolved at the moment the copy is handed over, and carried from there through
+        // the read-back and the sweep — see [BackupDestination.resolved]. Every call
+        // through the router resolves the rung again, and the two facts behind it move
+        // while the app runs: somebody changes destination, or a folder check publishes a
+        // link that has fallen or come back. A `VACUUM INTO` of the whole archive sits
+        // between this call and the sweep, which is time enough for either.
+        //
+        // Deferred to first use rather than taken at the top, so that where a link falls
+        // *during* the capture the copy still goes where it would have gone before this
+        // existed: to the app's own storage, provisionally, rather than at a folder that
+        // has just stopped answering (design D12 — the app may not stop capturing while
+        // the question about the folder goes unanswered).
+        val target = lazy { destination.resolved() }
+
         val landed: Either<BackupError, StoredBackup> = try {
             database.captureInto(
                 destinationPath = path,
                 appVersion = origin.appVersion,
                 platform = origin.platform.id,
             )
-            destination.put(capturedPath = path, name = backupFileName(at.local()))
+            target.value.put(capturedPath = path, name = backupFileName(at.local()))
         } catch (cause: CancellationException) {
             throw cause
         } catch (cause: DatabaseCaptureException) {
@@ -264,7 +287,7 @@ class BackupVault(
 
         return landed.fold(
             ifLeft = { CaptureOutcome.Failed(it) },
-            ifRight = { copy -> land(copy, at, mark, sparing, state) },
+            ifRight = { copy -> land(target.value, copy, at, mark, sparing, state) },
         )
     }
 
@@ -276,20 +299,21 @@ class BackupVault(
      * kept copy that reads is a kept copy.
      */
     private suspend fun land(
+        target: BackupDestination,
         copy: StoredBackup,
         at: Instant,
         mark: Long?,
         sparing: StoredBackup?,
         state: VaultState,
     ): CaptureOutcome {
-        val rejection = verifyLanded(copy)
+        val rejection = verifyLanded(target, copy)
         if (rejection != null) {
             // Best-effort, and never the reason this outcome changes again: the removal
             // gate re-proves what was just proven, over the same bytes, and answers no
             // for exactly the findings that matter most here — a truncated or corrupted
             // file is provably this app's least of all, so it may be left standing rather
             // than removed. The person is told the truth about the capture either way.
-            destination.remove(copy)
+            target.remove(copy)
             return CaptureOutcome.Failed(rejection.reason.toBackupError())
         }
 
@@ -312,7 +336,7 @@ class BackupVault(
         // for however long that takes to notice — a sweep skipped once more than it had to
         // be there costs a copy kept a little longer, never one lost (design D10's safe
         // direction).
-        if (!vault.consumeSweepDeferral(state.destination)) sweep(state, sparing)
+        if (!vault.consumeSweepDeferral(state.destination)) sweep(target, state, sparing)
 
         return CaptureOutcome.Captured(copy)
     }
@@ -333,12 +357,15 @@ class BackupVault(
      * may be perfectly good, made of the one moment a person is being told their backup
      * succeeded.
      */
-    private suspend fun verifyLanded(copy: StoredBackup): CandidateVerification.Rejected? {
+    private suspend fun verifyLanded(
+        target: BackupDestination,
+        copy: StoredBackup,
+    ): CandidateVerification.Rejected? {
         val verifier = verifier ?: return null
         val path = files.newCapturePath().getOrNull() ?: return null
 
         return try {
-            if (destination.copyOut(copy, path).getOrNull() != true) return null
+            if (target.copyOut(copy, path).getOrNull() != true) return null
             verifier.verify(path) as? CandidateVerification.Rejected
         } catch (cause: CancellationException) {
             throw cause
@@ -394,9 +421,13 @@ class BackupVault(
      * a `take` here spares the oldest, most irreplaceable copies for a later sweep rather
      * than reaching for them first.
      */
-    private suspend fun sweep(state: VaultState, sparing: StoredBackup? = null) {
+    private suspend fun sweep(
+        target: BackupDestination,
+        state: VaultState,
+        sparing: StoredBackup? = null,
+    ) {
         val keep = state.copiesKept() ?: return
-        val copies = destination.list().getOrNull() ?: return
+        val copies = target.list().getOrNull() ?: return
 
         copies.asSequence()
             .filterNot { it.name == PRE_MIGRATION_BACKUP_NAME }
@@ -404,7 +435,7 @@ class BackupVault(
             .filterNot { sparing != null && it.name == sparing.name && it.savedAt == sparing.savedAt }
             .take(MAX_REMOVED_PER_SWEEP)
             .forEach { copy ->
-                if (destination.remove(copy).getOrNull() == true) copyRemoved(copy)
+                if (target.remove(copy).getOrNull() == true) copyRemoved(copy)
             }
     }
 

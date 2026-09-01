@@ -92,6 +92,26 @@ interface BackupDestination {
      * removed — there is nothing left to refuse.
      */
     suspend fun remove(backup: StoredBackup): Either<BackupError, Boolean>
+
+    /**
+     * The one destination this is at this instant, for a caller that must address the same
+     * one for several operations in a row.
+     *
+     * Almost every destination *is* one already and answers itself: a folder somebody
+     * pointed at, or the app's own storage, does not become another place between two
+     * calls. The exception is the router that stands for both rungs
+     * ([com.neoutils.finsight.domain.vault.VaultDestinations]), which resolves the rung on
+     * every operation because the choice and the folder's reachability both move while the
+     * app runs — that is right for a screen listing what is there, and wrong for a sequence
+     * that has to end where it began.
+     *
+     * **A capture is such a sequence.** It hands a file over, reads it back to check it,
+     * and then sweeps what the destination now holds past the limit — and a rung that moved
+     * in between would have the sweep removing copies from a place this capture put nothing
+     * in. Resolving once and carrying the answer is what makes the sequence one destination
+     * rather than three lookups that may disagree.
+     */
+    fun resolved(): BackupDestination = this
 }
 
 /**

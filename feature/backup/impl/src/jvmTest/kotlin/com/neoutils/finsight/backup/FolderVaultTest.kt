@@ -37,9 +37,11 @@ import com.neoutils.finsight.domain.vault.VaultPeriodicBackup
 import com.neoutils.finsight.domain.vault.VaultPreventiveBackup
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
+import com.neoutils.finsight.ui.screen.backup.service.BackupDestination
 import com.neoutils.finsight.ui.screen.backup.service.BackupFileService
 import com.neoutils.finsight.ui.screen.backup.service.FolderLink
 import com.neoutils.finsight.ui.screen.backup.service.OwnCopyCheck
+import com.neoutils.finsight.ui.screen.backup.service.StoredBackup
 import com.neoutils.finsight.util.UiText
 import com.russhwolf.settings.MapSettings
 import java.io.File
@@ -196,6 +198,10 @@ class FolderVaultTest {
     private fun namesInFolder(): List<String> =
         chosen.listFiles().orEmpty().map { it.name }.sorted()
 
+    /** The other rung, read the same way — what the app's own storage is holding. */
+    private fun namesInAppStorage(): List<String> =
+        appStorageFolder.listFiles().orEmpty().map { it.name }.sorted()
+
     // ---------------------------------------------------------------- the copies land
 
     @Test
@@ -277,6 +283,93 @@ class FolderVaultTest {
 
         assertTrue(theirs.exists(), "the sweep removed a file this app never wrote")
     }
+
+    /**
+     * The sweep behind a capture belongs to the destination that capture filled, and not to
+     * whichever one is in force by the time it runs.
+     *
+     * **The two can differ, and a `VACUUM INTO` of the whole archive is how long they have
+     * to.** The rung is resolved from a preference somebody can change and from a folder
+     * reading a check publishes, and both move while the app runs — the backup screen's own
+     * `init` republishes the link, and neither screen guards the destination controls while
+     * a capture is running. Resolved a second time for the sweep, retention would then be
+     * removing copies out of a place this capture put nothing in, on the strength of one it
+     * did: a person who had just switched destinations would lose files from the rung they
+     * left, behind a capture that landed somewhere else and reported success.
+     *
+     * The rung is moved here at the one instant that makes the two answers differ — as the
+     * copy is handed over — because that is what pins the fix rather than the timing of any
+     * particular race. Both counts are asserted: the folder is swept to the limit, and the
+     * app's own storage, over the same limit and untouched by this capture, keeps every
+     * copy it had.
+     */
+    @Test
+    fun `the sweep goes to the destination the capture filled, not the one in force after`() =
+        runTest {
+            state.setOn(true)
+            state.setRetention(BackupRetention.EVERYTHING)
+
+            List(SIX) { captureSomethingNew("app $it") }
+            pointAtFolder()
+            List(SIX) { captureSomethingNew("folder $it") }
+
+            assertEquals(SIX, namesInFolder().size, "the folder was not filled")
+            assertEquals(SIX, namesInAppStorage().size, "the app's own storage was not filled")
+
+            state.setRetention(BackupRetention.FIVE)
+
+            val chosenRung = JvmFolderBackupDestination(
+                folder = backupFolder,
+                ownCopy = ownCopy,
+                files = files,
+            )
+            val movesOnPut = object : BackupDestination by chosenRung {
+                override suspend fun put(
+                    capturedPath: String,
+                    name: String,
+                ): Either<BackupError, StoredBackup> = chosenRung
+                    .put(capturedPath, name)
+                    .also { state.setDestination(VaultDestination.APP_STORAGE) }
+            }
+
+            val moving = BackupVault(
+                vault = state,
+                archive = RoomArchiveMark(live),
+                destination = VaultDestinations(
+                    state = state,
+                    link = MutableStateFlow(FolderLink.NONE),
+                    appStorage = JvmBackupDestination(
+                        ownCopy = ownCopy,
+                        directory = appStorageFolder,
+                    ),
+                    folder = movesOnPut,
+                ),
+                database = live,
+                origin = object : CaptureOrigin {
+                    override val appVersion = "1.2.3"
+                    override val platform = BackupPlatform.DESKTOP
+                },
+                files = files,
+                clock = object : Clock {
+                    override fun now(): Instant = instant
+                },
+            )
+
+            enter("one more")
+            instant += 1.minutes
+            assertIs<CaptureOutcome.Captured>(moving.captureIfNeeded())
+
+            assertEquals(
+                FIVE,
+                namesInFolder().size,
+                "the folder this capture landed in was not the one swept: " + namesInFolder(),
+            )
+            assertEquals(
+                SIX,
+                namesInAppStorage().size,
+                "the sweep removed copies from a rung this capture put nothing in",
+            )
+        }
 
     // ------------------------------------------------------------------- and come back
 

@@ -17,8 +17,6 @@ import com.neoutils.finsight.domain.restore.RestoreConfirmation
 import com.neoutils.finsight.domain.restore.RestoreOutcome
 import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.CaptureOutcome
-import com.neoutils.finsight.domain.vault.CarryOffer
-import com.neoutils.finsight.domain.vault.MigrationOutcome
 import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.VaultState
@@ -29,17 +27,15 @@ import com.neoutils.finsight.domain.vault.service.backupFileName
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.backup_carry_done
-import com.neoutils.finsight.resources.backup_carry_partial
 import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_restore_success
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.ui.modal.carryCopies.CarryCopiesModal
+import com.neoutils.finsight.ui.vault.PendingAnswer
+import com.neoutils.finsight.ui.vault.VaultDestinationFlow
 import com.neoutils.finsight.util.UiText
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -111,7 +107,7 @@ class BackupViewModel(
      * reaches that flow — completed by one of the four answers, and gone as soon as one of
      * them has answered, so the second tap finds nothing left to answer.
      */
-    private var answer: CompletableDeferred<Boolean>? = null
+    private val pending = PendingAnswer()
 
     /**
      * The one part of the state the confirmation sheet reads. A modal is rendered outside
@@ -171,6 +167,18 @@ class BackupViewModel(
         readDestination()
     }
 
+    /**
+     * Changing where the copies go, which both screens offer and neither owns — see
+     * [VaultDestinationFlow]. The reading afterwards is this screen's, and is the only part
+     * of it that differs between the two.
+     */
+    private val destinationFlow = VaultDestinationFlow(
+        change = destinationChange,
+        modalManager = modalManager,
+        scope = viewModelScope,
+        refresh = ::readDestination,
+    )
+
     fun onAction(action: BackupAction) {
         when (action) {
             is BackupAction.Export -> export(action.context)
@@ -184,8 +192,8 @@ class BackupViewModel(
             is BackupAction.SetPreventiveOn -> vault.setPreventiveOn(action.isOn)
             is BackupAction.SetInterval -> vault.setInterval(action.interval.duration)
             is BackupAction.SetRetention -> vault.setRetention(action.retention)
-            is BackupAction.ChooseFolder -> chooseFolder(action.context)
-            BackupAction.KeepInsideApp -> keepInsideApp()
+            is BackupAction.ChooseFolder -> destinationFlow.chooseFolder(action.context)
+            BackupAction.KeepInsideApp -> destinationFlow.keepInsideApp()
             BackupAction.Refresh -> readDestination()
         }
     }
@@ -221,89 +229,6 @@ class BackupViewModel(
         }
     }
 
-    /**
-     * Puts the folder picker up and, if a folder was chosen, moves the vault onto it.
-     *
-     * **Nothing is carried across on its own, and nothing is ever removed.** The move and
-     * the offer that follows it are [VaultDestinationChange]'s, which is what keeps the
-     * destination the copies were going to from being read twice — the other screen offers
-     * the same change, and the reading that has to be taken before the move is the one thing
-     * neither of them may hold (design D13).
-     *
-     * A picker somebody closed changes nothing and says nothing. Only a real failure — the
-     * folder could not be prepared — reaches the person, because only that one leaves them
-     * with something to do.
-     */
-    private fun chooseFolder(context: PlatformContext) {
-        viewModelScope.launch {
-            destinationChange.pointAtFolder(context).fold(
-                ifLeft = ::fail,
-                ifRight = { offer ->
-                    readDestination()
-                    offer?.let(::offerToCarry)
-                },
-            )
-        }
-    }
-
-    /**
-     * Moves the vault back to the app's own storage.
-     *
-     * It removes nothing and forgets nothing: the copies in the folder stay in it, and the
-     * folder stays remembered so that choosing it again leads back to them (design D4). It
-     * is also one of the two answers to a folder that has gone (design D12).
-     */
-    private fun keepInsideApp() {
-        viewModelScope.launch {
-            val offer = destinationChange.keepInsideApp()
-            readDestination()
-            offer?.let(::offerToCarry)
-        }
-    }
-
-    /**
-     * Asks whether the copies left behind should be written into the destination that is now
-     * in force.
-     *
-     * The question is only put where there is something to answer, and that is decided
-     * before this is reached: an offer exists only when a listing counted copies on the rung
-     * being left (design D13).
-     */
-    private fun offerToCarry(offer: CarryOffer) {
-        modalManager.show(
-            CarryCopiesModal(
-                copies = offer.copies,
-                onCarry = { carry(offer) },
-                onDeclined = destinationChange::declineCarry,
-            )
-        )
-    }
-
-    /**
-     * Carries the copies across, and says what came of it.
-     *
-     * Both outcomes are worth a word and they are different words: everything arrived, or it
-     * stopped partway — and the second one is a sentence the spec asks for by name, because
-     * a person who said yes to carrying twenty copies has to learn that some of them are
-     * still only in the old place. Neither says anything about the source, because nothing
-     * anywhere was removed from it.
-     *
-     * The destination is read again on the way out: what the card counts has just grown.
-     */
-    private fun carry(offer: CarryOffer) {
-        viewModelScope.launch {
-            when (destinationChange.carry(offer)) {
-                is MigrationOutcome.Carried -> succeed(Res.string.backup_carry_done)
-
-                is MigrationOutcome.Interrupted ->
-                    modalManager.showError(UiText.Res(Res.string.backup_carry_partial))
-
-                MigrationOutcome.NothingToCarry -> Unit
-            }
-
-            readDestination()
-        }
-    }
 
     /**
      * Reads what the destination holds, now.
@@ -412,7 +337,7 @@ class BackupViewModel(
      * one is listening on.
      */
     private fun chooseFileToRestore(context: PlatformContext) {
-        if (_uiState.value.isBusy || answer != null) return
+        if (_uiState.value.isBusy || pending.isWaiting) return
         _uiState.update { it.copy(isVerifying = true) }
 
         viewModelScope.launch {
@@ -449,24 +374,12 @@ class BackupViewModel(
     private val questions = object : RestoreQuestions {
 
         override suspend fun confirm(confirmation: RestoreConfirmation): Boolean =
-            await { it.copy(isVerifying = false, confirmation = confirmation) }
+            pending.ask { _uiState.update { it.copy(isVerifying = false, confirmation = confirmation) } }
 
         override suspend fun permitWithoutCopy(reason: UiText): Boolean =
-            await { it.copy(captureRefusal = reason, copyRefused = true) }
+            pending.ask { _uiState.update { it.copy(captureRefusal = reason, copyRefused = true) } }
     }
 
-    /** Publishes a question and waits, here, for the answer the sheet sends back. */
-    private suspend fun await(ask: (BackupUiState) -> BackupUiState): Boolean {
-        val pending = CompletableDeferred<Boolean>()
-        answer = pending
-        _uiState.update(ask)
-
-        return try {
-            pending.await()
-        } finally {
-            answer = null
-        }
-    }
 
     /**
      * The user answered yes; the flow that owns the file goes on from where it is waiting.
@@ -475,13 +388,8 @@ class BackupViewModel(
      * one with, and the entry is marked busy before the flow can resume: the operation is
      * not over for the screen one step before the user hears the result of it.
      */
-    private fun restore() {
-        val pending = answer ?: return
-        answer = null
-
-        _uiState.update { it.copy(isRestoring = true) }
-        pending.complete(true)
-    }
+    private fun restore() =
+        pending.answer(proceed = true) { _uiState.update { it.copy(isRestoring = true) } }
 
     /**
      * The confirmation was dismissed without an answer, and the file goes with it — the
@@ -491,22 +399,14 @@ class BackupViewModel(
      * the transaction either lands or reverts — and the answer that started it has already
      * been taken, so there is nothing here left to give.
      */
-    private fun discardCandidate() {
-        val pending = answer ?: return
-        answer = null
-        pending.complete(false)
-    }
+    private fun discardCandidate() = pending.answer(proceed = false)
 
     /**
      * The user answered the question about restoring without a copy; the flow that owns the
      * file goes on from where it is waiting, either into the replacement or out of it.
      */
-    private fun answerRefusal(proceed: Boolean) {
-        val pending = answer ?: return
-        answer = null
-        _uiState.update { it.copy(captureRefusal = null) }
-        pending.complete(proceed)
-    }
+    private fun answerRefusal(proceed: Boolean) =
+        pending.answer(proceed) { _uiState.update { it.copy(captureRefusal = null) } }
 
     private fun fail(error: BackupError) = modalManager.showError(error.toUiText())
 

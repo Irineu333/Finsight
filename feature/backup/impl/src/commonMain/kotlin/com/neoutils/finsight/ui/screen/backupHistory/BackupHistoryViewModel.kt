@@ -15,11 +15,9 @@ import com.neoutils.finsight.domain.restore.RestoreQuestions
 import com.neoutils.finsight.domain.vault.ArchiveImport
 import com.neoutils.finsight.domain.vault.BackupVault
 import com.neoutils.finsight.domain.vault.CaptureOutcome
-import com.neoutils.finsight.domain.vault.CarryOffer
 import com.neoutils.finsight.domain.vault.ImportOutcome
 import com.neoutils.finsight.domain.vault.KeptCopyFacts
 import com.neoutils.finsight.domain.vault.KeptCopyReader
-import com.neoutils.finsight.domain.vault.MigrationOutcome
 import com.neoutils.finsight.domain.vault.VaultDestinationChange
 import com.neoutils.finsight.domain.vault.VaultFolder
 import com.neoutils.finsight.domain.vault.service.BackupDestination
@@ -28,8 +26,6 @@ import com.neoutils.finsight.domain.vault.service.StoredBackup
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.backup_carry_done
-import com.neoutils.finsight.resources.backup_carry_partial
 import com.neoutils.finsight.resources.backup_export_success
 import com.neoutils.finsight.resources.backup_history_capture_done
 import com.neoutils.finsight.resources.backup_history_empty_off
@@ -39,10 +35,10 @@ import com.neoutils.finsight.resources.backup_history_remove_refused
 import com.neoutils.finsight.resources.backup_history_removed
 import com.neoutils.finsight.resources.backup_restore_success
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.ui.modal.carryCopies.CarryCopiesModal
+import com.neoutils.finsight.ui.vault.PendingAnswer
+import com.neoutils.finsight.ui.vault.VaultDestinationFlow
 import com.neoutils.finsight.util.UiText
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -139,7 +135,7 @@ class BackupHistoryViewModel(
      * The answer a sheet sends back, while it is being asked for. The file it is about is a
      * local of the flow that made it, which is still running and is what removes it.
      */
-    private var answer: CompletableDeferred<Boolean>? = null
+    private val pending = PendingAnswer()
 
     /**
      * The one part of the state the confirmation sheet reads. A modal is rendered outside
@@ -200,13 +196,25 @@ class BackupHistoryViewModel(
         refresh()
     }
 
+    /**
+     * Changing where the copies go, which both screens offer and neither owns — see
+     * [VaultDestinationFlow]. The reading afterwards is this screen's, and is the only part
+     * of it that differs between the two.
+     */
+    private val destinationFlow = VaultDestinationFlow(
+        change = destinationChange,
+        modalManager = modalManager,
+        scope = viewModelScope,
+        refresh = ::refresh,
+    )
+
     fun onAction(action: BackupHistoryAction) {
         when (action) {
             BackupHistoryAction.Refresh -> refresh()
             BackupHistoryAction.Capture -> capture()
             is BackupHistoryAction.Import -> importFile(action.context)
-            is BackupHistoryAction.ChooseFolder -> chooseFolder(action.context)
-            BackupHistoryAction.KeepInsideApp -> keepInsideApp()
+            is BackupHistoryAction.ChooseFolder -> destinationFlow.chooseFolder(action.context)
+            BackupHistoryAction.KeepInsideApp -> destinationFlow.keepInsideApp()
             is BackupHistoryAction.Inspect -> inspect(action.backup)
             is BackupHistoryAction.Restore -> restore(action.backup)
             is BackupHistoryAction.Share -> share(action.backup, action.context)
@@ -352,71 +360,6 @@ class BackupHistoryViewModel(
         }
     }
 
-    /**
-     * Points at a folder to keep the copies in, and offers to carry the ones left behind.
-     *
-     * The move and the offer are [VaultDestinationChange]'s. A picker somebody closed
-     * changes nothing and says nothing; only a folder that could not be prepared reaches the
-     * person, because only that leaves them with something to do.
-     */
-    private fun chooseFolder(context: PlatformContext) {
-        viewModelScope.launch {
-            destinationChange.pointAtFolder(context).fold(
-                ifLeft = ::fail,
-                ifRight = { offer ->
-                    refresh()
-                    offer?.let(::offerToCarry)
-                },
-            )
-        }
-    }
-
-    /**
-     * Moves the copies back inside the app.
-     *
-     * Nothing is removed and nothing is forgotten: the copies in the folder stay in it, and
-     * the folder stays remembered, so pointing at it again leads back to them (design D4).
-     */
-    private fun keepInsideApp() {
-        viewModelScope.launch {
-            val offer = destinationChange.keepInsideApp()
-            refresh()
-            offer?.let(::offerToCarry)
-        }
-    }
-
-    /**
-     * Asks whether the copies left behind should be written into the destination now in
-     * force — a question, never a step taken on the way past (design D13).
-     */
-    private fun offerToCarry(offer: CarryOffer) {
-        modalManager.show(
-            CarryCopiesModal(
-                copies = offer.copies,
-                onCarry = { carry(offer) },
-                onDeclined = destinationChange::declineCarry,
-            )
-        )
-    }
-
-    /**
-     * Carries the copies across, and says how far it got. A run that stopped partway is a
-     * sentence of its own: some of them are still only in the place they were.
-     */
-    private fun carry(offer: CarryOffer) {
-        viewModelScope.launch {
-            when (destinationChange.carry(offer)) {
-                is MigrationOutcome.Carried -> succeed(Res.string.backup_carry_done)
-
-                is MigrationOutcome.Interrupted ->
-                    modalManager.showError(UiText.Res(Res.string.backup_carry_partial))
-
-                MigrationOutcome.NothingToCarry -> Unit
-            }
-
-            refresh()
-        }
-    }
 
     /**
      * Reads [backup] — the one copy whose sheet has just been opened — off the main thread.
@@ -447,7 +390,7 @@ class BackupHistoryViewModel(
      * that goes wrong costs nothing that was being kept.
      */
     private fun restore(backup: StoredBackup) {
-        if (_uiState.value.isBusy || answer != null) return
+        if (_uiState.value.isBusy || pending.isWaiting) return
         inspection?.cancel()
         _uiState.update { it.copy(working = backup) }
 
@@ -619,43 +562,20 @@ class BackupHistoryViewModel(
     private val questions = object : RestoreQuestions {
 
         override suspend fun confirm(confirmation: RestoreConfirmation): Boolean =
-            await { it.copy(confirmation = confirmation) }
+            pending.ask { _uiState.update { it.copy(confirmation = confirmation) } }
 
         override suspend fun permitWithoutCopy(reason: UiText): Boolean =
-            await { it.copy(captureRefusal = reason, copyRefused = true) }
+            pending.ask { _uiState.update { it.copy(captureRefusal = reason, copyRefused = true) } }
     }
 
-    private suspend fun await(ask: (BackupHistoryUiState) -> BackupHistoryUiState): Boolean {
-        val pending = CompletableDeferred<Boolean>()
-        answer = pending
-        _uiState.update(ask)
 
-        return try {
-            pending.await()
-        } finally {
-            answer = null
-        }
-    }
+    private fun confirmRestore() =
+        pending.answer(proceed = true) { _uiState.update { it.copy(isRestoring = true) } }
 
-    private fun confirmRestore() {
-        val pending = answer ?: return
-        answer = null
-        _uiState.update { it.copy(isRestoring = true) }
-        pending.complete(true)
-    }
+    private fun answerConfirmation(proceed: Boolean) = pending.answer(proceed)
 
-    private fun answerConfirmation(proceed: Boolean) {
-        val pending = answer ?: return
-        answer = null
-        pending.complete(proceed)
-    }
-
-    private fun answerRefusal(proceed: Boolean) {
-        val pending = answer ?: return
-        answer = null
-        _uiState.update { it.copy(captureRefusal = null) }
-        pending.complete(proceed)
-    }
+    private fun answerRefusal(proceed: Boolean) =
+        pending.answer(proceed) { _uiState.update { it.copy(captureRefusal = null) } }
 
     private fun fail(error: BackupError) = modalManager.showError(error.toUiText())
 

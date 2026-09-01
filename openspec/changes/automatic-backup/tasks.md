@@ -162,3 +162,74 @@
       restaurar
 - [x] 12.4 Revisar `design.md` — fechar Q1 e Q2 com o que foi medido, e deixar Q3 registrada
 - [x] 12.5 Conferir que `PlatformBackupIsOffTest` continua verde e sem alterações
+
+## 13. Depois da entrega
+
+Tudo o que veio depois de `fefce652d` — *"every task in the change is done"* —, que é o commit em
+que esta lista se declarou completa. Levantado com `git log fefce652d..HEAD` e lido commit a
+commit, não de memória. São 20, e nenhum deles é tarefa nova: são defeitos encontrados por
+verificação, por auditoria ou por uso, e os ajustes que vieram com eles.
+
+**Defeitos de comportamento**
+
+- [x] 13.1 O stub de pasta em `VaultFolderTest` não tinha `forgetPrevious`, e o cache do Gradle
+      restaurava uma compilação anterior à mudança da interface — os 290 testes do módulo estavam
+      **sem rodar** com a suíte verde. Verificado do zero, sem cache (`afc9ee9dd`)
+- [x] 13.2 Zerar um ajuste apagava a própria transação de ajuste e pedia cópia preventiva, para a
+      única classe (`DERIVED_VALUE`) cujo argumento é que o valor se refaz. Uma captura que
+      falhasse virava erro genérico, sem a oferta de prosseguir sem cópia (`b18915e9d`)
+- [x] 13.3 A cópia anterior à migração mora no armazenamento do app, e o histórico lia só o degrau
+      em vigor: para quem escolheu pasta ela era escrita e nunca vista — a cópia invisível que D1
+      recusa. A listagem passa a buscá-la, e a troca de pasta a deixa onde está (`1085d2779`)
+- [x] 13.4 Excluir fatura sem transações não anunciava a remoção — o anúncio ia pendurado na
+      primeira linha de um laço — enquanto a folha já prometia a cópia (`53d52a054`)
+- [x] 13.5 O desempate da ordenação usava o nome cru, e `imported-` ordena acima de qualquer data:
+      num destino que empata todos os tempos, a varredura de uma captura podia remover o arquivo
+      que aquela captura acabara de escrever (`ca12bccb9`)
+- [x] 13.6 A varredura resolvia o degrau de novo, depois do `put`, e podia remover cópias de um
+      destino em que aquela captura não pôs nada (`e4d53353b`)
+- [x] 13.7 As cinco confirmações destrutivas diziam "não pode ser desfeita" com a caixa da oferta
+      marcada — que liga o cofre e tira a cópia antes da ação. Oferta e cobertura eram mutuamente
+      exclusivas por construção, e a frase nunca seguia a caixa (`3591ca3a1`)
+- [x] 13.8 O tile das cópias estava atrás de `vault.isOn`, e é a única porta para a tela onde a
+      pasta é escolhida — numa instalação nova, com o cofre desligado por requisito, não havia
+      caminho até o seletor. É o reencontro de D4 (`a195478c1`)
+
+**O que a tela afirma**
+
+- [x] 13.9 O tile do cofre prometia "a cada N dias", que a spec proíbe (`e0abb7664`), e a oferta
+      ao lado da confirmação prometia o mesmo, no lugar mais lido (`059d062d3`)
+- [x] 13.10 A frase de cobertura dizia que desinstalar leva as cópias junto — falso no desktop, que
+      o próprio código descreve como sobrevivente. `VaultCoverage` passa a ser o dono do fato
+      (`5af06ad0a`)
+- [x] 13.11 A linha "os dados do app são os desta cópia" deixava de ser verdade no primeiro
+      lançamento seguinte e continuava exibida; virou passado (`76671ee5b`)
+- [x] 13.12 O histórico mostrava só o último segmento da pasta, então duas pastas de mesmo nome
+      liam igual. Passa a dizer onde ela está — caminho inteiro no desktop, caminho do document id
+      no Android, e o iOS registrado como lacuna, não como regra (`de1cc7569`)
+
+**Apresentação**
+
+- [x] 13.13 A frase da cópia guardada ganhou um glifo inline, para não correr junto com a
+      declaração acima dela como um parágrafo só (`6801b4fe6`)
+- [x] 13.14 Contas e cartões passam a ter uma linha cada nos dois quadros de fatos, em vez de dois
+      números pareados por posição sob um rótulo duplo (`5dfd984d3`)
+- [x] 13.15 Três `testTag` estavam sobre o container e não sobre o nó que renderiza a figura, de
+      modo que só davam para afirmar presença, nunca o número (`35d9e5f08`)
+
+**Testes**
+
+- [x] 13.16 O caso que a marca do acervo tem permissão de perder — alteração no lugar, sem linha
+      nova — tinha cenário na spec e nenhum teste; agora tem, sobre banco real (`60b28f6bd`)
+- [x] 13.17 Dois fluxos Maestro para as travessias que nenhuma camada abaixo do app montado
+      exercita: o preventivo ponta a ponta e a captura na abertura (`c9488826f`)
+
+**Artefatos**
+
+- [x] 13.18 O requisito da pré-condição passou a dizer o que a marca mede e a nomear o caso que
+      deixa passar, em vez de prometer mais do que ela alcança (`71a4b4657`)
+- [x] 13.19 A tarefa 10.3 dizia que Q1 seguia aberta depois de ela ter sido medida em aparelho
+      (`83a986570`)
+- [x] 13.20 O cenário de cobertura da spec e D16 do design passaram a distinguir ler o próprio
+      armazenamento de adivinhar o provedor, que é o que aquela decisão recusa — no mesmo commit
+      de 13.10, porque o cenário afirmava sem ressalva o que o código dizia errado (`5af06ad0a`)

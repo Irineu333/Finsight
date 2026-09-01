@@ -547,15 +547,21 @@ class BackupHistoryViewModel(
      */
     private suspend fun copyOut(backup: StoredBackup): Either<BackupError, String?> =
         files.newCapturePath().flatMap { path ->
-            destination.copyOut(backup, path).flatMap { copied ->
-                if (copied) {
-                    path.right()
-                } else {
-                    withContext(NonCancellable) { files.discard(path) }
-                    modalManager.showError(UiText.Res(Res.string.backup_history_gone))
-                    null.right()
+            // A read that failed still handed a path out, and may have written most of a
+            // database into it before it gave up — a disk with no room is the likeliest way
+            // to get here, and leaving the archive's own size behind is the worst answer to
+            // it. The name is this app's to remove either way, and the two ends below do.
+            destination.copyOut(backup, path)
+                .onLeft { withContext(NonCancellable) { files.discard(path) } }
+                .flatMap { copied ->
+                    if (copied) {
+                        path.right()
+                    } else {
+                        withContext(NonCancellable) { files.discard(path) }
+                        modalManager.showError(UiText.Res(Res.string.backup_history_gone))
+                        null.right()
+                    }
                 }
-            }
         }
 
     /** The two questions this screen puts up, and where the answers come back from. */

@@ -287,7 +287,17 @@ class BackupVault(
 
         return landed.fold(
             ifLeft = { CaptureOutcome.Failed(it) },
-            ifRight = { copy -> land(target.value, copy, at, mark, sparing, state) },
+            // Uncancellable from here, because the file is already in the destination and
+            // everything left to do is about *that file*. Cancelled midway — the person
+            // pressed capture and left the screen, taking the view model's scope with them —
+            // the copy stood in the destination while nothing recorded that it had been
+            // taken: the screen's last-copy line stayed old, and the next trigger wrote a
+            // second file the first one had made unnecessary. Costing one copy is the
+            // direction design D8 is allowed to be wrong in, but it is still a capture that
+            // happened and was not written down.
+            ifRight = { copy ->
+                withContext(NonCancellable) { land(target.value, copy, at, mark, sparing, state) }
+            },
         )
     }
 

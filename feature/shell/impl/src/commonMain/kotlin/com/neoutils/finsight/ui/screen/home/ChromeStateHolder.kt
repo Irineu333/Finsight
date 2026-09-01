@@ -23,21 +23,24 @@ import com.neoutils.finsight.feature.shell.api.ChromeController
 internal class ChromeStateHolder : ChromeController {
 
     private data class Published(
-        val config: ChromeConfig,
+        val config: ChromeConfig?,
         val actions: List<ChromeAction>,
     )
 
     private val registry = mutableStateMapOf<String, Published>()
 
     /**
-     * What this destination published, or `null` while it has published nothing.
+     * What this destination published, or `null` while it has said nothing — because it has not
+     * composed yet, or because it has composed and has nothing to say (`ChromeEffect(config =
+     * null)`, a screen still reading what its chrome depends on). The two silences are the same
+     * silence, and the shell answers both the same way.
      *
-     * The two are not the same answer, and collapsing them is a defect. A screen publishes from a
-     * `SideEffect`, which runs after the composition that first drew it, so the frame in which the
-     * shell learns it has navigated is a frame in which the destination it navigated to has said
-     * nothing yet. `ChromeConfig.Default` there is not silence — it is a request to show the
-     * button — and between two screens that both suppress it, that is the button appearing and
-     * leaving again.
+     * Silence and `ChromeConfig.Default` are not the same answer, and collapsing them is a defect.
+     * A screen publishes from a `SideEffect`, which runs after the composition that first drew it,
+     * so the frame in which the shell learns it has navigated is a frame in which the destination
+     * it navigated to has said nothing yet. `Default` there is not silence — it is a request to
+     * show the button — and between two screens that both suppress it, that is the button appearing
+     * and leaving again.
      */
     fun configOf(destinationId: String?): ChromeConfig? =
         registry[destinationId]?.config
@@ -47,14 +50,14 @@ internal class ChromeStateHolder : ChromeController {
 
     override fun publish(
         destinationId: String,
-        config: ChromeConfig,
+        config: ChromeConfig?,
         actions: List<ChromeAction>,
     ) {
         // A screen publishes on every recomposition; writing an identical value would invalidate
         // whoever reads the register and recompose the shell for nothing.
         val published = registry[destinationId]
 
-        if (published?.config == config && published.actions == actions) return
+        if (published != null && published.config == config && published.actions == actions) return
 
         registry[destinationId] = Published(config, actions)
     }

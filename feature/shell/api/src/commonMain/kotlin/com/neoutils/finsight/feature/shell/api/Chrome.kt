@@ -80,14 +80,14 @@ data class ChromeAction(
  * already published — a single slot would have the outgoing screen erase the incoming one's word.
  */
 interface ChromeController {
-    fun publish(destinationId: String, config: ChromeConfig, actions: List<ChromeAction>)
+    fun publish(destinationId: String, config: ChromeConfig?, actions: List<ChromeAction>)
     fun clear(destinationId: String)
 }
 
 private object NoOpChromeController : ChromeController {
     override fun publish(
         destinationId: String,
-        config: ChromeConfig,
+        config: ChromeConfig?,
         actions: List<ChromeAction>,
     ) = Unit
 
@@ -106,10 +106,16 @@ val LocalChromeController = staticCompositionLocalOf<ChromeController> {
  * `NavBackStackEntry` is the `ViewModelStoreOwner`, so the identity is read from there: no
  * ceremony per screen, and no call site that can forget it. Composed outside a destination there is
  * nothing to attribute the publication to, and it publishes nothing.
+ *
+ * **A null [config] is not the default — it is "no word yet".** A screen whose chrome depends on
+ * what it is still reading cannot answer, and the answer it would guess is one it has to take back:
+ * the bar and the button move once on the guess and again on the reading, and the button is caught
+ * halfway to the place the guess sent it. Saying nothing leaves the chrome on screen exactly as it
+ * is until the reading lands, and then everything moves once, together and in the right direction.
  */
 @Composable
 fun ChromeEffect(
-    config: ChromeConfig = ChromeConfig.Default,
+    config: ChromeConfig? = ChromeConfig.Default,
     actions: List<ChromeAction> = emptyList(),
 ) {
     val controller = LocalChromeController.current

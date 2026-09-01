@@ -80,6 +80,31 @@ class ChromeStateHolderTest {
     }
 
     @Test
+    fun `a screen with nothing to say yet reads the same as one that has not spoken`() {
+        val holder = ChromeStateHolder()
+
+        // A screen whose chrome depends on what it is still reading publishes no configuration.
+        // The shell has one rule for silence, and both silences have to reach it as the same
+        // answer — otherwise a screen that cannot answer yet is made to guess, and the chrome moves
+        // once on the guess and again when the reading lands.
+        holder.publish(accounts, config = null, actions = emptyList())
+
+        assertNull(holder.configOf(accounts))
+        assertNull(holder.configOf(budgets))
+    }
+
+    @Test
+    fun `saying nothing withdraws what the same destination said before`() {
+        val holder = ChromeStateHolder()
+
+        holder.publish(accounts, ChromeConfig.Default, listOf(action("accounts_add")))
+        holder.publish(accounts, config = null, actions = emptyList())
+
+        assertNull(holder.configOf(accounts))
+        assertEquals(emptyList(), holder.actionsOf(accounts))
+    }
+
+    @Test
     fun `republishing with other actions leaves the configuration alone`() {
         val holder = ChromeStateHolder()
 

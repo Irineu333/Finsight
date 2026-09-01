@@ -264,6 +264,7 @@ Por moeda — **toda** leitura que atravessa contas, e **toda** leitura por dime
 | O mesmo, para vários | `flowsByDimensionByCurrency(ids)` |
 | Gasto de uma dimensão no mês (categoria) | `dimensionBalanceInMonthByCurrency(month, dimensionId)` |
 | O mesmo, para várias dimensões | `dimensionBalancesInMonthByCurrency(month, ids)` |
+| A série mensal de uma dimensão, até um mês, numa consulta | `dimensionMonthlySeriesByCurrency(dimensionId, upTo)` |
 | Totais por dimensão num período, vistos de um conjunto de contas | `totalsByDimensionByCurrency(nominalType, start, end, siblingAccountIds)` |
 | Os mesmos totais, escopados a sub-razões | `totalsByDimensionInScopeByCurrency(nominalType, scopeDimensionIds)` |
 | Receita/despesa/saldo/saldo inicial de um escopo (relatório) | `scopeStatsByCurrency(scopeAccountIds, start, end)` |

@@ -5,6 +5,9 @@ package com.neoutils.finsight.ui.modal.exchangeRateForm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.database.repository.RateArchive
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateExchangeRate
+import com.neoutils.finsight.domain.analytics.event.EditExchangeRate
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
@@ -50,6 +53,7 @@ class ExchangeRateFormViewModel(
     private val exchangeRateRepository: RateArchive,
     private val currencyRepository: ICurrencyRepository,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val base = baseCurrencyRepository.observe().value
@@ -135,6 +139,12 @@ class ExchangeRateFormViewModel(
                     // prevails over a derived rate of the same date.
                     source = ExchangeRate.Source.USER,
                 )
+            )
+            analytics.logEvent(
+                when {
+                    state.isEditing -> EditExchangeRate(state.from, state.to)
+                    else -> CreateExchangeRate(state.from, state.to)
+                }
             )
             modalManager.dismissAll()
         }

@@ -18,7 +18,7 @@ class FirebaseAnalyticsImpl : Analytics {
 
     override fun logEvent(event: Event) {
         Firebase.analytics.logEvent(event.name) {
-            event.params.forEach { (key, value) -> param(key, value) }
+            event.wireParams().forEach { (key, value) -> param(key, value) }
         }
     }
 

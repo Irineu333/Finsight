@@ -38,7 +38,10 @@ data class RecurringForm(
     fun toRecurring(createdAt: Long): Either<RecurringError, Recurring> = either {
         ensure(amount.isNotEmpty()) { RecurringError.AMOUNT_REQUIRED }
         ensure(amount.moneyToDouble() != 0.0) { RecurringError.AMOUNT_ZERO }
-        ensure(title.isNotEmpty() || category != null) {
+        // Blank, not empty: whitespace is not a name, and the surfaces that read the
+        // template's label say so too. Accepting it here would let a row through that
+        // satisfies the owner of the rule and nothing that reads it.
+        ensure(title.isNotBlank() || category != null) {
             RecurringError.TITLE_OR_CATEGORY_REQUIRED
         }
 
@@ -54,7 +57,7 @@ data class RecurringForm(
         Recurring(
             type = type,
             amount = amount.moneyToDouble(),
-            title = title.ifEmpty { null },
+            title = title.trim().ifEmpty { null },
             dayOfMonth = day,
             category = category,
             account = account,

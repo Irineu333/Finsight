@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewAccount
 
+import com.neoutils.finsight.RecordingAnalytics
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
@@ -66,17 +67,22 @@ class ViewAccountViewModelTest {
         isArchived = isArchived,
     currency = "BRL",)
 
-    private fun viewModel(repository: FakeAccountRepository) = ViewAccountViewModel(
+    private fun viewModel(
+        repository: FakeAccountRepository,
+        analytics: RecordingAnalytics = RecordingAnalytics(),
+    ) = ViewAccountViewModel(
         accountId = 1L,
         accountRepository = repository,
         unarchiveAccount = UnarchiveAccountUseCase(repository),
+        analytics = analytics,
         crashlytics = FakeCrashlytics(),
     )
 
     @Test
     fun `the unarchive action reopens the shown account and dismisses`() = runTest(dispatcher) {
         val repository = FakeAccountRepository()
-        val vm = viewModel(repository)
+        val analytics = RecordingAnalytics()
+        val vm = viewModel(repository, analytics)
 
         turbineScope {
             val state = vm.uiState.testIn(backgroundScope)
@@ -90,6 +96,9 @@ class ViewAccountViewModelTest {
             runCurrent()
 
             assertEquals(listOf(1L), repository.reopened)
+            // Reopening is its own event: it used to leave no trace at all, while
+            // retiring the same account reported itself as a deletion.
+            assertEquals(listOf("unarchive_account"), analytics.events.map { it.name })
             assertIs<ViewAccountEvent.Dismiss>(events.awaitItem())
 
             state.cancel()

@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.TransactionType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LedgerTest {
@@ -118,6 +119,44 @@ class LedgerTest {
         // Permanent vacuously: the property decides whether archiving could strand a
         // balance, and a conversion account is never archived.
         assertTrue(AccountType.CONVERSION.isPermanent)
+    }
+
+    // --- sourceLeg / destinationLeg: the two ends of a movement, by type and sign ---
+
+    @Test
+    fun `the two ends of a mono-currency transfer are the negative and positive asset legs`() {
+        val entries = listOf(
+            entry(AccountType.ASSET, -10000, 1),
+            entry(AccountType.ASSET, 10000, 2),
+        )
+
+        assertEquals(1L, entries.sourceLeg()?.account?.id)
+        assertEquals(2L, entries.destinationLeg()?.account?.id)
+    }
+
+    @Test
+    fun `the destination of a cross-currency transfer is the account, never the conversion leg`() {
+        // The conversion leg holding the positive residue sits *before* the
+        // destination account here, so anything reading "the first positive leg"
+        // would answer 10 — which is exactly what the ASSET filter prevents.
+        val entries = listOf(
+            entry(AccountType.ASSET, -55000, 1),
+            entry(AccountType.CONVERSION, 55000, 10),
+            entry(AccountType.CONVERSION, -10000, 11),
+            entry(AccountType.ASSET, 10000, 2),
+        )
+
+        assertEquals(2L, entries.destinationLeg()?.account?.id)
+        assertEquals(1L, entries.sourceLeg()?.account?.id)
+    }
+
+    @Test
+    fun `an operation with no incoming asset leg has no destination`() {
+        val expense = listOf(entry(AccountType.ASSET, -5000, 1), entry(AccountType.EXPENSE, 5000))
+        val cardPurchase = listOf(entry(AccountType.LIABILITY, 5000, 2), entry(AccountType.EXPENSE, -5000))
+
+        assertNull(expense.destinationLeg())
+        assertNull(cardPurchase.destinationLeg())
     }
 
     // --- isBalanced (Σ = 0 per currency) ---

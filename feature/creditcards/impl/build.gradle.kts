@@ -16,6 +16,8 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.crashlytics)
 
+            implementation(projects.feature.shell.api)
+
             implementation(projects.feature.creditcards.api)
             implementation(projects.feature.transactions.api)
             implementation(projects.feature.recurring.api)

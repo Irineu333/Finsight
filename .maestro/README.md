@@ -33,7 +33,7 @@ Na pirâmide, é o anel mais externo: a suíte unitária (`./gradlew jvmTest`) �
 esta é dona da jornada. São os únicos testes que rodam o sistema montado — logo, os únicos que podem
 falhar por integração, e é só por isso que valem o que custam.
 
-**O custo, com números.** A suíte inteira leva **~29 minutos** para 14 fluxos. Os dois de fumaça somam
+**O custo, com números.** A suíte inteira leva **~31 minutos** para 15 fluxos. Os dois de fumaça somam
 menos de 20 segundos; os de jornada custam de 1m a 4m30 **cada um**. Isso é o orçamento (§6), e é
 o que torna "adicionar um fluxo" uma decisão, não uma adição livre. Um fluxo que duplica o que um
 teste de ViewModel já prova custa dois minutos de emulador para não contar nada de novo.
@@ -79,7 +79,7 @@ Na prática, para quem for rodar — pessoa ou agente de IA, sem distinção:
    estiver conectado" — e com mais de um ligado, fixe o alvo (§2.2.1).
 2. **Conferir as sete linhas da §2.2 à mão, antes do run**, e **reinstalar o APK de debug**. Menos
    de um minuto, contra 28 de resultado que não vale nada.
-3. **Reportar em que aparelho rodou.** Um "13/13 verde" sem o aparelho ao lado não é um resultado,
+3. **Reportar em que aparelho rodou.** Um "15/15 verde" sem o aparelho ao lado não é um resultado,
    é uma afirmação sem lastro — e um agente que só imprime o placar está reportando exatamente isso.
 4. **Vermelho não é ambiente até que a §4 diga que é.** A pergunta 1 daquela lista existe para ser
    respondida com dados, não usada como explicação de saída.
@@ -190,7 +190,7 @@ aponta para dentro:
 
 | Comando | O que acontece |
 |---|---|
-| `maestro test .maestro` | Workspace: os 14 fluxos, com as animações desligadas pelo `config.yaml` |
+| `maestro test .maestro` | Workspace: os 15 fluxos, com as animações desligadas pelo `config.yaml` |
 | `maestro test --include-tags smoke .maestro` | Workspace, filtrado por tag — a forma certa de rodar um subconjunto |
 | `maestro test .maestro/flows/budgets/lifecycle.yaml` | Roda o fluxo, **sem** o `config.yaml`: as animações ficam como o aparelho as tiver |
 | `maestro test .maestro/flows` | **Não roda nada** e sai com código 0 — só há subpastas, e o glob ficou para trás |
@@ -222,10 +222,17 @@ veredito, rode pelo workspace.
 ```
 
 `subflows/` fica fora do glob `flows/**` de propósito — é isso que impede um bloco compartilhado de
-ser executado como teste próprio. Hoje são oito: `launch_fresh` (estado inicial), `open_section`
+ser executado como teste próprio. Hoje são nove: `launch_fresh` (estado inicial), `open_section`
 (chegar a uma seção pela grade de ações rápidas), `record_transaction`, `record_categorized_expense`
 e `record_card_expense` (lançar), `create_account`, `create_credit_card` e `create_category` (abrir
-uma conta, abrir um cartão, criar uma categoria).
+uma conta, abrir um cartão, criar uma categoria), e `tap_action` (alcançar uma ação do botão de
+ação, esteja ela no botão ou dentro do menu que ele abre).
+
+`tap_action` é o único que existe por causa da forma de um componente, e não de uma jornada. O app
+tem **um** botão de ação, desenhado pela casca, e o que pressioná-lo faz depende de quantas ações a
+tela publicou: uma, e o botão é a ação; mais de uma, e ele abre um menu onde cada ação responde pelo
+seu id. Como isso varia com o *estado* da tela e não só com a tela, quem quer uma ação pergunta por
+ela — o subflow abre o menu apenas quando ela ainda não está na tela.
 
 Um subflow carrega o **arranjo**, nunca a afirmação: quem chama é que diz o que o estado criado
 deve mostrar. É por isso que `create_credit_card` não assere o limite disponível do cartão que
@@ -234,6 +241,10 @@ acabou de criar — dois fluxos criam cartões com limites diferentes, e a afirm
 Quase toda área tem um único `lifecycle.yaml`, e isso é deliberado: `launch_fresh` limpa o banco,
 então uma história partida em duas gastaria a primeira metade recriando o que a segunda precisa.
 
+`creditcards` é a exceção, e a razão é aritmética: as figuras de `lifecycle` são escolhidas para que
+nenhuma repita os dígitos de outra, e todas são asseridas adiante. Gastar dinheiro dentro dela move
+essa conta, e uma falha da jornada retroativa passaria a se ler como falha da história do cartão.
+
 | Fluxo | A afirmação pela qual ele existe |
 |---|---|
 | `smoke/launch` | o app sobe e publica seu chrome |
@@ -241,14 +252,15 @@ então uma história partida em duas gastaria a primeira metade recriando o que 
 | `dashboard/customization` | o dashboard é do usuário: reordenado, esvaziado, repovoado, um componente por vez e configurado — e continua assim depois que o processo morre |
 | `ledger/lifecycle` | duas escritas de naturezas diferentes, somadas e lidas de volta; corrigir uma reescreve as duas pernas, não acrescenta uma terceira; e a figura do dashboard leva à lista já cortada por ela |
 | `report/lifecycle` | o relatório *escopa*: a mesma escrita lida por contas diferentes, e por perspectivas diferentes, diz coisas diferentes |
-| `accounts/lifecycle` | uma transferência move dinheiro sem criar nenhum; uma conta zerada pode ser arquivada e reencontrada |
+| `accounts/lifecycle` | uma conta que nada tocou se apaga; uma transferência move dinheiro sem criar nenhum; e uma conta com histórico se aposenta arquivando, zerada antes, e é reencontrada |
 | `creditcards/lifecycle` | um cartão cria dívida, não gasto de caixa, até a fatura ser fechada e paga; e um cartão com movimento se aposenta arquivando, não apagando, e só quando não deve nada |
+| `creditcards/retroactive_payment` | um ciclo passado se regulariza pela mesma porta das demais faturas, e pagá-lo até zerar não o quita — `PAID` continua sendo consequência do fechamento |
 | `installments/lifecycle` | uma parcela devida por fatura, a compra inteira comprometida contra o limite |
 | `recurring/lifecycle` | um recorrente não é dinheiro até ser confirmado, e pular liquida um ciclo, não a ordem |
 | `recurring/from_transaction` | uma despesa lançada abre a recorrência da qual ela é o primeiro ciclo — e o mês que ela acabou de pagar não volta a ser cobrado |
 | `currency/lifecycle` | duas moedas no mesmo bolso: o segundo campo nasce da discordância entre dois seletores, e a mesma escrita é exata na conta e aproximada no total — sob duas moedas base |
 | `budgets/lifecycle` | uma despesa categorizada chega ao orçamento que a vigia, e passado o limite a leitura muda |
-| `categories/lifecycle` | sem movimento a categoria se apaga, com movimento se arquiva; arquivada sai dos seletores e continua no gasto do mês, e volta inteira |
+| `categories/lifecycle` | sem movimento a categoria se apaga, com movimento se arquiva; arquivada sai do seletor de lançamento, continua no gasto do mês e **continua cortando a lista**, e volta inteira |
 | `support/lifecycle` | uma folha, uma lista e um chat entregam a mesma conversa uns aos outros, e a resposta continua lá ao reabrir |
 | `backup/reach` | a única porta do backup abre uma feature que não tem aba nem lugar no catálogo, com as quatro peças que a ligam — rota, subgrafo, módulo e entrada — respondendo juntas |
 | `backup/vault` | ligar o cofre é a cópia, não a promessa de uma: a tela muda de forma em volta do interruptor e uma segunda tela já lista o arquivo que caiu, marcado como aquele de que o banco veio |
@@ -263,9 +275,13 @@ destino que nomeia.
 Um id é um `Modifier.testTag` do Compose, e ele só chega ao Maestro porque a raiz de composição
 publica as tags na árvore de acessibilidade, via `Modifier.exposeTestTags()` (`core/designsystem` —
 `ui/util/ExposeTestTags`). **Uma raiz precisa aderir explicitamente, e uma folha modal, um diálogo ou
-um popup são raízes próprias.** Hoje aderem: o `Surface` do `App`, o `ModalBottomSheet`, o painel de
-detalhe e dois `DropdownMenu`. Uma janela nova precisa da sua própria chamada, ou suas tags serão
-invisíveis sem nenhum erro que explique o porquê.
+um popup são raízes próprias.** Hoje aderem dez raízes: o `Surface` do `App`, o `ModalBottomSheet`,
+o painel de detalhe (`AdaptiveDetail`) e sete menus — o `ExposedDropdownMenu` do `TargetSelector` e
+o do `ExchangeRateFormModal`, mais o `DropdownMenu` de `CreditCardsScreen`,
+`InvoiceTransactionsScreen`, `AccountsScreen`, `CategoriesScreen` e `RecurringScreen`. A lista se
+confere com `grep -rn "exposeTestTags()" --include="*.kt" core feature app`. Uma janela nova precisa
+da sua própria chamada, ou suas tags serão invisíveis sem nenhum erro que explique o porquê — e um
+menu que ainda não aderiu só é alcançável pelo texto das suas opções, que é cópia.
 
 ## 4. Quando um teste fica vermelho
 
@@ -372,6 +388,14 @@ precisão.
 
 1. **Alcance elementos por `id`, nunca pelo texto da interface.** Rótulo é copy: muda numa revisão
    de UX e quebra um teste que não tinha nada com o assunto.
+
+   Uma linha de uma lista é a exceção honesta: contas, cartões e categorias não têm `id` por
+   instância, então escolher *uma* delas é escolhê-la pelo nome. Quando o nome é dado pelo próprio
+   fluxo (`${NEW_ACCOUNT}`), isso não é cópia — é o objeto sob teste. Quando **não** é, o único
+   caso hoje sendo a conta semeada (`account_default_name`: *Carteira* / *Wallet*), o nome é
+   declarado uma vez no `env:` do fluxo, como `DEFAULT_ACCOUNT`. A dependência continua existindo
+   — ela é o motivo de a §2.2 fixar o idioma —, mas passa a ter um lugar só, em vez de estar
+   soletrada em vinte pontos de cinco arquivos.
 2. **Asserte a figura renderizada, não a existência do elemento.** `assertVisible: id=balance` passa
    com o saldo errado. `457.10` no nó que o renderiza prova que duas escritas foram persistidas,
    somadas e lidas de volta — a única coisa que o E2E prova melhor que qualquer camada. Prefira o
@@ -422,18 +446,22 @@ precisão.
 | **Screenshot como asserção** | Toda troca de tema gera dezenas de diffs e o time aprova baselines em massa | Captura é artefato de diagnóstico; comparação visual é outra suíte |
 
 **Sobre "a grande turnê", que já foi contada em passos.** Três fluxos passam de 120 e os três são
-uma história só — a decisão está tomada e não é para ser reaberta a cada leitura:
+uma história só — a decisão está tomada e não é para ser reaberta a cada leitura. O número entre
+parênteses é o de comandos de topo do arquivo (`grep -c '^- ' <fluxo>`), não o de passos que o
+Maestro imprime, que expande cada `runFlow` e sai bem maior:
 
-- **`recurring/lifecycle`** (170) — a claim final é *confirmar depois do salto arquiva a ocorrência
-  no mês do relógio do app*, e ela depende de tudo que veio antes: dois recorrentes, um confirmado
-  por valor corrigido, um pulado, um arquivado e reativado. Partir ao meio obrigaria a segunda
-  metade a refazer esse arranjo inteiro.
-- **`creditcards/lifecycle`** (179) — o ciclo de vida da fatura é indivisível pelo mesmo motivo:
+- **`accounts/lifecycle`** (190) — arquivar **exige** saldo zero, que exige o ajuste, que exige a
+  transferência. O cabeçalho do arquivo diz isso. A conta de rascunho que abre o fluxo é a exceção
+  que confirma a regra: ela não depende de nada e nada depende dela, e está ali porque é o único
+  lugar em que a exclusão pode ser *executada* sem levar a história junto.
+- **`creditcards/lifecycle`** (178) — o ciclo de vida da fatura é indivisível pelo mesmo motivo:
   fechar exige ter gasto, pagar exige ter fechado, e a fatura seguinte só existe porque a anterior
   fechou. E o cartão só se aposenta por arquivamento porque teve movimento, e só é aceito porque não
   deve mais nada — as duas coisas só valem para um cartão que esta história inteira produziu.
-- **`accounts/lifecycle`** (126) — arquivar **exige** saldo zero, que exige o ajuste, que exige a
-  transferência. O cabeçalho do arquivo diz isso.
+- **`recurring/lifecycle`** (173) — a claim final é *confirmar depois do salto arquiva a ocorrência
+  no mês do relógio do app*, e ela depende de tudo que veio antes: dois recorrentes, um confirmado
+  por valor corrigido, um pulado, um arquivado e reativado. Partir ao meio obrigaria a segunda
+  metade a refazer esse arranjo inteiro.
 
 O que o antipadrão condena é encadear assuntos sem relação, e o sintoma é o nome precisar de dois
 "e" (§5.2, padrão 8). Um fluxo longo cujo último passo depende do primeiro não é uma turnê; é uma
@@ -451,16 +479,29 @@ história que custa o que custa.
 
 ## 6. Saúde da suíte
 
-**Orçamento: ~29 minutos e 14 fluxos** (medido de ponta a ponta: 25m16 e 28m10, mais os 39s do
-fluxo mais novo, medido sozinho). Ao estourar,
+**Orçamento: ~31 minutos e 15 fluxos** (medido de ponta a ponta: 25m16 e 28m10, mais o 1m52 do
+fluxo mais novo, medido dentro da suíte). Ao estourar,
 corta-se ou funde-se — o teto não sobe por reflexo. Cada fluxo novo compete com os existentes pelo
 tempo de quem roda a suíte; ao propor um, diga **qual sai ou por que o teto muda**.
+
+> **A medição mais recente não substitui o número acima, e é preciso dizer por quê.** Depois que
+> `accounts/lifecycle` e `categories/lifecycle` ganharam uma perna cada (a exclusão de uma conta de
+> rascunho e o corte da lista por categoria arquivada), a suíte inteira deu **15/15 em 31m39** —
+> mas com um segundo emulador ligado ao lado, o que é exatamente a disputa de CPU que o §1 manda
+> não trazer para cá. Vale como **teto** e como prova de que nada ficou vermelho; não vale como a
+> medida limpa. Quem rodar com a máquina ociosa refaz esta linha.
+>
+> Os fluxos daquela execução, do mais caro ao mais barato: `creditcards/lifecycle` 4m28,
+> `accounts/lifecycle` 3m14, `categories/lifecycle` 2m51, `currency` 2m49, `ledger` e
+> `recurring/lifecycle` 2m45, `budgets` 2m40, `report` 2m37, `installments` 2m09,
+> `creditcards/retroactive_payment` 1m51, `dashboard/customization` 1m44, `support` 53s,
+> `recurring/from_transaction` 38s, `dashboard/initial_state` 11s, `smoke/launch` 3s.
 
 **Instabilidade é bug.** Um fluxo que fica vermelho sem mudança de código entra em investigação no
 mesmo dia. Não existe fluxo em quarentena permanente nesta pasta, e a ausência disso é o que a
 mantém confiável.
 
-**O precedente.** O teto subiu quatro vezes, e cada uma fica registrada porque é ela que autoriza a
+**O precedente.** O teto subiu cinco vezes, e cada uma fica registrada porque é ela que autoriza a
 próxima recusa. Nenhuma tirou um fluxo em troca; todas entraram pelo mesmo argumento — cobrir uma
 travessia que nenhuma camada abaixo alcança:
 
@@ -471,6 +512,7 @@ travessia que nenhuma camada abaixo alcança:
 | ~21 → ~23 | `dashboard/customization` | 1m42 | O único gesto do app sem botão por trás: arrastar. Reordenar é arrastar, e pôr ou tirar **um** componente também — os comandos em massa movem os onze ou nenhum. Nenhuma camada monta o editor e a tela que lê o resultado |
 | ~25 → ~28 | `currency/lifecycle` | 2m53 | O **segundo campo de valor**, único controle do app que nasce da discordância entre dois seletores: o arquivo o pré-preenche e digitar por cima retira a oferta. Ele existia no código sem fluxo nenhum — `transfer_destination_amount` era peso morto. E a **fronteira da consolidação**, que exige a tela de contas e o dashboard montados ao mesmo tempo sob **duas** moedas base: a mesma escrita exata de um lado e aproximada do outro. Nenhuma camada abaixo monta duas telas, e é a fronteira que a feature inteira existe para não quebrar |
 | ~28 → ~29 | `recurring/from_transaction` | 39s | O que a marca de recorrência no lançamento **impede**: sem a ocorrência escrita junto, o mês recém-pago volta como pendente e o usuário lança a mesma despesa duas vezes no razão. A afirmação é uma ausência em duas telas — a recorrência existe na lista e o dashboard não cobra o mês —, e ausência em duas telas ao mesmo tempo nenhuma camada abaixo monta |
+| ~29 → ~31 | `creditcards/retroactive_payment` | 1m52 | A jornada que a unificação do pagamento abre, e que nenhuma camada abaixo monta: uma fatura de um mês que já passou — criada, dotada do que aquele ciclo devia e paga pela mesma porta das demais — atravessando o menu de contexto, a criação, o ajuste e o pagamento em sequência. E a **ausência** que a fecha: paga até zerar, o comando de pagamento continua oferecido, que é a interface dizendo que a fatura não foi quitada. Fora de `creditcards/lifecycle` porque as figuras daquele fluxo são asseridas adiante: gastar dinheiro dentro dele moveria a aritmética, e uma falha aqui passaria a se ler como falha lá |
 | ~23 → ~25 | `categories/lifecycle` | 2m19–2m22 | O ciclo de aposentadoria da dimensão, que `budgets/lifecycle` só atravessa de raspão: o comando trocar de *Delete* para *Archive* porque **outra feature** escreveu no razão, e os dois leitores de `isArchived` discordando na direção certa — o seletor de transação deixa de oferecê-la no instante em que o dashboard continua somando o que ela gastou |
 
 Duas recusas vêm no mesmo pacote, e valem como precedente igual. A aritmética do arrasto **não** é

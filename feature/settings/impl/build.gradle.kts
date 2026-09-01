@@ -15,6 +15,8 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.crashlytics)
 
+            implementation(projects.feature.shell.api)
+
             implementation(projects.feature.settings.api)
 
             // The first edge this module draws to another feature. Settings is the door

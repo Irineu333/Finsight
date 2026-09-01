@@ -91,6 +91,9 @@ class ViewBudgetViewModelTest {
             accountId: Long?,
         ): Flow<List<Transaction>> = throw NotImplementedError()
         override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+        override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+            throw NotImplementedError()
+
         override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
         override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
         override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
@@ -98,7 +101,7 @@ class ViewBudgetViewModelTest {
             id: Long,
             title: String?,
             date: LocalDate,
-            leg: TransactionLeg,
+            legs: List<TransactionLeg>,
             contra: ContraLeg?,
         ) = throw NotImplementedError()
         override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
@@ -134,6 +137,7 @@ class ViewBudgetViewModelTest {
     )
 
     private class FakeEntryRepository : IEntryRepository {
+        override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
         override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
             com.neoutils.finsight.domain.model.MoneyByCurrency.of("BRL", 0.0)
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
@@ -143,7 +147,6 @@ class ViewBudgetViewModelTest {
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
         override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
-        override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()

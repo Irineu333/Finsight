@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -156,6 +157,7 @@ private object NoInvoices : IInvoiceRepository {
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = observeAllInvoices()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = MutableStateFlow(null)
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = observeAllInvoices()
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = emptyList()
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = emptyList()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = emptyList()
@@ -175,6 +177,9 @@ private class ChargeStore(private val transactions: List<Transaction>) : ITransa
         MutableStateFlow(transactions.firstOrNull { it.id == id })
 
     override suspend fun getAllTransactions(): List<Transaction> = transactions
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        transactions.filter { it.id in ids }
+
     override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
@@ -182,7 +187,7 @@ private class ChargeStore(private val transactions: List<Transaction>) : ITransa
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) = throw NotImplementedError()
 

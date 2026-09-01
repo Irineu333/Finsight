@@ -42,6 +42,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.yearMonth
+import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -217,6 +218,8 @@ class AddTransactionRecurringTest {
         modalManager: ModalManager = ModalManager(),
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = AddTransactionViewModel(
+        // Opened from nowhere in particular: nothing is preselected.
+        origin = null,
         categoryRepository = FakeCategories,
         creditCardRepository = FakeCards,
         invoiceRepository = FakeInvoices,
@@ -320,6 +323,7 @@ class AddTransactionRecurringTest {
         override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
         override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+        override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()

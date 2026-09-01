@@ -75,7 +75,7 @@ class TransactionsViewModelCharacterizationTest {
         // (Σ the account's signed legs 100 − 30 + 40 − 80). Month-wide card payment = 80.
         // Month-wide asset flows: income 100, expense 30, adjustment 40.
         val vm = TransactionsViewModel(
-            filterLabel = null, filterTarget = null,
+            filterLabel = null, filterTarget = null, filterCategoryId = null,
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
             installmentRepository = NoInstallments,
@@ -114,10 +114,13 @@ internal class FakeTransactionRepository(transactions: List<Transaction>) : ITra
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        throw NotImplementedError()
+
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = throw NotImplementedError()
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) = throw NotImplementedError()
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
 
     override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()

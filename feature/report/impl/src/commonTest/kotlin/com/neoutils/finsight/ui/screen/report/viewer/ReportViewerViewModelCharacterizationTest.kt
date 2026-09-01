@@ -242,10 +242,13 @@ private class Fakes {
         override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
         override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
         override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+        override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+            throw NotImplementedError()
+
         override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
         override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
         override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
-        override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = throw NotImplementedError()
+        override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) = throw NotImplementedError()
         override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
         override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()
     }
@@ -291,6 +294,7 @@ private class Fakes {
         override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
         override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+        override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
@@ -335,9 +339,9 @@ private class Fakes {
         override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
         override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
         override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
+        override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
         override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
-        override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
         override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>) =
             dimensionIds.distinct().associateWith { dimensionOwedByCurrency(it) }
 

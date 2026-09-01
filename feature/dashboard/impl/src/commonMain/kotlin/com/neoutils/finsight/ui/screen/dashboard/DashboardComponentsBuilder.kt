@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.extension.ConsolidatedAmount
@@ -20,6 +21,7 @@ import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
@@ -32,6 +34,14 @@ data class DashboardComponentsInput(
     val transactions: List<Transaction>,
     val creditCards: List<CreditCard>,
     val invoicesByCreditCardId: Map<Long, Invoice>,
+    /**
+     * The invoices still to settle: not paid, and due no later than the month on screen.
+     *
+     * A perimeter of its own rather than a slice of [invoicesByCreditCardId], which holds
+     * **one invoice per card** — a card with a closed invoice falling due now and an open
+     * one would lose one of the two.
+     */
+    val invoicesToSettle: List<Invoice> = emptyList(),
     val accounts: List<Account>,
     val budgets: List<Budget>,
     val recurringList: List<Recurring>,
@@ -49,6 +59,11 @@ data class DashboardComponentsInput(
 
 data class DashboardBuilderContext(
     val pendingRecurring: List<Recurring>,
+    /**
+     * The templates the month has nothing recorded for, day of cycle irrelevant —
+     * [pendingRecurring] is this list cut by the day, so it is always a subset of it.
+     */
+    val unhandledRecurring: List<Recurring>,
 )
 
 class DashboardComponentsBuilder(
@@ -57,6 +72,7 @@ class DashboardComponentsBuilder(
     private val calculateCategoryIncomeUseCase: CalculateCategoryIncomeUseCase,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
+    private val getUnhandledRecurringUseCase: GetUnhandledRecurringUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
     private val entryRepository: IEntryRepository,
     private val accountRepository: IAccountRepository,
@@ -93,14 +109,30 @@ class DashboardComponentsBuilder(
      */
     private suspend fun List<Recurring>.moneyByCurrency(): MoneyByCurrency =
         fold(MoneyByCurrency.zero) { total, recurring ->
-            val currency = currencyOf(recurring) ?: return@fold total
+            val currency = accountRepository.currencyOf(recurring) ?: return@fold total
             total + MoneyByCurrency.of(currency, recurring.amount)
         }
 
-    /** The account or card a template posts to is what denominates its amount (D17). */
-    private suspend fun currencyOf(recurring: Recurring): String? =
-        recurring.account?.currency
-            ?: recurring.creditCard?.let { accountRepository.getAccountById(it.accountId)?.currency }
+    /**
+     * The owed total of these invoices, per currency, in **one** read: N invoices cost a
+     * single grouped query and never one query each (`ledger-reporting`).
+     *
+     * A credit balance is coerced to zero **per invoice**, before the sum, exactly as
+     * `InvoiceUiMapperImpl` does — coercing afterwards would let one card's credit cancel
+     * another card's debt, which is money that leaves the account regardless. An invoice
+     * with no dimension (null only on rows older than v10) sums nothing.
+     */
+    private suspend fun List<Invoice>.owedByCurrency(): MoneyByCurrency {
+        val dimensionIds = mapNotNull { it.dimensionId }
+        if (dimensionIds.isEmpty()) return MoneyByCurrency.zero
+
+        return entryRepository.owedByDimensionByCurrency(dimensionIds).values
+            .fold(MoneyByCurrency.zero) { total, owed ->
+                owed.toList().fold(total) { subtotal, term ->
+                    subtotal + MoneyByCurrency.of(term.currency, term.value.coerceAtLeast(0.0))
+                }
+            }
+    }
 
     /**
      * Nothing worth a widget: no term of the figure is positive.
@@ -124,6 +156,12 @@ class DashboardComponentsBuilder(
             DashboardComponentType.CONCRETE_BALANCE_STATS.key -> concreteBalanceStats(input, config)
             DashboardComponentType.PENDING_BALANCE_STATS.key -> pendingBalanceStats(
                 pendingRecurring = context.pendingRecurring,
+                input = input,
+                config = config,
+            )
+
+            DashboardComponentType.MONTH_SETTLEMENT.key -> monthSettlement(
+                unhandledRecurring = context.unhandledRecurring,
                 input = input,
                 config = config,
             )
@@ -152,6 +190,7 @@ class DashboardComponentsBuilder(
             DashboardComponentType.BUDGETS.key -> budgets(input)
             DashboardComponentType.PENDING_RECURRING.key -> pendingRecurring(
                 pendingRecurring = context.pendingRecurring,
+                unhandledRecurring = context.unhandledRecurring,
                 input = input,
                 config = config,
             )
@@ -168,7 +207,12 @@ class DashboardComponentsBuilder(
                 recurringList = input.recurringList,
                 occurrences = input.occurrences,
                 today = input.today,
-            )
+            ),
+            unhandledRecurring = getUnhandledRecurringUseCase(
+                recurringList = input.recurringList,
+                occurrences = input.occurrences,
+                month = input.today.yearMonth,
+            ),
         )
     }
 
@@ -265,6 +309,48 @@ class DashboardComponentsBuilder(
         }
     }
 
+    /**
+     * What has yet to settle this month: the untreated recurring templates of the month —
+     * the whole month, not only what is past its day — plus the owed of every invoice
+     * whose due month has arrived and that has not been paid.
+     *
+     * Nothing deduplicates the two, because nothing can overlap: a template with no
+     * occurrence has written no entry, so no invoice's owed contains it. Confirming a card
+     * template therefore leaves the total where it was — the value moves from the first
+     * source into the invoice of that very due month.
+     *
+     * Turning both sources off empties the perimeter, and an empty **perimeter** is not
+     * empty **data**: the widget reads zero and stays, `hide_when_empty` or not, because a
+     * widget that disappears while the user is configuring it cannot be configured.
+     */
+    private suspend fun monthSettlement(
+        unhandledRecurring: List<Recurring>,
+        input: DashboardComponentsInput,
+        config: Map<String, String>,
+    ): DashboardComponent.MonthSettlement? {
+        val fromRecurring = config.isSourceOn(MonthSettlementConfig.INCLUDE_RECURRING)
+        val fromInvoices = config.isSourceOn(MonthSettlementConfig.INCLUDE_INVOICES)
+
+        val recurring = if (fromRecurring) unhandledRecurring else emptyList()
+        val invoiceDebt = if (fromInvoices) input.invoicesToSettle.owedByCurrency() else MoneyByCurrency.zero
+
+        // An invoice has no income counterpart, so only one of the two classes has two
+        // sources. The asymmetry is structural and nothing is invented to even it out.
+        val incoming = recurring.filter { it.type.isIncome }.moneyByCurrency()
+        val outgoing = recurring.filter { it.type.isExpense }.moneyByCurrency() + invoiceDebt
+
+        val hasSource = fromRecurring || fromInvoices
+        val isEmpty = incoming.isNothing && outgoing.isNothing
+        if (hasSource && isEmpty && config.hideWhenEmpty(defaultValue = true)) {
+            return null
+        }
+
+        return DashboardComponent.MonthSettlement(
+            incoming = input.figure(incoming, DisplayAmount::magnitude),
+            outgoing = input.figure(outgoing, DisplayAmount::magnitude),
+        )
+    }
+
     private suspend fun creditCardBalanceStats(
         input: DashboardComponentsInput,
         config: Map<String, String>,
@@ -331,12 +417,11 @@ class DashboardComponentsBuilder(
         val creditCardsWithBills = input.creditCards
             .filter { it.id !in excludedIds }
             .mapNotNull { creditCard ->
-                // The limit is the card's money, so it reads in the card's currency (D17),
-                // and the LIABILITY account behind the card is the only place that states
-                // it. A card whose account does not resolve is an orphan row: it is left
-                // out of the pager rather than denominated by guess.
-                val currency = accountRepository.getAccountById(creditCard.accountId)
-                    ?.currency ?: return@mapNotNull null
+                // The limit is the card's money, so it reads in the card's currency
+                // (D17). A card whose account does not resolve is an orphan row: it is
+                // left out of the pager rather than denominated by guess.
+                val currency = accountRepository.currencyOf(creditCard)
+                    ?: return@mapNotNull null
 
                 val invoice = input.invoicesByCreditCardId[creditCard.id]
                 val ui = CreditCardUi(
@@ -434,6 +519,7 @@ class DashboardComponentsBuilder(
 
     private suspend fun pendingRecurring(
         pendingRecurring: List<Recurring>,
+        unhandledRecurring: List<Recurring>,
         input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.PendingRecurring? {
@@ -441,18 +527,13 @@ class DashboardComponentsBuilder(
             ?.toIntOrNull() ?: PendingRecurringConfig.DEFAULT_UPCOMING_DAYS_AHEAD
         val currentYearMonth = input.today.yearMonth
         val pendingIds = pendingRecurring.map { it.id }.toSet()
-        val handledRecurringIds = input.occurrences
-            .asSequence()
-            .filter { it.yearMonth == currentYearMonth }
-            .map { it.recurringId }
-            .toSet()
 
-        val upcomingRecurring = input.recurringList.filter { recurring ->
+        // "Not archived and with nothing recorded this month" is asked of its owner, not
+        // recomputed here — the day is all this list adds to it.
+        val upcomingRecurring = unhandledRecurring.filter { recurring ->
             val effectiveDay = currentYearMonth.effectiveDay(recurring.dayOfMonth)
 
-            !recurring.isArchived &&
-                recurring.id !in handledRecurringIds &&
-                recurring.id !in pendingIds &&
+            recurring.id !in pendingIds &&
                 effectiveDay > input.today.day &&
                 effectiveDay - input.today.day <= daysAhead
         }
@@ -468,7 +549,7 @@ class DashboardComponentsBuilder(
         // deleted names no account, and a row no account denominates is left out rather
         // than shown in a guessed currency.
         val recurringUi = visibleRecurring.mapNotNull { recurring ->
-            val currency = currencyOf(recurring) ?: return@mapNotNull null
+            val currency = accountRepository.currencyOf(recurring) ?: return@mapNotNull null
 
             PendingRecurringUi(
                 recurring = recurring,

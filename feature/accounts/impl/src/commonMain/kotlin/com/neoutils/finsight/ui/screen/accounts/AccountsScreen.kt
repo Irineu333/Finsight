@@ -62,6 +62,9 @@ import com.neoutils.finsight.ui.navigation.ArchivedAccountsRoute
 import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
+import com.neoutils.finsight.feature.transactions.api.TransactionOrigin
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.OutlinedActionButton
@@ -80,6 +83,8 @@ import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_spending_uncategorized
+import com.neoutils.finsight.resources.accounts_add
+import com.neoutils.finsight.resources.accounts_add_transaction
 import com.neoutils.finsight.resources.accounts_edit
 import com.neoutils.finsight.resources.accounts_empty_body
 import com.neoutils.finsight.resources.accounts_empty_filter_body
@@ -137,6 +142,52 @@ private fun AccountsContent(
     val modalManager = LocalModalManager.current
     val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
+
+    // The account the pager is showing, with the default one as a fallback: `Content` always has
+    // one in focus, and both the transfer and the transaction are about the account being looked
+    // at. The transfer is offered only when there is somewhere for the money to go — the same
+    // condition `AccountActions` already applies below.
+    val content = uiState as? AccountsUiState.Content
+    val focusedAccount = content?.let { state ->
+        state.domainAccounts.getOrNull(state.selectedAccountIndex)
+            ?: state.domainAccounts.firstOrNull { it.isDefault }
+    }
+    val canTransfer = content != null && content.accounts.size > 1
+
+    ChromeEffect(
+        actions = remember(modalManager, transactionsEntry, focusedAccount, canTransfer) {
+            listOfNotNull(
+                ChromeAction(
+                    icon = Icons.Default.Add,
+                    labelRes = Res.string.accounts_add,
+                    testTag = "accounts_add",
+                    onClick = { modalManager.show(AccountFormModal()) },
+                ),
+                focusedAccount?.takeIf { canTransfer }?.let { account ->
+                    ChromeAction(
+                        icon = Icons.Default.SwapHoriz,
+                        labelRes = Res.string.accounts_transfer,
+                        testTag = "accounts_add_transfer",
+                        onClick = { modalManager.show(TransferBetweenAccountsModal(account)) },
+                    )
+                },
+                focusedAccount?.let { account ->
+                    ChromeAction(
+                        icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                        labelRes = Res.string.accounts_add_transaction,
+                        testTag = "accounts_add_transaction",
+                        onClick = {
+                            modalManager.show(
+                                transactionsEntry.addTransactionModal(
+                                    TransactionOrigin.Account(account.id)
+                                )
+                            )
+                        },
+                    )
+                },
+            )
+        }
+    )
 
     Scaffold(
         modifier = Modifier.testTag("screen_accounts"),
@@ -203,19 +254,6 @@ private fun AccountsContent(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    modalManager.show(AccountFormModal())
-                },
-                modifier = Modifier.testTag("accounts_add"),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null
-                )
-            }
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
@@ -367,17 +405,9 @@ private fun AccountsContent(
                                         .fillMaxWidth()
                                         .animateItem(),
                                     onClick = {
-                                        when (transactionUi.direction) {
-                                            TransactionType.ADJUSTMENT -> {
-                                                detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
-                                            }
-
-                                            else -> {
-                                                detailController.show(
-                                                    transactionsEntry.viewTransactionModal(transactionUi.id)
-                                                )
-                                            }
-                                        }
+                                        detailController.show(
+                                            transactionsEntry.viewTransactionModal(transactionUi.id)
+                                        )
                                     }
                                 )
                             }

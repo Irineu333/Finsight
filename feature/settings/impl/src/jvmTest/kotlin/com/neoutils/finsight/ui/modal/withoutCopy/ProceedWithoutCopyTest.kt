@@ -24,6 +24,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.currencies_delete_confirm_action
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.deleteCurrency.DeleteCurrencyViewModel
+import com.neoutils.finsight.RecordingAnalytics
 import com.neoutils.finsight.ui.modal.deleteExchangeRate.DeleteExchangeRateViewModel
 import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.Dispatchers
@@ -212,6 +213,7 @@ class ProceedWithoutCopyTest {
         code = code,
         deleteCurrency = deleteCurrency(backup),
         modalManager = ModalManager(),
+        analytics = RecordingAnalytics(),
         vaultOffer = vaultOffer,
         coverage = coverage,
     ).tracked()
@@ -229,6 +231,7 @@ class ProceedWithoutCopyTest {
         rate = rate,
         exchangeRateRepository = rates(backup),
         modalManager = ModalManager(),
+        analytics = RecordingAnalytics(),
         vaultOffer = vaultOffer,
         coverage = coverage,
     ).tracked()

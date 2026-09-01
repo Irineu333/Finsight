@@ -1,6 +1,15 @@
 package com.neoutils.finsight.domain.model
 
 data class ReportLayout(
+    /**
+     * The BCP-47 tag of the language the document was written in.
+     *
+     * It travels with the layout because the layout is where the text already is: every
+     * string here arrived translated, and the tag is the name of that translation. A
+     * renderer declares it rather than choosing it — what reads the document, from a
+     * screen reader to a browser's translator, has no other way to know.
+     */
+    val languageTag: String,
     val title: String,
     val generatedAtLabel: String,
     val context: ReportContext,

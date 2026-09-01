@@ -9,6 +9,7 @@ Use as skills abaixo diretamente dos caminhos locais, sem cópia e sem symlink:
 
 - `commit`: `./.claude/skills/commit/SKILL.md` — versiona seguindo a convenção do projeto
 - `bump-version`: `./.claude/skills/bump-version/SKILL.md` — sobe a versão no Android, iOS e Desktop
+- `issues`: `./.claude/skills/issues/SKILL.md` — registra, corrige e arquiva os bugs em `issues/`
 - `openspec-explore`: `./.claude/skills/openspec-explore/SKILL.md` — pensa uma ideia antes ou durante uma mudança
 - `openspec-propose`: `./.claude/skills/openspec-propose/SKILL.md` — propõe uma mudança com os artefatos dela
 - `openspec-apply-change`: `./.claude/skills/openspec-apply-change/SKILL.md` — implementa as tarefas de uma mudança

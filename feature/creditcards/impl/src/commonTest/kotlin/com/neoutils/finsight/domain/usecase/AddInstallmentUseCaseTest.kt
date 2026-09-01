@@ -286,13 +286,16 @@ private class FakeTransactionWriter(
 
     override fun observeTransactionById(id: Long): Flow<Transaction?> = outOfScope()
     override suspend fun getAllTransactions(): List<Transaction> = outOfScope()
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        outOfScope()
+
     override suspend fun getTransactionById(id: Long): Transaction? = outOfScope()
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = outOfScope()
     override suspend fun updateTransaction(
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) = outOfScope()
     override suspend fun deleteTransactionById(id: Long) = outOfScope()
@@ -330,6 +333,7 @@ private class FakeInvoiceReader(private val invoices: List<Invoice>) : IInvoiceR
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = outOfScope()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = outOfScope()
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = outOfScope()
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = outOfScope()
     override suspend fun getAllInvoices(): List<Invoice> = outOfScope()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = outOfScope()
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = outOfScope()

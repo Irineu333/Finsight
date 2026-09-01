@@ -36,8 +36,13 @@ class GetDashboardPreferencesUseCase(
             position = 1,
             config = emptyMap(),
         ),
+        // Takes the place `PENDING_BALANCE_STATS` held, and its `hide_when_empty` with it:
+        // it contains what that widget summed — the month's untreated recurring — and adds
+        // the invoices left to pay. A superset, so no dashboard reading the default loses
+        // information by the swap, and nothing saved is rewritten. Both sources are absent
+        // from this config on purpose: absent reads as on.
         DashboardComponentPreference(
-            key = DashboardComponentType.PENDING_BALANCE_STATS.key,
+            key = DashboardComponentType.MONTH_SETTLEMENT.key,
             position = 2,
             config = mapOf(DashboardComponentConfig.HIDE_WHEN_EMPTY to "true"),
         ),

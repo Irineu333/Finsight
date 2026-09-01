@@ -7,11 +7,8 @@ import arrow.core.Either.Companion.catch
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
-import com.neoutils.finsight.extension.monthsUntil
-import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
-import kotlin.time.Instant
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -23,10 +20,14 @@ class SkipRecurringUseCase(
         date: LocalDate,
     ): Either<Throwable, Unit> = catch {
         val yearMonth = date.yearMonth
-        val cycleNumber = Instant
-            .fromEpochMilliseconds(recurring.createdAt)
-            .toYearMonth()
-            .monthsUntil(yearMonth) + 1
+        // Asked of the template, never counted here: skipping and confirming record the
+        // same ordinal about the same month, and two hand-rolled copies of the formula
+        // are two chances to disagree. Absent means the series had not begun, which is
+        // refused rather than numbered zero.
+        val cycleNumber = requireNotNull(recurring.cycleNumberIn(yearMonth)) {
+            "Recurring ${recurring.id} has no cycle in $yearMonth: " +
+                "its series begins in ${recurring.originMonth}"
+        }
         val existingOccurrence = recurringOccurrenceRepository.getOccurrenceBy(recurring.id, yearMonth)
 
         require(existingOccurrence?.status != RecurringOccurrence.Status.CONFIRMED) {

@@ -241,6 +241,9 @@ class PreventiveDeletionTest {
 
         override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+        override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> =
+            throw NotImplementedError()
+
         override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> =
             throw NotImplementedError()
 

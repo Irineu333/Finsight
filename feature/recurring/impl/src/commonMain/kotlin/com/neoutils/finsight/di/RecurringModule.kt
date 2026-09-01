@@ -9,6 +9,9 @@ import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.GetRecurringCyclesUseCase
+import com.neoutils.finsight.domain.usecase.GetRecurringMonthOverviewUseCase
+import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
@@ -24,6 +27,7 @@ import com.neoutils.finsight.ui.modal.unarchiveRecurring.UnarchiveRecurringViewM
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.modal.archiveRecurring.ArchiveRecurringViewModel
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringViewModel
+import com.neoutils.finsight.ui.screen.archivedRecurring.ArchivedRecurringViewModel
 import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -51,7 +55,10 @@ val recurringModule = module {
     factory { RecurringMapper() }
     factory { RecurringOccurrenceMapper() }
 
-    factory { GetPendingRecurringUseCase() }
+    factory { GetUnhandledRecurringUseCase() }
+    factory { GetRecurringCyclesUseCase(getUnhandledRecurring = get()) }
+    factory { GetPendingRecurringUseCase(getRecurringCycles = get()) }
+    factory { GetRecurringMonthOverviewUseCase(occurrenceRepository = get()) }
     factory {
         ResolveRecurringRetirabilityUseCase(
             recurringRepository = get(),
@@ -86,6 +93,21 @@ val recurringModule = module {
 
     viewModel {
         RecurringViewModel(
+            recurringRepository = get(),
+            accountRepository = get(),
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            transactionRepository = get(),
+            occurrenceRepository = get(),
+            getRecurringCycles = get(),
+            getRecurringMonthOverview = get(),
+            consolidateMoney = get(),
+            observeConsolidationChanges = get(),
+            clock = get(),
+        )
+    }
+    viewModel {
+        ArchivedRecurringViewModel(
             recurringRepository = get(),
             accountRepository = get(),
         )

@@ -143,7 +143,7 @@ private class RecordingTransactions : ITransactionRepository {
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) { updated += id }
 
@@ -154,5 +154,8 @@ private class RecordingTransactions : ITransactionRepository {
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        throw NotImplementedError()
+
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
 }

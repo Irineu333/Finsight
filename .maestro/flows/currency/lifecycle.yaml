@@ -4,6 +4,10 @@ tags:
   - currency
   - ledger
 env:
+  # The seeded account's name is a translated resource (`account_default_name`), so naming it is
+  # naming copy. It is declared once here rather than spelled at each use: the device is fixed to
+  # English (README §2.2), and a rewording is then this one line instead of a hunt.
+  DEFAULT_ACCOUNT: "Wallet"
   SALARY: "E2E Salary"
   SALARY_DIGITS: "91860"
   EUR_ACCOUNT: "E2E Euros"
@@ -77,8 +81,10 @@ env:
     visible:
       id: "screen_accounts"
     timeout: 15000
-- tapOn:
-    id: "accounts_add"
+- runFlow:
+    file: ../../subflows/tap_action.yaml
+    env:
+      ACTION: "accounts_add"
 - extendedWaitUntil:
     visible:
       id: "account_form_name"
@@ -242,7 +248,9 @@ env:
       id: "screen_accounts"
     timeout: 15000
 # The pager opens on the seeded account, which is the one holding dollars and therefore the source.
-- assertVisible: "Wallet"
+- assertVisible:
+    id: "account_name"
+    text: ${DEFAULT_ACCOUNT}
 - tapOn:
     id: "account_transfer"
 - extendedWaitUntil:
@@ -309,7 +317,9 @@ env:
 # The ledger never consolidates: a balance scoped to one account is exact and denominated by that
 # account. The name above each figure is the premise — the pager holds two now, so the id alone
 # would be ambiguous.
-- assertVisible: "Wallet"
+- assertVisible:
+    id: "account_name"
+    text: ${DEFAULT_ACCOUNT}
 - assertVisible:
     id: "account_balance_amount"
     text: "[$]650[.,]85"
@@ -392,7 +402,9 @@ env:
     visible:
       id: "screen_accounts"
     timeout: 15000
-- assertVisible: "Wallet"
+- assertVisible:
+    id: "account_name"
+    text: ${DEFAULT_ACCOUNT}
 - assertVisible:
     id: "account_balance_amount"
     text: "[$]650[.,]85"

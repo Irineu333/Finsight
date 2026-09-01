@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.modal.deleteExchangeRate
 
 import androidx.compose.runtime.Composable
+import com.neoutils.finsight.RecordingAnalytics
 import com.neoutils.finsight.database.repository.RateArchive
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.feature.backup.api.PreventiveCoverage
@@ -107,6 +108,7 @@ class DeleteExchangeRateViewModelTest {
             rate = rate,
             exchangeRateRepository = archive,
             modalManager = manager,
+            analytics = RecordingAnalytics(),
             vaultOffer = VaultOffer.None,
             coverage = PreventiveCoverage.None,
         )

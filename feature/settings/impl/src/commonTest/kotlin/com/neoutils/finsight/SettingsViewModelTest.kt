@@ -51,17 +51,23 @@ class SettingsViewModelTest {
     @Test
     fun `switching writes the preference once`() = runTest {
         val repository = RecordingBase()
+        val analytics = RecordingAnalytics()
 
-        SettingsViewModel(repository, FakeCurrencyRepository()).onAction(SettingsAction.SwitchBaseCurrency("USD"))
+        SettingsViewModel(repository, FakeCurrencyRepository(), analytics)
+            .onAction(SettingsAction.SwitchBaseCurrency("USD"))
 
         assertEquals(listOf("USD"), repository.written)
         assertEquals("USD", repository.observe().value)
+        // The switch writes a preference and moves no row, so nothing else in the
+        // data would ever show that it happened.
+        assertEquals(listOf("switch_base_currency"), analytics.events.map { it.name })
+        assertEquals(mapOf("code" to "USD"), analytics.events.single().params)
     }
 
     @Test
     fun `the switch reaches the state that every figure observes`() = runTest {
         val repository = RecordingBase()
-        val viewModel = SettingsViewModel(repository, FakeCurrencyRepository())
+        val viewModel = SettingsViewModel(repository, FakeCurrencyRepository(), RecordingAnalytics())
 
         viewModel.uiState.test {
             assertEquals("BRL", awaitItem().baseCurrencyCode)
@@ -79,7 +85,7 @@ class SettingsViewModelTest {
      */
     @Test
     fun `the registry is offered whole`() = runTest {
-        val viewModel = SettingsViewModel(RecordingBase(), FakeCurrencyRepository())
+        val viewModel = SettingsViewModel(RecordingBase(), FakeCurrencyRepository(), RecordingAnalytics())
 
         val state = viewModel.uiState.first { it.selectableCurrencies.isNotEmpty() }
 
@@ -95,6 +101,7 @@ class SettingsViewModelTest {
         val viewModel = SettingsViewModel(
             RecordingBase(),
             FakeCurrencyRepository(archived = setOf("EUR")),
+            RecordingAnalytics(),
         )
 
         val state = viewModel.uiState.first { it.selectableCurrencies.isNotEmpty() }

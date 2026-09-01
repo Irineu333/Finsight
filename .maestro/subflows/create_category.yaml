@@ -11,8 +11,10 @@ name: create_category
 # It carries the arrangement only. What the new category should *show* belongs to the calling flow:
 # one caller reads a category with no movement, another one with an expense on it.
 
-- tapOn:
-    id: "categories_add"
+- runFlow:
+    file: tap_action.yaml
+    env:
+      ACTION: "categories_add"
 - extendedWaitUntil:
     visible:
       id: "category_form_name"

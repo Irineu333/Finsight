@@ -1,0 +1,943 @@
+<title>Linha única de recorrências</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root {
+    --ground: #E9EDF1;
+    --surface: #FFFFFF;
+    --sunk: #DFE5EB;
+    --ink: #101820;
+    --soft: #566470;
+    --faint: #7C8A96;
+    --accent: #24608C;
+    --accent-soft: #DCE7F1;
+    --warn: #9E4A16;
+    --warn-soft: #F6E4D6;
+    --ok: #1F7050;
+    --ok-soft: #DBEDE4;
+    --rule: #C3CDD6;
+    --hair: #D3DBE2;
+
+    /* Os tokens do app, nos valores reais de core/designsystem/…/Color.kt */
+    --app-bg: #F1F5F9;
+    --app-card: #FFFFFF;
+    --app-on: #0F172A;
+    --app-on-var: #475569;
+    --app-income: #22C55E;
+    --app-expense: #EF4444;
+    --app-warning: #F59E0B;
+
+    --measure: 68ch;
+    --wide: 1080px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0C1116;
+      --surface: #151C23;
+      --sunk: #10161C;
+      --ink: #E2E8EE;
+      --soft: #8E9CA9;
+      --faint: #6E7C89;
+      --accent: #74AADD;
+      --accent-soft: #16283A;
+      --warn: #DA9152;
+      --warn-soft: #2E2015;
+      --ok: #57BE92;
+      --ok-soft: #12271F;
+      --rule: #2F3A44;
+      --hair: #232C35;
+
+      --app-bg: #0F172A;
+      --app-card: #1E293B;
+      --app-on: #FFFFFF;
+      --app-on-var: #94A3B8;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0C1116;
+    --surface: #151C23;
+    --sunk: #10161C;
+    --ink: #E2E8EE;
+    --soft: #8E9CA9;
+    --faint: #6E7C89;
+    --accent: #74AADD;
+    --accent-soft: #16283A;
+    --warn: #DA9152;
+    --warn-soft: #2E2015;
+    --ok: #57BE92;
+    --ok-soft: #12271F;
+    --rule: #2F3A44;
+    --hair: #232C35;
+
+    --app-bg: #0F172A;
+    --app-card: #1E293B;
+    --app-on: #FFFFFF;
+    --app-on-var: #94A3B8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.62;
+    margin: 0;
+    padding: 0 24px 120px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wide); margin: 0 auto; }
+  .col { max-width: var(--measure); margin-left: auto; margin-right: auto; }
+
+  h1, h2, h3, .eyebrow, .dim, .tag, .num, th {
+    font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  code, .mono, .dim, pre {
+    font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  /* ---------- cabeçalho ---------- */
+
+  header { padding: 88px 0 56px; }
+
+  .eyebrow {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .eyebrow .sep { width: 26px; height: 1px; background: var(--rule); }
+
+  h1 {
+    font-size: clamp(38px, 6vw, 56px);
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -0.026em;
+    margin: 0 0 24px;
+    text-wrap: balance;
+  }
+
+  .lede {
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--soft);
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- seções ---------- */
+
+  section { padding-top: 68px; }
+
+  h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--soft);
+    margin: 0 0 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  h2 .step {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  h3 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    line-height: 1.22;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+
+  p { margin: 0 0 18px; }
+  p:last-child { margin-bottom: 0; }
+
+  .col > p code, li code, td code, p code {
+    font-size: 0.845em;
+    background: var(--sunk);
+    border: 1px solid var(--hair);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .note {
+    border-left: 2px solid var(--accent);
+    padding: 2px 0 2px 20px;
+    color: var(--soft);
+    font-size: 16px;
+    margin: 26px 0;
+  }
+
+  /* ---------- prancha de medidas ---------- */
+
+  .plate {
+    margin: 34px auto 0;
+    max-width: 760px;
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: 10px;
+    padding: 26px 28px 30px;
+  }
+
+  .plate-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--hair);
+  }
+
+  .plate-title {
+    font-family: Archivo, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .scale {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--faint);
+    letter-spacing: 0.02em;
+  }
+
+  .stage {
+    background: var(--app-bg);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 8px; min-width: 420px; }
+
+  .measured { display: flex; align-items: stretch; gap: 14px; }
+
+  /* régua de cota */
+  .cota {
+    width: 40px;
+    flex: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 9px;
+  }
+
+  .cota::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 1px;
+    bottom: 1px;
+    width: 1px;
+    background: var(--app-on-var);
+    opacity: 0.5;
+  }
+
+  .cota::after {
+    content: "";
+    position: absolute;
+    right: -3px;
+    top: 1px;
+    bottom: 1px;
+    width: 7px;
+    border-top: 1px solid var(--app-on-var);
+    border-bottom: 1px solid var(--app-on-var);
+    opacity: 0.5;
+  }
+
+  .dim {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--app-on-var);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .measured.flag .cota::before,
+  .measured.flag .cota::after { background: var(--app-warning); border-color: var(--app-warning); opacity: 1; }
+  .measured.flag .dim { color: var(--app-warning); font-weight: 700; }
+
+  .measured.good .dim { color: var(--ok); font-weight: 700; }
+
+  /* ---------- os cards do app, 1 dp = 1 px ---------- */
+
+  .card {
+    background: var(--app-card);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    width: 328px;
+    flex: none;
+    font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
+    color: var(--app-on);
+  }
+
+  .card.tmpl { gap: 12px; }
+  .card.txn  { gap: 16px; }
+
+  .chip {
+    flex: none;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--tint) 20%, transparent);
+  }
+
+  .chip.c40 { width: 40px; height: 40px; border-radius: 8px; }
+  .chip.c48 { width: 48px; height: 48px; border-radius: 12px; }
+  .chip svg { width: 24px; height: 24px; fill: var(--tint); display: block; }
+
+  .mid { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .card.tmpl .mid { gap: 4px; }
+
+  .l1 { display: flex; align-items: center; gap: 4px; min-width: 0; }
+
+  .title {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dir { width: 16px; height: 16px; flex: none; display: block; }
+
+  .src { display: flex; align-items: center; gap: 4px; min-width: 0; }
+  .src svg { width: 14px; height: 14px; flex: none; display: block; fill: var(--app-on-var); }
+  .src span {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--app-on-var);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
+
+  .amount { font-size: 16px; line-height: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .when { font-size: 12px; line-height: 16px; color: var(--app-on-var); font-variant-numeric: tabular-nums; }
+
+  /* a geometria do TransactionCard */
+  .card.txn .mid { gap: 0; }
+  .card.txn .t-title { font-size: 16px; line-height: 24px; font-weight: 500; }
+  .card.txn .t-date  { font-size: 14px; line-height: 24px; color: var(--app-on-var); font-variant-numeric: tabular-nums; }
+  .card.txn .t-amount { font-size: 16px; line-height: 24px; font-weight: 600; font-variant-numeric: tabular-nums; flex: none; }
+
+  .sec-head {
+    font-family: Archivo, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--app-on-var);
+    padding: 10px 0 2px 54px;
+  }
+
+  .callout {
+    margin-left: 54px;
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--warn);
+    background: var(--warn-soft);
+    border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+    border-radius: 5px;
+    padding: 5px 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .callout.ok { color: var(--ok); background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
+
+  .caption {
+    max-width: 760px;
+    margin: 14px auto 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--soft);
+  }
+
+  /* ---------- tabela ---------- */
+
+  .tablewrap { overflow-x: auto; margin: 30px auto 0; max-width: 760px; }
+
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 15px; }
+
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+
+  th {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--faint);
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+
+  td:first-child { color: var(--soft); }
+
+  .val { font-family: "JetBrains Mono", monospace; font-size: 13.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .val.d { color: var(--warn); font-weight: 700; }
+  tr.total td { border-bottom: none; padding-top: 15px; }
+  tr.total td:first-child { color: var(--ink); font-weight: 600; font-family: Archivo, sans-serif; }
+
+  /* ---------- código ---------- */
+
+  pre {
+    background: var(--sunk);
+    border: 1px solid var(--hair);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.68;
+    margin: 24px 0;
+    color: var(--ink);
+  }
+
+  pre .k { color: var(--accent); }
+  pre .c { color: var(--faint); font-style: italic; }
+  pre .h { background: color-mix(in srgb, var(--warn) 17%, transparent); border-radius: 3px; padding: 1px 3px; }
+
+  .file {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--faint);
+    letter-spacing: -0.01em;
+    margin-bottom: -14px;
+    padding-left: 2px;
+  }
+
+  /* ---------- as três mudanças ---------- */
+
+  .steps { display: flex; flex-direction: column; gap: 2px; margin-top: 30px; }
+
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    padding: 24px 26px;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 4px 18px;
+  }
+
+  .step-card:first-child { border-radius: 10px 10px 0 0; }
+  .step-card:last-child { border-radius: 0 0 10px 10px; }
+  .step-card + .step-card { border-top: none; }
+
+  .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.15;
+    grid-row: span 2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .step-card h4 {
+    font-family: Archivo, sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    margin: 0 0 8px;
+    align-self: center;
+  }
+
+  .step-card p { font-size: 16px; line-height: 1.58; color: var(--soft); }
+  .step-card p:last-child { margin-bottom: 0; }
+  .step-card strong { color: var(--ink); font-weight: 600; }
+
+  .touched {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--soft);
+    background: var(--sunk);
+    border: 1px solid var(--hair);
+    border-radius: 4px;
+    padding: 3px 8px;
+    letter-spacing: -0.015em;
+  }
+
+  .tag.keep { color: var(--ok); background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 28%, transparent); }
+
+  /* ---------- telas intocadas ---------- */
+
+  .screens { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 22px; }
+
+  .screen {
+    font-family: Archivo, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--soft);
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: 999px;
+    padding: 6px 15px;
+  }
+
+  /* ---------- pendências ---------- */
+
+  .open {
+    margin-top: 26px;
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-left: 2px solid var(--warn);
+    border-radius: 8px;
+    padding: 22px 26px;
+  }
+
+  .open h4 {
+    font-family: Archivo, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+
+  .open p { font-size: 16px; color: var(--soft); }
+
+  footer {
+    margin-top: 76px;
+    padding-top: 24px;
+    border-top: 1px solid var(--hair);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    color: var(--faint);
+    line-height: 1.9;
+    letter-spacing: -0.01em;
+  }
+
+  @media (max-width: 620px) {
+    header { padding-top: 56px; }
+    .plate { padding: 20px 16px 22px; }
+    .step-card { grid-template-columns: 1fr; padding: 20px; }
+    .num { grid-row: auto; font-size: 15px; }
+    .sec-head, .callout { margin-left: 0; padding-left: 0; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card { transition: none; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="col">
+    <p class="eyebrow"><span>openspec</span><span class="sep"></span><span>unify-recurring-list-row</span></p>
+    <h1>Uma linha só para a lista de recorrências</h1>
+    <p class="lede">A seção <strong>Lançadas</strong> é desenhada por um componente que não é dela. Mede 72&nbsp;dp onde as outras medem 68, e põe as mesmas informações em colunas diferentes. Estas são as três mudanças que igualam a lista — sem tocar em nenhuma das outras sete telas.</p>
+  </header>
+
+  <section>
+    <div class="col">
+      <h2><span class="step">01</span> O sintoma</h2>
+      <h3>Quatro seções, duas geometrias</h3>
+      <p>A tela organiza os ciclos do mês em quatro seções e desenha três delas com <code>RecurringCard</code> e a quarta com <code>TransactionCard</code>, que mora em <code>core/ui</code> e serve outras sete telas. Empilhados na mesma lista, os dois não se acertam.</p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head">
+        <span class="plate-title">Hoje</span>
+        <span class="scale">escala 1:1 · 1 dp = 1 px</span>
+      </div>
+      <div class="stage">
+        <div class="stack">
+
+          <p class="sec-head">Pendentes</p>
+
+          <div class="measured">
+            <div class="cota" style="height:68px"><span class="dim">68</span></div>
+            <div class="card tmpl">
+              <div class="chip c40" style="--tint: var(--app-expense)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+              </div>
+              <div class="mid">
+                <div class="l1">
+                  <span class="title">Aluguel</span>
+                  <svg class="dir" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--app-expense)"><path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6z"/></svg>
+                </div>
+                <div class="src">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z"/></svg>
+                  <span>Itaú</span>
+                </div>
+              </div>
+              <div class="right">
+                <div class="amount" style="color: var(--app-expense)">R$ 1.850,00</div>
+                <div class="when">Dia 5</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="measured">
+            <div class="cota" style="height:68px"><span class="dim">68</span></div>
+            <div class="card tmpl">
+              <div class="chip c40" style="--tint: var(--app-expense)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4v1h-2V4c0-.55-.45-1-1-1H9c-.55 0-1 .45-1 1v1H6V4c0-1.66 1.34-3 3-3h6c1.66 0 3 1.34 3 3zM4 7h16v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z"/></svg>
+              </div>
+              <div class="mid">
+                <div class="l1">
+                  <span class="title">Netflix</span>
+                  <svg class="dir" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--app-expense)"><path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6z"/></svg>
+                </div>
+                <div class="src">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                  <span>Nubank Ultravioleta</span>
+                </div>
+              </div>
+              <div class="right">
+                <div class="amount" style="color: var(--app-expense)">R$ 39,90</div>
+                <div class="when">Dia 12</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="sec-head">Lançadas</p>
+
+          <div class="measured flag">
+            <div class="cota" style="height:72px"><span class="dim">72</span></div>
+            <div class="card txn">
+              <div class="chip c48" style="--tint: var(--app-income)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+              </div>
+              <div class="mid">
+                <div class="t-title">Salário</div>
+                <div class="t-date">05/08/2026</div>
+              </div>
+              <div class="t-amount" style="color: var(--app-income)">R$ 8.400,00</div>
+            </div>
+          </div>
+
+          <div class="callout">+4 dp de altura · chip +8 dp · gap +4 dp · outra distribuição</div>
+
+        </div>
+      </div>
+    </div>
+
+    <p class="caption">A cota à esquerda é a altura total de cada card. As duas primeiras linhas medem 68&nbsp;dp porque a coluna direita — figura, 4&nbsp;dp, dia — soma 44 e passa por cima do chip de 40. A terceira mede 72 porque o ícone de 48 é que a governa.</p>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2><span class="step">02</span> As medidas</h2>
+      <h3>Onde os dois componentes discordam</h3>
+      <p>Todos os valores abaixo foram lidos do código que está em disco — <code>RecurringCard.kt</code>, <code>TransactionCard.kt</code> e o <code>Type.kt</code> do tema.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>RecurringCard</th>
+            <th>TransactionCard</th>
+            <th>Δ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Padding do card</td>
+            <td class="val">12 dp</td>
+            <td class="val">12 dp</td>
+            <td class="val">—</td>
+          </tr>
+          <tr>
+            <td>Espaçamento horizontal</td>
+            <td class="val">12 dp</td>
+            <td class="val">16 dp</td>
+            <td class="val d">+4</td>
+          </tr>
+          <tr>
+            <td>Chip</td>
+            <td class="val">40 dp · raio 8</td>
+            <td class="val">48 dp · raio 12</td>
+            <td class="val d">+8</td>
+          </tr>
+          <tr>
+            <td>Coluna de identidade</td>
+            <td class="val">20 + 4 + 16 = 40</td>
+            <td class="val">24 + 24 = 48</td>
+            <td class="val d">+8</td>
+          </tr>
+          <tr>
+            <td>Coluna da figura</td>
+            <td class="val">24 + 4 + 16 = 44</td>
+            <td class="val">24 (linha só)</td>
+            <td class="val d">−20</td>
+          </tr>
+          <tr>
+            <td>Tipografia</td>
+            <td class="val">tokens do tema</td>
+            <td class="val">sp cru</td>
+            <td class="val d">≠</td>
+          </tr>
+          <tr class="total">
+            <td>Altura</td>
+            <td class="val">68 dp</td>
+            <td class="val">72 dp</td>
+            <td class="val d">+4</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <p class="note">O <code>TransactionCard</code> é o único card de lista do app que dimensiona a tipografia em <code>sp</code> cru em vez de usar os tokens do tema. Isso é verdade e fica registrado — mas corrigi-lo mudaria as outras sete telas, e não é o que esta mudança faz.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2><span class="step">03</span> A causa</h2>
+      <h3>A tela ramifica entre dois componentes</h3>
+      <p>A ramificação existe por um motivo legítimo: um ciclo sem fato só pode ser descrito pelo template que o projeta, e um ciclo lançado é descrito pelo razão — porque confirmar aceita sobrescrever valor, identidade e classificação só naquele mês. O erro não está em ler de duas fontes. Está em ter deixado que <strong>duas fontes virassem dois desenhos</strong>.</p>
+
+      <p class="file">RecurringScreen.kt:293</p>
+<pre><span class="k">when</span> (cycle) {
+    <span class="k">is</span> RecurringCycleUi.Template -&gt; <span class="h">RecurringCard</span>(
+        recurring = cycle.recurring,
+        amount = cycle.amount,
+        …
+    )
+
+    <span class="k">is</span> RecurringCycleUi.Posted -&gt; <span class="h">TransactionCard</span>(
+        transaction = cycle.transaction,
+        …
+    )
+}</pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2><span class="step">04</span> O bloqueio</h2>
+      <h3>A linha lançada não sabe de onde o dinheiro saiu</h3>
+      <p>O <code>RecurringCard</code> põe a origem — conta ou cartão — na segunda linha do centro. O <code>TransactionCard</code> não tem esse dado: <code>TransactionUi</code> carrega apenas <code>isCardTarget: Boolean</code>, sem nome algum. Sem resolver isso, a linha lançada não tem o que escrever naquele slot, e a distribuição não pode ser igualada.</p>
+
+      <p>E a origem não pode ser tomada emprestada do template, porque confirmar um ciclo pode trocá-la:</p>
+
+      <p class="file">ConfirmRecurringUseCase.kt:93,124</p>
+<pre><span class="k">val</span> targetCreditCard = <span class="h">creditCard ?: recurring.creditCard</span>
+<span class="k">val</span> sourceAccount    = <span class="h">account ?: recurring.account</span>
+<span class="c">// a conta e o cartão são sobrescrevíveis por ciclo</span></pre>
+
+      <p>E a ocorrência não guarda a escolha — <code>RecurringOccurrenceEntity</code> tem só <code>transactionId</code>. A origem verdadeira daquele mês existe apenas nas pernas da transação. Uma linha que mostrasse a conta do template afirmaria a regra onde o usuário lê o fato, e erraria exatamente no mês em que os dois divergem — que é o único mês em que essa informação distingue alguma coisa.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2><span class="step">05</span> O resultado</h2>
+      <h3>Uma geometria, quatro seções</h3>
+      <p>A mesma altura, o mesmo chip e os mesmos slots — a origem na segunda linha do centro, o par figura&nbsp;/&nbsp;tempo na direita. O que preenche cada slot continua vindo de fontes diferentes; o desenho é que passa a ser um só.</p>
+    </div>
+
+    <div class="plate">
+      <div class="plate-head">
+        <span class="plate-title">Depois</span>
+        <span class="scale">escala 1:1 · 1 dp = 1 px</span>
+      </div>
+      <div class="stage">
+        <div class="stack">
+
+          <p class="sec-head">Pendentes</p>
+
+          <div class="measured good">
+            <div class="cota" style="height:68px"><span class="dim">68</span></div>
+            <div class="card tmpl">
+              <div class="chip c40" style="--tint: var(--app-expense)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+              </div>
+              <div class="mid">
+                <div class="l1">
+                  <span class="title">Aluguel</span>
+                  <svg class="dir" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--app-expense)"><path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6z"/></svg>
+                </div>
+                <div class="src">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z"/></svg>
+                  <span>Itaú</span>
+                </div>
+              </div>
+              <div class="right">
+                <div class="amount" style="color: var(--app-expense)">R$ 1.850,00</div>
+                <div class="when">Dia 5</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="measured good">
+            <div class="cota" style="height:68px"><span class="dim">68</span></div>
+            <div class="card tmpl">
+              <div class="chip c40" style="--tint: var(--app-expense)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4v1h-2V4c0-.55-.45-1-1-1H9c-.55 0-1 .45-1 1v1H6V4c0-1.66 1.34-3 3-3h6c1.66 0 3 1.34 3 3zM4 7h16v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z"/></svg>
+              </div>
+              <div class="mid">
+                <div class="l1">
+                  <span class="title">Netflix</span>
+                  <svg class="dir" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--app-expense)"><path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6z"/></svg>
+                </div>
+                <div class="src">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                  <span>Nubank Ultravioleta</span>
+                </div>
+              </div>
+              <div class="right">
+                <div class="amount" style="color: var(--app-expense)">R$ 39,90</div>
+                <div class="when">Dia 12</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="sec-head">Lançadas</p>
+
+          <div class="measured good">
+            <div class="cota" style="height:68px"><span class="dim">68</span></div>
+            <div class="card tmpl">
+              <div class="chip c40" style="--tint: var(--app-income)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+              </div>
+              <div class="mid">
+                <div class="l1">
+                  <span class="title">Salário</span>
+                  <svg class="dir" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--app-income)"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+                </div>
+                <div class="src">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z"/></svg>
+                  <span>Nubank Conta</span>
+                </div>
+              </div>
+              <div class="right">
+                <div class="amount" style="color: var(--app-income)">R$ 8.400,00</div>
+                <div class="when">05/08</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout ok">altura, chip e slots idênticos · a origem e a data vêm do razão</div>
+
+        </div>
+      </div>
+    </div>
+
+    <p class="caption">A linha lançada mostra <span class="mono" style="font-size:13px">Nubank Conta</span> porque foi ali que a transação postou — não onde o template diz. E no slot em que as outras dizem “Dia 5”, ela diz a data do registro: um ciclo confirmado fora do dia previsto passa a contar isso sozinho, o que hoje só o detalhe conta.</p>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2><span class="step">06</span> O plano</h2>
+      <h3>Três mudanças, nesta ordem</h3>
+      <p>A numeração é uma sequência real: a primeira destrava as outras duas.</p>
+    </div>
+
+    <div class="col steps">
+
+      <div class="step-card">
+        <div class="num">1</div>
+        <h4>Resolver a origem do ciclo lançado</h4>
+        <div style="grid-column: 2">
+          <p>Das pernas da transação, tirar a conta do plano — e, quando a perna é <code>LIABILITY</code>, o cartão que a projeta, pelo <code>accountId</code>. A resolução entra em <strong>uma leitura para a seção inteira</strong>, dentro de <code>ledgerRowsOf</code>, que já busca as transações em bloco pelo motivo que o próprio KDoc registra: o <code>combine</code> tem cinco fontes e refaz esse caminho a cada emissão. Nenhuma query por linha.</p>
+          <div class="touched">
+            <span class="tag">RecurringViewModel.kt</span>
+            <span class="tag">RecurringUiState.kt</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="num">2</div>
+        <h4>Dar ao componente um contrato só</h4>
+        <div style="grid-column: 2">
+          <p><code>RecurringCard</code> passa a receber <strong>o que a linha afirma</strong> — identidade, figura, origem, linha do tempo — em vez de <code>Recurring</code> ou <code>TransactionUi</code> crus. A escolha da fonte continua no view model; o componente deixa de saber que existem duas.</p>
+          <p><code>CHIP_SIZE</code> (40&nbsp;dp) e <code>ROW_LINE_GAP</code> (4&nbsp;dp) viram o dono único da altura, e a invariante a verificar é uma: toda variante mede o mesmo — com categoria e sem, denominada e não, template e lançada — para que <code>animateItem()</code> reordene sem salto.</p>
+          <div class="touched">
+            <span class="tag">RecurringCard.kt</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="num">3</div>
+        <h4>Tirar a ramificação da tela</h4>
+        <div style="grid-column: 2">
+          <p>O <code>when</code> entre os dois componentes sai, junto com o import de <code>TransactionCard</code>. A seção lançada passa a publicar os mesmos <code>testTag</code> das demais — nenhum flow Maestro de recorrências referencia <code>transaction_card</code>, então nada quebra, e a seção ganha a asserção que hoje não tem.</p>
+          <div class="touched">
+            <span class="tag">RecurringScreen.kt</span>
+            <span class="tag">recurring/lifecycle.yaml</span>
+            <span class="tag keep">core/ui intocado</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2><span class="step">07</span> O alcance</h2>
+      <h3>O que não muda</h3>
+      <p><code>TransactionCard</code> e <code>TransactionUi</code> ficam exatamente como estão. O componente não sai do app — sai de uma seção que não era a dele. As sete telas que o consomem seguem idênticas:</p>
+      <div class="screens">
+        <span class="screen">Transações</span>
+        <span class="screen">Cartões</span>
+        <span class="screen">Faturas</span>
+        <span class="screen">Parcelas</span>
+        <span class="screen">Painel</span>
+        <span class="screen">Contas</span>
+        <span class="screen">Relatório</span>
+      </div>
+
+      <div class="open">
+        <h4>Em aberto, a resolver no apply</h4>
+        <p>De onde vem a cor da figura na linha lançada: de <code>TransactionUi.direction</code>, derivada do razão, ou de <code>recurring.type</code>. O mapper resolve <code>label</code> e <code>direction</code> separadamente, e um lançamento em cartão pode derivar um label que a paleta de recorrência não prevê. A verificar antes de escrever o componente.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="col">
+    openspec/changes/unify-recurring-list-row/ · proposal · design · specs/recurring-list-row · tasks<br>
+    Medidas lidas de RecurringCard.kt, TransactionCard.kt, Type.kt e Color.kt · cores do app nos valores reais de core/designsystem
+  </footer>
+
+</div>

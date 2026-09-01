@@ -27,6 +27,10 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
     suspend fun getAll(): List<TransactionEntity>
 
+    /** The rows [ids] names, in one query. An id with no row is simply absent. */
+    @Query("SELECT * FROM transactions WHERE id IN (:ids) ORDER BY date DESC, id DESC")
+    suspend fun getByIds(ids: Collection<Long>): List<TransactionEntity>
+
 
     @Query(
         """

@@ -73,6 +73,21 @@ sealed interface DashboardComponentVariant {
         ) : PendingBalanceStats
     }
 
+    sealed interface MonthSettlement : DashboardComponentVariant {
+        override val component: DashboardComponent.MonthSettlement
+        override val title: UiText get() = UiText.Res(Res.string.component_month_settlement)
+
+        data class Viewing(
+            override val component: DashboardComponent.MonthSettlement,
+            override val config: Map<String, String>,
+        ) : MonthSettlement
+
+        data class Preview(
+            override val component: DashboardComponent.MonthSettlement,
+            override val config: Map<String, String> = emptyMap(),
+        ) : MonthSettlement
+    }
+
     sealed interface CreditCardBalanceStats : DashboardComponentVariant {
         override val component: DashboardComponent.CreditCardBalanceStats
         override val title: UiText get() = UiText.Res(Res.string.component_credit_card_balance_stats)

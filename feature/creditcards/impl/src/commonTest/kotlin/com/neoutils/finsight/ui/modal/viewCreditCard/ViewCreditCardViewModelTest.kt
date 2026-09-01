@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewCreditCard
 
+import com.neoutils.finsight.RecordingAnalytics
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -68,6 +69,7 @@ class ViewCreditCardViewModelTest {
         override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
         override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+        override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
         override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
@@ -99,12 +101,14 @@ class ViewCreditCardViewModelTest {
     private fun viewModel(
         creditCardRepository: FakeCreditCardRepository,
         invoiceRepository: FakeInvoiceRepository,
+        analytics: RecordingAnalytics = RecordingAnalytics(),
     ) = ViewCreditCardViewModel(
         cardId = 1L,
         creditCardRepository = creditCardRepository,
         accountRepository = FakeCardAccountRepository(),
         invoiceRepository = invoiceRepository,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(creditCardRepository),
+        analytics = analytics,
         crashlytics = FakeCrashlytics(),
     )
 
@@ -126,7 +130,8 @@ class ViewCreditCardViewModelTest {
     @Test
     fun `the unarchive action unarchives the shown card by its accountId and dismisses`() = runTest(dispatcher) {
         val repository = FakeCreditCardRepository()
-        val vm = viewModel(repository, FakeInvoiceRepository(emptyList()))
+        val analytics = RecordingAnalytics()
+        val vm = viewModel(repository, FakeInvoiceRepository(emptyList()), analytics)
 
         turbineScope {
             val state = vm.uiState.testIn(backgroundScope)
@@ -140,6 +145,7 @@ class ViewCreditCardViewModelTest {
             runCurrent()
 
             assertEquals(listOf(77L), repository.unarchived)
+            assertEquals(listOf("unarchive_credit_card"), analytics.events.map { it.name })
             assertIs<ViewCreditCardEvent.Dismiss>(events.awaitItem())
 
             state.cancel()

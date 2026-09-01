@@ -35,6 +35,7 @@ import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
 import com.neoutils.finsight.ui.screen.report.service.ReportShareService
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.extension.operationFormNames
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -129,6 +130,7 @@ private fun ReportViewerContent(
     val navController = LocalNavController.current
 
     val exportStrings = ReportExportStrings(
+        languageTag = stringResource(Res.string.app_language_tag),
         title = stringResource(Res.string.report_viewer_title),
         generatedAtPrefix = stringResource(Res.string.report_output_generated_at),
         summaryBalance = stringResource(Res.string.report_viewer_summary_balance),
@@ -141,10 +143,9 @@ private fun ReportViewerContent(
         sectionSpendingByCategory = stringResource(Res.string.report_viewer_spending_by_category),
         sectionIncomeByCategory = stringResource(Res.string.report_viewer_income_by_category),
         sectionTransactions = stringResource(Res.string.report_viewer_transactions),
-        transactionTransfer = stringResource(Res.string.transaction_card_transfer),
-        transactionPayment = stringResource(Res.string.transaction_card_payment),
-        transactionBalanceAdjustment = stringResource(Res.string.transaction_card_balance_adjustment),
-        transactionInvoiceAdjustment = stringResource(Res.string.transaction_card_invoice_adjustment),
+        // Every cell of the form table, resolved here because this is the last place
+        // that can: the document is built outside composition.
+        operationForms = operationFormNames().associateWith { stringResource(it) },
         uncategorized = stringResource(Res.string.category_spending_uncategorized),
         columnCategory = stringResource(Res.string.report_output_column_category),
         columnTransaction = stringResource(Res.string.report_output_column_transaction),
@@ -315,13 +316,7 @@ private fun ReportViewerContent(
                                             .animateItem()
                                             .padding(horizontal = 16.dp),
                                         onClick = {
-                                            when {
-                                                transactionUi.direction.isAdjustment -> detailController.show(
-                                                    transactionsEntry.viewAdjustmentModal(transactionUi.id)
-                                                )
-
-                                                else -> detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
-                                            }
+                                            detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                         },
                                     )
                                 }

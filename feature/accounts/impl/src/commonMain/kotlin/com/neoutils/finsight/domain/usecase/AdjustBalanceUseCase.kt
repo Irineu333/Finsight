@@ -101,10 +101,12 @@ class AdjustBalanceUseCase(
                 id = existingTransaction.id,
                 title = existingTransaction.title,
                 date = existingTransaction.date,
-                leg = TransactionLeg(
-                    type = TransactionType.ADJUSTMENT,
-                    amount = newAmount,
-                    accountId = account.id,
+                legs = listOf(
+                    TransactionLeg(
+                        type = TransactionType.ADJUSTMENT,
+                        amount = newAmount,
+                        accountId = account.id,
+                    ),
                 ),
                 contra = ContraLeg(AccountType.EQUITY),
             )

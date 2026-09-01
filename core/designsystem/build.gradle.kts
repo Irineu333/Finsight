@@ -19,5 +19,12 @@ kotlin {
             // library itself.
             implementation(libs.compose.settings.ui.tiles)
         }
+        commonTest.dependencies {
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
+        }
+        jvmTest.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
     }
 }

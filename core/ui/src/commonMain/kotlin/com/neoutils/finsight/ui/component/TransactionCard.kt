@@ -28,16 +28,12 @@ import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.format
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.transaction_card_balance_adjustment
-import com.neoutils.finsight.resources.transaction_card_invoice_adjustment
-import com.neoutils.finsight.resources.transaction_card_payment
-import com.neoutils.finsight.resources.transaction_card_transfer
+import com.neoutils.finsight.extension.operationName
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.stringUiText
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TransactionCard(
@@ -119,16 +115,11 @@ fun TransactionCard(
                 }
             }
 
-            val paymentLabel = stringResource(Res.string.transaction_card_payment)
-            val transferLabel = stringResource(Res.string.transaction_card_transfer)
-            val balanceAdjustLabel = stringResource(Res.string.transaction_card_balance_adjustment)
-            val invoiceAdjustLabel = stringResource(Res.string.transaction_card_invoice_adjustment)
-
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = transaction.displayTitle(paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
+                    text = transaction.displayTitle(),
                     modifier = Modifier.testTag("transaction_card_title"),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
@@ -154,19 +145,25 @@ fun TransactionCard(
     }
 }
 
-private fun TransactionUi.displayTitle(
-    paymentLabel: String,
-    transferLabel: String,
-    balanceAdjustLabel: String,
-    invoiceAdjustLabel: String,
-): String {
-    val baseTitle = when {
-        label == TransactionLabel.PAYMENT -> paymentLabel
-        label == TransactionLabel.TRANSFER -> transferLabel
-        label == TransactionLabel.ADJUSTMENT && !isCardTarget -> balanceAdjustLabel
-        label == TransactionLabel.ADJUSTMENT && isCardTarget -> invoiceAdjustLabel
-        else -> title
-    }
+/**
+ * The name of the operation, plus the instalment it belongs to.
+ *
+ * The name is the one rule's ([operationName]), asked in the register a list item needs:
+ * it names the operation on its own, saying what the operation *is*, where a detail
+ * header that already announced the nature says instead what the header did not.
+ *
+ * What is this surface's alone is the suffix — the instalment is a fact of the row, not
+ * of the operation's name.
+ */
+@Composable
+private fun TransactionUi.displayTitle(): String {
+    val baseTitle = stringUiText(
+        operationName(
+            displayTitle = title,
+            label = label,
+            isCardTarget = isCardTarget,
+        )
+    )
 
     return installmentLabel?.let { "$baseTitle • $it" } ?: baseTitle
 }

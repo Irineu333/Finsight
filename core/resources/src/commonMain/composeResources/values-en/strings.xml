@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The BCP-47 tag of this file's language, for whatever has to declare it -->
+    <string name="app_language_tag">en</string>
+
     <!-- Invoice date labels -->
     <string name="invoice_opens_on">opens on %1$s</string>
     <string name="invoice_closes_on">closes on %1$s</string>
@@ -15,6 +18,7 @@
     <string name="account_error_has_recurring">Recurring entries depend on this. Point them elsewhere or delete them before deleting this.</string>
     <string name="account_error_currency_immutable">An account's currency is set when it is created and cannot be changed. To correct it, delete the account (if it has no entries) and create another.</string>
     <string name="account_error_cannot_archive_default">The default account cannot be archived. Choose another account as the default first.</string>
+    <string name="account_error_cannot_delete_default">The default account cannot be deleted. Choose another account as the default first.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
@@ -191,6 +195,7 @@
     <string name="installments_remaining">Remaining</string>
     <string name="installments_status_active">Active</string>
     <string name="installments_status_completed">Completed</string>
+    <string name="installment_card_installment">Installment</string>
     <string name="installments_filter_category">Category</string>
     <string name="installments_filter_category_all">All</string>
     <string name="installments_filter_type">Type</string>
@@ -204,10 +209,8 @@
     <string name="credit_cards_empty">No credit cards</string>
     <string name="credit_cards_create">Create card</string>
     <string name="credit_cards_edit">Edit</string>
-    <string name="credit_cards_advance_payment">Advance Payment</string>
     <string name="credit_cards_close_invoice">Close Invoice</string>
     <string name="credit_cards_reopen_invoice">Reopen Invoice</string>
-    <string name="credit_cards_pay_invoice">Pay Invoice</string>
     <string name="credit_cards_filter_category">Category</string>
     <string name="credit_cards_filter_category_all">All</string>
     <string name="credit_cards_filter_type">Type</string>
@@ -281,14 +284,14 @@
 
     <!-- Budgets Screen -->
     <string name="budgets_title">Budgets</string>
-    <string name="budgets_limit">Limit</string>
-    <string name="budgets_spent">Spent</string>
-    <string name="budgets_remaining">Remaining</string>
-    <string name="budgets_exceeded_by">Exceeded by</string>
-    <string name="budgets_category_singular">1 category</string>
-    <string name="budgets_category_plural">%1$d categories</string>
     <string name="budgets_empty">No budgets</string>
     <string name="budgets_create">Create budget</string>
+    <string name="budgets_row_spent">spent</string>
+    <string name="budgets_row_categories_more">+%1$d</string>
+    <string name="budgets_row_exceeded">Over budget</string>
+    <string name="budgets_row_derived_limit">Ceiling derived from a recurring income</string>
+    <string name="budgets_period_monthly">Monthly</string>
+    <string name="budgets_period_weekly">Weekly</string>
 
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Edit Card</string>
@@ -296,12 +299,10 @@
     <string name="invoice_transactions_advance_payments">Advance Payments</string>
     <string name="invoice_transactions_adjustments">Adjustments</string>
     <string name="invoice_transactions_total">Total</string>
-    <string name="invoice_transactions_advance_payment">Advance Payment</string>
     <string name="invoice_transactions_close_invoice">Close Invoice</string>
     <string name="invoice_transactions_delete_invoice">Delete Invoice</string>
     <string name="invoice_transactions_create_invoice">Create Invoice</string>
     <string name="invoice_transactions_reopen_invoice">Reopen Invoice</string>
-    <string name="invoice_transactions_pay_invoice">Pay Invoice</string>
     <string name="invoice_transactions_filter_category">Category</string>
     <string name="invoice_transactions_filter_category_all">All</string>
     <string name="invoice_transactions_filter_type">Type</string>
@@ -452,13 +453,6 @@
     <string name="delete_future_invoice_message_transactions_reversible">Are you sure you want to delete this invoice? The %1$d transaction(s) posted to it will be removed along with it.</string>
     <string name="delete_future_invoice_confirm">Delete</string>
 
-    <!-- Pay Invoice Modal -->
-    <string name="pay_invoice_title">Pay Invoice</string>
-    <string name="pay_invoice_message">The payment will be the total amount of the invoice.</string>
-    <string name="pay_invoice_amount_label">Invoice Amount</string>
-    <string name="pay_invoice_date_label">Payment Date</string>
-    <string name="pay_invoice_confirm">Pay Invoice</string>
-
     <!-- Close Invoice Modal -->
     <string name="close_invoice_title">Close Invoice</string>
     <string name="close_invoice_message">After closing, the invoice will not be able to receive new charges.</string>
@@ -473,20 +467,34 @@
     <string name="reopen_invoice_confirm">Reopen</string>
     <string name="invoice_error_cannot_reopen">Only the latest closed invoice can be reopened.</string>
 
-    <!-- Advance Payment Modal -->
-    <string name="advance_payment_title">Advance Payment</string>
-    <string name="advance_payment_description">Pay part of the invoice before closing.</string>
-    <string name="advance_payment_amount_label">Amount</string>
-    <string name="advance_payment_date_label">Date</string>
-    <string name="advance_payment_confirm">Advance Payment</string>
+    <!-- Invoice Payment Modal -->
+    <!-- The head names the operation and holds still; the verb is derived from the
+         invoice's state and names the command on every surface that offers it, and the
+         sheet's confirm button. -->
+    <string name="invoice_payment_title">Invoice Payment</string>
+    <string name="invoice_payment_message">Choose the invoice and the account that pays it.</string>
+    <string name="invoice_payment_advance">Advance Payment</string>
+    <string name="invoice_payment_pay">Pay Invoice</string>
+    <string name="invoice_payment_amount_label">Payment Amount</string>
+    <string name="invoice_payment_max">Max</string>
+    <string name="invoice_payment_date_label">Payment Date</string>
+    <string name="invoice_payment_no_debt">This invoice has nothing to pay.</string>
+    <!-- Correcting a payment already registered: the mode is fixed from the moment the
+         sheet opens, so the head names it and the button says what confirming does —
+         the money already moved, and neither "advance" nor "pay" is true of it. -->
+    <string name="invoice_payment_edit_title">Edit payment</string>
+    <string name="invoice_payment_edit_confirm">Save</string>
 
     <!-- Transfer Between Accounts Modal -->
     <string name="transfer_title">Transfer between accounts</string>
+    <string name="transfer_edit_title">Edit transfer</string>
+    <string name="transfer_title_label">Title</string>
     <string name="transfer_source_account_label">Source account</string>
     <string name="transfer_destination_account_label">Destination account</string>
     <string name="transfer_amount_label">Amount</string>
     <string name="transfer_date_label">Date</string>
     <string name="transfer_confirm">Transfer</string>
+    <string name="transfer_edit_confirm">Save</string>
 
     <!-- Cross-currency amount fields (the grammar the three two-value flows share) -->
     <string name="cross_currency_leaves_label">Leaves %1$s</string>
@@ -535,18 +543,27 @@
     <string name="view_transaction_edit">Edit</string>
 
     <!-- View Adjustment Modal -->
-    <string name="view_adjustment_type_label">Adjustment</string>
-    <string name="view_adjustment_balance_adjust">Balance Adjustment</string>
-    <string name="view_adjustment_invoice_adjust">Invoice Adjustment</string>
-    <string name="view_adjustment_date_label">Date</string>
-    <string name="view_adjustment_delete_label">Delete Adjustment</string>
 
     <!-- View Category Modal -->
     <string name="view_category_type_income">Income</string>
     <string name="view_category_type_expense">Expense</string>
     <string name="view_category_total_received">Total Received</string>
     <string name="view_category_total_spent">Total Spent</string>
-    <string name="view_category_transactions_month">Transactions this Month</string>
+    <string name="view_category_this_month">This month</string>
+    <string name="view_category_partial_month">day %1$d of %2$d</string>
+    <plurals name="view_category_month_average">
+        <item quantity="one">Monthly average (%1$d month)</item>
+        <item quantity="other">Monthly average (%1$d months)</item>
+    </plurals>
+    <plurals name="view_category_window_total">
+        <item quantity="one">%1$d-month total</item>
+        <item quantity="other">%1$d-month total</item>
+    </plurals>
+    <string name="view_category_above_average">%1$s above average</string>
+    <string name="view_category_below_average">%1$s below average</string>
+    <string name="view_category_at_average">In line with the period average</string>
+    <string name="view_category_history_range">from %1$s to %2$s</string>
+    <string name="view_category_see_transactions">See transactions</string>
     <string name="view_category_edit">Edit</string>
     <string name="view_category_unarchive">Unarchive</string>
 
@@ -572,6 +589,8 @@
     <string name="balance_card_current_invoice">Current Invoice</string>
     <string name="balance_card_pending_income">Pending Income</string>
     <string name="balance_card_pending_expense">Pending Expenses</string>
+    <string name="balance_card_settlement_incoming">Coming in</string>
+    <string name="balance_card_settlement_outgoing">Going out</string>
 
     <string name="summary_card_opening_balance">Initial Balance</string>
     <string name="summary_card_income">Money In</string>
@@ -594,6 +613,8 @@
     <string name="transaction_card_payment">Invoice Payment</string>
     <string name="transaction_card_balance_adjustment">Balance Adjustment</string>
     <string name="transaction_card_invoice_adjustment">Invoice Adjustment</string>
+    <string name="transaction_card_expense">Expense</string>
+    <string name="transaction_card_income">Income</string>
 
     <string name="target_selector_account">Account</string>
     <string name="target_selector_credit_card">Credit Card</string>
@@ -621,15 +642,12 @@
     <string name="credit_card_ui_edit_invoice">Edit invoice</string>
 
     <string name="dashboard_credit_card_close_invoice">Close Invoice</string>
-    <string name="dashboard_credit_card_pay_invoice">Pay Invoice</string>
-    <string name="dashboard_credit_card_advance">Advance</string>
 
     <string name="invoice_summary_card_expenses">Expenses</string>
     <string name="invoice_summary_card_advance_payments">Advance Payments</string>
     <string name="invoice_summary_card_adjustments">Adjustments</string>
     <string name="invoice_summary_card_invoice">Invoice</string>
     <string name="invoice_summary_card_edit_invoice">Edit invoice</string>
-
 
     <string name="category_spending_card_title">Spending by Category</string>
 
@@ -711,12 +729,32 @@
     <string name="recurring_screen_empty">No recurring transactions</string>
     <string name="recurring_screen_create">Create recurring</string>
     <string name="recurring_screen_day">Day %1$d</string>
-    <string name="recurring_filter_active">Active</string>
-    <string name="recurring_filter_archived">Archived</string>
+    <string name="recurring_filter_all">All</string>
     <string name="recurring_empty_filter">No recurring transactions here.</string>
+    <string name="recurring_view_archived">Archived</string>
+    <string name="recurring_archived_title">Archived recurring</string>
+    <string name="recurring_archived_empty">No archived recurring transactions</string>
+
+    <!-- Recurring Cycle Sections -->
+    <string name="recurring_section_pending">Pending</string>
+    <string name="recurring_section_upcoming">Upcoming</string>
+    <string name="recurring_section_posted">Posted</string>
+    <string name="recurring_section_skipped">Skipped</string>
     <string name="recurring_expense">Expense</string>
     <string name="recurring_income">Income</string>
-    <string name="recurring_card_monthly_amount">Monthly amount</string>
+    <string name="recurring_source_unusable">Source unavailable</string>
+
+    <!-- Recurring Month Summary -->
+    <string name="recurring_summary_settled">Posted this month</string>
+    <string name="recurring_summary_forecast">Not posted yet</string>
+    <string name="recurring_summary_fixed_expense">Fixed expenses</string>
+    <string name="recurring_summary_fixed_income">Fixed income</string>
+    <string name="recurring_expand">Expand</string>
+    <string name="recurring_collapse">Collapse</string>
+    <plurals name="recurring_summary_undenominated">
+        <item quantity="one">%1$d recurring left out of the total: no account denominates it.</item>
+        <item quantity="other">%1$d recurring left out of the total: no account denominates them.</item>
+    </plurals>
 
     <!-- Recurring Form Modal -->
     <string name="recurring_form_title_label">Title</string>
@@ -788,6 +826,7 @@
     <string name="component_balance_stats">Accounts Balance</string>
     <string name="component_overall_balance_stats">Overall Balance</string>
     <string name="component_pending_balance">Pending Balance</string>
+    <string name="component_month_settlement">To settle this month</string>
     <string name="component_credit_card_balance_stats">Card Balance</string>
     <string name="component_accounts_overview">Accounts</string>
     <string name="component_credit_cards">Credit Cards</string>
@@ -822,6 +861,8 @@
     <string name="component_config_hide_single_account">Hide single account</string>
     <string name="component_config_accounts_in_total">Accounts included in the total</string>
     <string name="component_config_hide_when_empty">Hide when empty</string>
+    <string name="component_config_settlement_recurring">This month's recurring</string>
+    <string name="component_config_settlement_invoices">Invoices to pay</string>
     <string name="component_config_show_empty_state">Show empty state</string>
     <string name="component_config_max_categories">Max categories</string>
     <string name="component_config_days_ahead">Days ahead</string>
@@ -854,7 +895,6 @@
     <string name="detail_pane_error_title">Unable to load</string>
     <string name="detail_pane_error">The item was not found or could not be loaded.</string>
     <string name="view_transaction_title">Transaction</string>
-    <string name="view_adjustment_title">Adjustment</string>
     <string name="view_category_title">Category</string>
     <string name="view_budget_title">Budget</string>
     <string name="view_recurring_title">Recurring</string>
@@ -870,6 +910,7 @@
     <string name="money_unresolved_badge">Why something is missing here</string>
     <string name="money_unresolved_title">No single amount to compare against</string>
     <string name="money_unresolved_body">Some part of this period is in a currency with no rate on file, so there is no single amount to compare against — which is why the bar and the proportion are not there. The amounts are still exact, each in its own currency; what is missing is the common measure between them. Add the rate and this works again.</string>
+    <string name="money_unresolved_list_notice">A currency with no rate this month</string>
     <string name="report_export_footnote">≈ marks an amount that passed through an exchange rate. Where no rate was on file, that currency's share stands on its own, unconverted.</string>
     <string name="money_approximate_see_rates">See rates</string>
 
@@ -1126,4 +1167,14 @@
     <string name="backup_export_replace_title">This replaces a file that is already there</string>
     <string name="backup_export_replace_message">There is already a file called %1$s in that folder. Saving the backup here writes over it, and what is in it now is lost.</string>
     <string name="backup_export_replace_action">Replace</string>
+
+    <!-- Action button: the app's single floating action button and the actions screens publish to it -->
+    <string name="floating_action_expand">More actions</string>
+    <string name="floating_action_collapse">Close actions</string>
+    <string name="accounts_add">Add account</string>
+    <string name="accounts_add_transaction">New transaction in this account</string>
+    <string name="credit_cards_add_transaction">New transaction on this card</string>
+    <string name="categories_add_expense">Add expense category</string>
+    <string name="categories_add_income">Add income category</string>
+    <string name="support_create_issue">Open issue</string>
 </resources>

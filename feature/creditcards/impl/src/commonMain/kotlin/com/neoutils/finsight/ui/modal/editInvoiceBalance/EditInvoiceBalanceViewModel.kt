@@ -7,7 +7,7 @@ import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.window
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -115,7 +115,7 @@ class EditInvoiceBalanceViewModel(
                 editableInvoices = invoices,
                 selectedInvoice = selectedInvoice,
                 currentBalance = balance,
-                currency = accountRepository.currencyOf(selectedCard),
+                currency = accountRepository.requireCurrencyOf(selectedCard),
                 date = date,
                 today = currentDate,
             )

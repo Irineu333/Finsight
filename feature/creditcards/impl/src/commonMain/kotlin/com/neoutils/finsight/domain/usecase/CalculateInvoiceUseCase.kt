@@ -25,8 +25,45 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 class CalculateInvoiceUseCase(
     private val entryRepository: IEntryRepository,
 ) {
-    suspend operator fun invoke(invoice: Invoice): Double =
-        invoice.dimensionId
-            ?.let { entryRepository.dimensionOwedByCurrency(it).singleOrNull()?.value }
+    /**
+     * @param excluding the operation whose own contribution is to be left out — the
+     * ceiling a correction is judged by, since an operation that is being rewritten
+     * already reduced the figure it is about to state again.
+     *
+     * One formula covers the three situations, without a branch between them: on a
+     * creation the operation does not exist and nothing is left out; on a correction
+     * over the same invoice what it settled comes back; on a correction that switched
+     * invoices it has nothing there and, again, nothing is left out.
+     *
+     * **The default is the current owed**, which is what every read that is not a
+     * correction wants. It carries a default where `contra` in `updateTransaction` and
+     * `account` in `InvoicePaymentAction.Submit` deliberately do not, and the difference
+     * is what the omitted value means: there it is *wrong* — an unbalanced write, the
+     * default account instead of the chosen one — and here it is the ordinary, correct
+     * case.
+     */
+    suspend operator fun invoke(invoice: Invoice, excluding: Long? = null): Double {
+        val dimensionId = invoice.dimensionId ?: return 0.0
+
+        val owed = entryRepository
+            .dimensionOwedByCurrency(dimensionId)
+            .singleOrNull()
+            ?.value
             ?: 0.0
+
+        if (excluding == null) return owed
+
+        // What that operation contributes to this figure, read exactly the way the
+        // figure is read — entries are `Long` cents, debit-positive, and the owed is
+        // `Double` units read credit-positive. Stated as a subtraction of the same
+        // reading, the sign falls out on its own and does not depend on whether a
+        // payment debits or credits.
+        val contributed = entryRepository
+            .getEntriesByTransaction(excluding)
+            .filter { it.dimensionId == dimensionId }
+            .sumOf { it.amount }
+            .let { -it / 100.0 }
+
+        return owed - contributed
+    }
 }

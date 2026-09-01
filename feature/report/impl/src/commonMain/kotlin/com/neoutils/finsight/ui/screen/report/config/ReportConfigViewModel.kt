@@ -147,7 +147,7 @@ class ReportConfigViewModel(
                         if (params.includeSpendingByCategory) add("spending_by_category")
                         if (params.includeIncomeByCategory) add("income_by_category")
                         if (params.includeTransactionList) add("transaction_list")
-                    }.joinToString(",")
+                    }
                     analytics.logEvent(GenerateReport(target, sections))
                     _events.send(ReportConfigEvent.NavigateToViewer(params))
                 }

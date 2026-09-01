@@ -93,6 +93,7 @@ class CreateInvoiceModal(
                 },
                 label = stringResource(Res.string.create_invoice_month_label),
                 modifier = Modifier.testTag("create_invoice_month"),
+                previousTestTag = "create_invoice_previous_month",
             )
 
             Spacer(modifier = Modifier.height(8.dp))

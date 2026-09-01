@@ -1,6 +1,10 @@
 appId: com.neoutils.finsight
 name: report_lifecycle
 env:
+  # The seeded account's name is a translated resource (`account_default_name`), so naming it is
+  # naming copy. It is declared once here rather than spelled at each use: the device is fixed to
+  # English (README §2.2), and a rewording is then this one line instead of a hunt.
+  DEFAULT_ACCOUNT: "Wallet"
   INCOME_TITLE: "E2E Report Salary"
   INCOME_DIGITS: "50000"
   RESERVE_ACCOUNT: "E2E Reserve"
@@ -66,7 +70,7 @@ env:
     timeout: 15000
 - assertVisible:
     id: "transfer_source_account"
-    text: "Wallet"
+    text: ${DEFAULT_ACCOUNT}
 - tapOn:
     id: "transfer_destination_account"
 - extendedWaitUntil:
@@ -114,9 +118,11 @@ env:
       CARD: ${CARD_NAME}
 
 # Paid from the credit cards screen rather than from inside the invoice: it is the offer a user
-# meets first, and it reaches the same modal. The account arrives already selected — the default
-# one — and that is asserted rather than assumed, because "$20.00 left the Wallet" below is only a
-# claim about this payment if this payment came from the Wallet.
+# meets first, and it is the same sheet either way — one command per surface, opening on the
+# invoice in view. The invoice is still open, so the amount is this flow's to state. The account
+# arrives already selected — the default one — and that is asserted rather than assumed, because
+# "$20.00 left the Wallet" below is only a claim about this payment if this payment came from the
+# Wallet.
 - runFlow:
     file: ../../subflows/open_section.yaml
     env:
@@ -127,29 +133,29 @@ env:
     timeout: 15000
 - scrollUntilVisible:
     element:
-      id: "credit_card_advance_payment"
+      id: "credit_card_pay_invoice"
     direction: DOWN
     centerElement: true
     timeout: 20000
 - tapOn:
-    id: "credit_card_advance_payment"
+    id: "credit_card_pay_invoice"
 - extendedWaitUntil:
     visible:
-      id: "advance_payment_amount"
+      id: "invoice_payment_amount"
     timeout: 15000
 - assertVisible:
-    id: "advance_payment_account"
-    text: "Wallet"
+    id: "invoice_payment_account"
+    text: ${DEFAULT_ACCOUNT}
 - tapOn:
-    id: "advance_payment_amount"
+    id: "invoice_payment_amount"
 - waitForAnimationToEnd
 - inputText: ${ADVANCE_DIGITS}
 - hideKeyboard
 - tapOn:
-    id: "advance_payment_confirm"
+    id: "invoice_payment_confirm"
 - extendedWaitUntil:
     notVisible:
-      id: "advance_payment_amount"
+      id: "invoice_payment_amount"
     timeout: 15000
 
 # --- The Wallet: what it earned, and everything that left it -------------------------------------
@@ -170,7 +176,7 @@ env:
     visible:
       id: "report_balance_amount"
     timeout: 20000
-- assertVisible: "Wallet"
+- assertVisible: ${DEFAULT_ACCOUNT}
 - assertVisible:
     id: "report_opening_balance_amount"
     text: "[$]0[.,]00"
@@ -199,7 +205,7 @@ env:
     direction: DOWN
     timeout: 20000
 - tapOn: ${RESERVE_ACCOUNT}
-- tapOn: "Wallet"
+- tapOn: ${DEFAULT_ACCOUNT}
 - tapOn:
     id: "report_generate"
 - extendedWaitUntil:

@@ -1,18 +1,19 @@
 package com.neoutils.finsight.ui.screen.recurring
 
 /**
- * The one selector on the recurring screen, mixing two axes on purpose: status
- * ([ACTIVE], [ARCHIVED]) and type ([EXPENSE], [INCOME]) — the same shape the
- * categories screen settled on. It replaces the two dropdowns this screen used to
- * carry (status × type, nine states) with four views.
+ * The one selector on the recurring screen, on **one axis**: the nature of the money.
  *
- * "Ativas" rather than "Todas" keeps it honest: archived recurrings are excluded
- * from the first three views. What is lost — archived of a single type, and "all
- * including archived" — is the same trade categories already made.
+ * One axis and not two. A control that sometimes narrows the list and sometimes changes
+ * what the screen *is* leaves the user unable to tell which of the two it just did — so
+ * archived recurrings have a destination of their own, and what stays here is transversal
+ * to the sections: it narrows each of them without touching how the list is organised.
+ *
+ * [ALL] and not a name that promises a cut by status: in a monthly list what is shown is
+ * non-archived by construction — an archived template generates no cycle, in any month —
+ * so there is no status left to cut by.
  */
 enum class RecurringFilter {
-    ACTIVE,
+    ALL,
     EXPENSE,
     INCOME,
-    ARCHIVED,
 }

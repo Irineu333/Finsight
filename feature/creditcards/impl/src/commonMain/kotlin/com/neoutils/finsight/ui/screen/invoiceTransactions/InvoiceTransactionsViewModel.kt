@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.*
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -15,6 +15,8 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.UnarchiveCreditCard
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.extension.DisplayAmount
@@ -24,6 +26,7 @@ import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.legUnder
 import com.neoutils.finsight.ui.model.toTransactionUi
+import com.neoutils.finsight.extension.paymentLabel
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.util.dayMonth
@@ -52,6 +55,7 @@ class InvoiceTransactionsViewModel(
     private val entryRepository: IEntryRepository,
     private val recurringRepository: IRecurringRepository,
     private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
+    private val analytics: Analytics,
     private val crashlytics: Crashlytics,
     private val clock: Clock,
 ) : ViewModel() {
@@ -138,7 +142,7 @@ class InvoiceTransactionsViewModel(
 
         // Every figure of this screen is the card's money, so all of them read in the
         // card's own currency (design D17) — asked once, not once per invoice.
-        val currency = accountRepository.currencyOf(creditCard)
+        val currency = accountRepository.requireCurrencyOf(creditCard)
 
         val invoice = invoices.getOrNull(index)
         // The rows render archived categories too, so the lookup keeps them — only the
@@ -250,6 +254,9 @@ class InvoiceTransactionsViewModel(
                     canReopen = invoice.isReopenable(invoices),
                     transactionCount = invoice.dimensionId
                         ?.let { countByDimension[it] } ?: 0,
+                    canPay = invoice.acceptsPayment,
+                    payLabel = invoice.paymentLabel,
+                    paySettles = invoice.acceptsFullSettlement,
                 )
             },
             selectedInvoiceIndex = index,
@@ -338,7 +345,9 @@ class InvoiceTransactionsViewModel(
             // domain model sits in observable state.
             InvoiceTransactionsAction.Unarchive -> {
                 val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return@launch
-                unarchiveCreditCard(creditCard).onLeft { crashlytics.recordException(it) }
+                unarchiveCreditCard(creditCard)
+                    .onRight { analytics.logEvent(UnarchiveCreditCard) }
+                    .onLeft { crashlytics.recordException(it) }
             }
         }
     }

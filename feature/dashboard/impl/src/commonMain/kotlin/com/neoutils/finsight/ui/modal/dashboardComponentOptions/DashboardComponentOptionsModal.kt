@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.rounded.SpaceBar
@@ -89,6 +90,7 @@ class DashboardComponentOptionsModal(
                 when (item.key) {
                     DashboardComponentType.OVERALL_BALANCE_STATS.key,
                     DashboardComponentType.CONCRETE_BALANCE_STATS.key,
+                    DashboardComponentType.MONTH_SETTLEMENT.key,
                     DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key,
                     DashboardComponentType.ACCOUNTS_OVERVIEW.key,
                     DashboardComponentType.CREDIT_CARDS_PAGER.key,
@@ -157,6 +159,20 @@ class DashboardComponentOptionsModal(
                     BalanceStatsConfigContent(
                         config = config,
                         defaultHideWhenEmpty = true,
+                        onConfigChange = {
+                            config = it
+                        },
+                    )
+                }
+
+                DashboardComponentType.MONTH_SETTLEMENT.key -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    MonthSettlementConfigContent(
+                        config = config,
                         onConfigChange = {
                             config = it
                         },
@@ -552,6 +568,55 @@ private fun BalanceStatsConfigContent(
             leadingIcon = Icons.Default.VisibilityOff,
         )
     }
+}
+
+/**
+ * Which sources make up the settlement figure, and whether the widget withdraws when
+ * there is nothing to settle.
+ *
+ * The two are different questions and the builder keeps them apart: turning both sources
+ * off empties the perimeter, and an empty perimeter reads zero and stays on screen —
+ * hiding it would take away the very widget being configured.
+ */
+@Composable
+private fun MonthSettlementConfigContent(
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val fromRecurring = config.isSourceOn(MonthSettlementConfig.INCLUDE_RECURRING)
+    val fromInvoices = config.isSourceOn(MonthSettlementConfig.INCLUDE_INVOICES)
+
+    DashboardConfigCard {
+        DashboardConfigToggleRow(
+            title = stringResource(Res.string.component_config_settlement_recurring),
+            modifier = Modifier.testTag("dashboard_component_options_settlement_recurring"),
+            checked = fromRecurring,
+            onCheckedChange = { enabled ->
+                onConfigChange(config.toMutableMap().apply {
+                    put(MonthSettlementConfig.INCLUDE_RECURRING, enabled.toString())
+                })
+            },
+            leadingIcon = Icons.Default.Autorenew,
+        )
+
+        DashboardConfigToggleRow(
+            title = stringResource(Res.string.component_config_settlement_invoices),
+            modifier = Modifier.testTag("dashboard_component_options_settlement_invoices"),
+            checked = fromInvoices,
+            onCheckedChange = { enabled ->
+                onConfigChange(config.toMutableMap().apply {
+                    put(MonthSettlementConfig.INCLUDE_INVOICES, enabled.toString())
+                })
+            },
+            leadingIcon = Icons.Default.CreditCard,
+        )
+    }
+
+    BalanceStatsConfigContent(
+        config = config,
+        defaultHideWhenEmpty = true,
+        onConfigChange = onConfigChange,
+    )
 }
 
 /**

@@ -28,36 +28,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.navigation.LocalNavController
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.format
-import com.neoutils.finsight.extension.formatOrUnresolved
-import com.neoutils.finsight.ui.component.ConsolidationBadge
-import com.neoutils.finsight.ui.component.CategoryIconBox
-import com.neoutils.finsight.ui.component.MoneyText
+import com.neoutils.finsight.ui.component.ConsolidationListNotice
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
-import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.budgets_category_plural
-import com.neoutils.finsight.resources.budgets_category_singular
 import com.neoutils.finsight.resources.budgets_create
 import com.neoutils.finsight.resources.budgets_empty
-import com.neoutils.finsight.resources.budgets_exceeded_by
-import com.neoutils.finsight.resources.budgets_limit
-import com.neoutils.finsight.resources.budgets_remaining
-import com.neoutils.finsight.resources.budgets_spent
 import com.neoutils.finsight.resources.budgets_title
 import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.stringResource
@@ -78,6 +66,28 @@ fun BudgetsScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("budgets")
     }
+
+    // Only in `Content`, as the button used to be: publishing unconditionally would put it on
+    // screen while the month is still being read.
+    ChromeEffect(
+        actions = if (uiState is BudgetsUiState.Content) {
+            remember(modalManager) {
+                listOf(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.budgets_create,
+                        // The same command as the empty state's button, so it carries the same
+                        // id: a flow asks for "create a budget", not for whichever affordance
+                        // the current state happens to render it as.
+                        testTag = "budgets_add",
+                        onClick = { modalManager.show(BudgetFormModal()) },
+                    )
+                )
+            }
+        } else {
+            emptyList()
+        }
+    )
 
     Scaffold(
         modifier = Modifier.testTag("screen_budgets"),
@@ -108,19 +118,6 @@ fun BudgetsScreen(
                 },
             )
         },
-        floatingActionButton = {
-            if (uiState is BudgetsUiState.Content) {
-                FloatingActionButton(
-                    onClick = { modalManager.show(BudgetFormModal()) },
-                    // The same command as the empty state's button, so it carries the
-                    // same id: a flow asks for "create a budget", not for whichever
-                    // affordance the current state happens to render it as.
-                    modifier = Modifier.testTag("budgets_add"),
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                }
-            }
-        }
     ) { paddingValues ->
         when (val uiState = uiState) {
             is BudgetsUiState.Loading -> {
@@ -151,14 +148,31 @@ fun BudgetsScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    // One notice for the whole list, and only where a row had to fall
+                    // back on the absence mark. The cause is the archive missing a rate —
+                    // global, and identical on every row it touches — so it is stated
+                    // once here instead of costing width on every row of the screen.
+                    //
+                    // Emitted conditionally rather than composed to nothing: an item that
+                    // draws nothing still takes the list's 8dp of spacing.
+                    if (uiState.budgetProgress.any { !it.isResolved }) {
+                        item(key = "budgets_consolidation_notice") {
+                            ConsolidationListNotice(
+                                onSeeRates = { navController.navigate(ExchangeRatesRoute) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateItem(),
+                            )
+                        }
+                    }
+
                     items(
                         items = uiState.budgetProgress,
                         key = { it.budget.id },
                     ) { progress ->
-                        BudgetProgressItem(
+                        BudgetCard(
                             progress = progress,
                             onClick = { detailController.show(ViewBudgetModal(progress.budget.id, uiState.selectedMonth)) },
-                            onSeeRates = { navController.navigate(ExchangeRatesRoute) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem(),
@@ -221,184 +235,6 @@ private fun MonthSelector(
         )
     }
 }
-
-@Composable
-private fun BudgetProgressItem(
-    progress: BudgetProgress,
-    onClick: () -> Unit,
-    onSeeRates: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val formatter = LocalCurrencyFormatter.current
-    // Every figure on this card is denominated by the limit, never by the base: a budget
-    // declares its currency once, at creation, and what is shown beside the limit is the
-    // spending reduced *to it* (design D13).
-    val currency = progress.budget.currency
-
-    Card(
-        modifier = modifier
-            .testTag("budget_card")
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer,
-        ),
-        shape = RoundedCornerShape(16.dp),
-    ) {
-        // No fraction means no "how full" to colour by, so the accent falls back to the
-        // neutral one rather than to the colour an empty bar would wear.
-        val accentColor = progress.progress?.let { budgetProgressColor(it) }
-            ?: colorScheme.onSurfaceVariant
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                CategoryIconBox(
-                    icon = progress.budget.icon,
-                    tint = accentColor,
-                    contentPadding = PaddingValues(8.dp),
-                    modifier = Modifier.size(40.dp),
-                )
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = progress.budget.title,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurface,
-                    )
-                    val categoryCount = progress.budget.categories.size
-                    val categoryLabel = if (categoryCount == 1) {
-                        stringResource(Res.string.budgets_category_singular)
-                    } else {
-                        stringResource(Res.string.budgets_category_plural, categoryCount)
-                    }
-                    Text(
-                        text = if (progress.recurringLabel != null) {
-                            "$categoryLabel, ${progress.recurringLabel}"
-                        } else {
-                            categoryLabel
-                        },
-                        fontSize = 12.sp,
-                        color = colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                // This card is one budget, so the badge here is unambiguous — it explains
-                // *this* progress. Top-right corner, like every other badge in the app.
-                ConsolidationBadge(
-                    figures = listOfNotNull(progress.spentFigure),
-                    onSeeRates = onSeeRates,
-                    unresolved = !progress.isResolved,
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = stringResource(Res.string.budgets_limit),
-                    fontSize = 12.sp,
-                    color = colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = formatter.format(progress.budget.amount, currency),
-                    modifier = Modifier.testTag("budget_limit_amount"),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(Res.string.budgets_spent),
-                        fontSize = 12.sp,
-                        color = colorScheme.onSurfaceVariant,
-                    )
-                    // Room enough to show the parts, so it shows them: what cannot be
-                    // reduced to one number is still perfectly well known, currency by
-                    // currency. `***` is the answer only where the parts do not fit or do
-                    // not apply, which is the column beside this one.
-                    val spentFigure = progress.spentFigure
-                    if (spentFigure != null) {
-                        MoneyText(
-                            figure = spentFigure,
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colorScheme.onSurface,
-                            ),
-                            align = TextAlign.Start,
-                            modifier = Modifier.testTag("budget_spent_amount"),
-                        )
-                    } else {
-                        Text(
-                            text = formatter.formatOrUnresolved(progress.spentAmount),
-                            modifier = Modifier.testTag("budget_spent_amount"),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colorScheme.onSurface,
-                        )
-                    }
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = if (progress.isExceeded) stringResource(Res.string.budgets_exceeded_by) else stringResource(
-                            Res.string.budgets_remaining
-                        ),
-                        // The label is the rule: which of the two the card shows is
-                        // `isExceeded`, and the figure beside it changes formula with it.
-                        modifier = Modifier.testTag("budget_remaining_label"),
-                        fontSize = 12.sp,
-                        color = colorScheme.onSurfaceVariant,
-                    )
-                    // No parts to show here: what is left, and by how much it was
-                    // exceeded, are answers *against the limit* rather than sums of
-                    // pieces — so with the spending unresolved they do not exist at all.
-                    // The absence is said quietly, in the variant colour: it is the
-                    // lack of a number, not a number worth reading.
-                    val leftOrOver =
-                        if (progress.isExceeded) progress.exceededAmount else progress.remainingAmount
-                    Text(
-                        text = formatter.formatOrUnresolved(leftOrOver),
-                        modifier = Modifier.testTag("budget_remaining_amount"),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (leftOrOver != null) colorScheme.onSurface else colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            // No fraction, no bar: an empty track claims "nothing spent yet", which is
-            // precisely what is not known when part of the spending cannot be priced.
-            progress.progress?.let { fraction ->
-                LinearProgressIndicator(
-                    progress = { fraction },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = accentColor,
-                    trackColor = colorScheme.surfaceContainerHighest,
-                    drawStopIndicator = {},
-                    gapSize = (-4).dp,
-                )
-            }
-        }
-    }
-}
-
 
 @Composable
 private fun EmptyBudgetsState(

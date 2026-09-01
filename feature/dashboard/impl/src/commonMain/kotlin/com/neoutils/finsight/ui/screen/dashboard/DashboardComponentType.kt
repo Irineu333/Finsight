@@ -6,11 +6,16 @@ import com.neoutils.finsight.ui.util.WindowMode
  * @property modes the window modes this component is shown in. A component is offered in every
  * mode unless it says otherwise — what a narrower list says is that another affordance of that
  * layout already does the component's job.
+ * @property isDeprecated whether this component has been superseded by one that contains what it
+ * showed. A deprecated component leaves the edit mode's showcase and the default layout, and is
+ * **still built, previewed and rendered** for every dashboard whose saved preference names it —
+ * dropping the key would silently cost that user a position. Nothing rewrites a saved preference.
  */
 enum class DashboardComponentType(
     val key: String,
     val defaultConfig: Map<String, String> = emptyMap(),
     val modes: Set<WindowMode> = WindowMode.ALL,
+    val isDeprecated: Boolean = false,
 ) {
     TOTAL_BALANCE(
         key = "total_balance",
@@ -35,11 +40,24 @@ enum class DashboardComponentType(
             DashboardComponentConfig.SHOW_HEADER to "false",
         ),
     ),
+    // Superseded by MONTH_SETTLEMENT, which sums this month's untreated recurring — every
+    // one of them, not only those past their day — plus the invoices left to pay.
     PENDING_BALANCE_STATS(
         key = "balance_stats_pending",
         defaultConfig = mapOf(
             DashboardComponentConfig.TOP_SPACING to "false",
             DashboardComponentConfig.HIDE_WHEN_EMPTY to "false",
+        ),
+        isDeprecated = true,
+    ),
+    MONTH_SETTLEMENT(
+        key = "month_settlement",
+        defaultConfig = mapOf(
+            DashboardComponentConfig.TOP_SPACING to "false",
+            DashboardComponentConfig.HIDE_WHEN_EMPTY to "false",
+            DashboardComponentConfig.SHOW_HEADER to "false",
+            MonthSettlementConfig.INCLUDE_RECURRING to "true",
+            MonthSettlementConfig.INCLUDE_INVOICES to "true",
         ),
     ),
     CREDIT_CARD_BALANCE_STATS(

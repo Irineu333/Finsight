@@ -19,11 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.destinationLeg
 import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.extension.sourceLeg
 import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
@@ -35,6 +40,7 @@ import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.LocalDate
+import kotlin.math.abs
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -42,26 +48,68 @@ import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class TransferBetweenAccountsModal(
+/**
+ * The form of a transfer, in its two modes: registering one and correcting one.
+ *
+ * They are the same form and differ only in what the header announces, so there is one
+ * of them rather than two grammars for one operation. The two modes are reached by two
+ * constructors over a private one, and that is the point: neither of them can be handed
+ * a state that does not mean anything — no source and no transaction, or both at once.
+ *
+ * In correction the source account is **not** a parameter. It is the operation's own
+ * outgoing leg, so asking the caller for it would open the door to a caller that
+ * disagrees with the transaction it passed.
+ */
+class TransferBetweenAccountsModal private constructor(
     private val sourceAccount: Account,
+    private val transaction: Transaction?,
 ) : ModalBottomSheet() {
+
+    /** Registering a transfer: it is born pointing at the account the money leaves. */
+    constructor(sourceAccount: Account) : this(sourceAccount, transaction = null)
+
+    /** Correcting one: both ends are read off the operation. */
+    constructor(transaction: Transaction) : this(
+        sourceAccount = requireNotNull(transaction.entries.sourceLeg()?.account) {
+            "A transfer always has an outgoing asset leg."
+        },
+        transaction = transaction,
+    )
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<TransferBetweenAccountsViewModel> {
-            parametersOf(sourceAccount)
+            parametersOf(sourceAccount, transaction)
         }
 
         val uiState by viewModel.uiState.collectAsState()
         val modalManager = LocalModalManager.current
+        val formatter = LocalCurrencyFormatter.current
 
         // The clock the app was given, like the other sheets that write a transaction: this date
         // both seeds the field and bounds the picker, and the picker reads the same clock.
         val currentDate = koinInject<Clock>().today()
 
-        val amount = rememberTextFieldState()
-        val destinationAmount = rememberTextFieldState()
-        val date = rememberTextFieldState(dayMonthYear.format(currentDate))
+        // What the operation records, each end read in the currency of its own account.
+        // A correction opens on facts, not on an empty form and today's date.
+        val recordedSource = transaction?.entries?.sourceLeg()
+        val recordedDestination = transaction?.entries?.destinationLeg()
+        val recordedDestinationAmount = recordedDestination
+            ?.takeIf { it.currency != recordedSource?.currency }
+            ?.let { abs(it.amount) / 100.0 }
+
+        val amount = rememberTextFieldState(
+            recordedSource?.let { formatter.format(abs(it.amount) / 100.0, it.currency) }.orEmpty(),
+        )
+        val destinationAmount = rememberTextFieldState(
+            recordedDestinationAmount
+                ?.let { formatter.format(it, recordedDestination.currency) }
+                .orEmpty(),
+        )
+        val date = rememberTextFieldState(
+            dayMonthYear.format(transaction?.date ?: currentDate),
+        )
+        val title = rememberTextFieldState(transaction?.title.orEmpty())
 
         val source = uiState.selectedSourceAccount ?: sourceAccount
         val destination = uiState.selectedDestinationAccount
@@ -93,11 +141,38 @@ class TransferBetweenAccountsModal(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = stringResource(Res.string.transfer_title),
+                    text = stringResource(
+                        if (uiState.isEditMode) {
+                            Res.string.transfer_edit_title
+                        } else {
+                            Res.string.transfer_title
+                        }
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // First, as in the transaction form: the field that names the operation
+                // reads better opening it than appended after the date.
+                OutlinedTextField(
+                    state = title,
+                    label = {
+                        Text(text = stringResource(Res.string.transfer_title_label))
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next,
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("transfer_title"),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 AccountSelector(
                     selectedAccount = uiState.selectedSourceAccount,
@@ -153,6 +228,9 @@ class TransferBetweenAccountsModal(
                     date = runCatching { dayMonthYear.parse(date.text.toString()) }
                         .getOrDefault(currentDate),
                     modifier = Modifier.testTag("transfer_destination_amount"),
+                    // What the operation records is fact, and the archive's offer must
+                    // neither replace it nor erase it for want of an observation.
+                    recordedAmount = recordedDestinationAmount,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -205,6 +283,7 @@ class TransferBetweenAccountsModal(
                                 amount = amount.text.toString().moneyToDouble(),
                                 destinationAmount = destinationAmount.text.toString().moneyToDouble(),
                                 date = dayMonthYear.parse(date.text.toString()),
+                                title = title.text.toString(),
                             )
                         )
                     },
@@ -223,7 +302,17 @@ class TransferBetweenAccountsModal(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = stringResource(Res.string.transfer_confirm),
+                        // The verb has to name what the tap does. "Transfer" is what
+                        // registering one does; a correction saves an operation that
+                        // already moved the money, and reading "Transfer" there
+                        // suggests it is about to move again.
+                        text = stringResource(
+                            if (uiState.isEditMode) {
+                                Res.string.transfer_edit_confirm
+                            } else {
+                                Res.string.transfer_confirm
+                            }
+                        ),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

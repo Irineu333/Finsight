@@ -15,8 +15,18 @@ class EditCategory(params: Map<String, String>) : Event("edit_category", params)
     )
 }
 
+/** The row is gone. Retiring one that must be preserved is [ArchiveCategory] instead. */
 class DeleteCategory(params: Map<String, String>) : Event("delete_category", params) {
-    constructor(category: Category) : this(
-        mapOf("name" to category.name, "type" to category.type.name.lowercase())
-    )
+    constructor(category: Category) : this(category.asParams())
 }
+
+/** Retired but kept, and reversible by [UnarchiveCategory] — not a deletion. */
+class ArchiveCategory(params: Map<String, String>) : Event("archive_category", params) {
+    constructor(category: Category) : this(category.asParams())
+}
+
+class UnarchiveCategory(params: Map<String, String>) : Event("unarchive_category", params) {
+    constructor(category: Category) : this(category.asParams())
+}
+
+private fun Category.asParams() = mapOf("name" to name, "type" to type.name.lowercase())

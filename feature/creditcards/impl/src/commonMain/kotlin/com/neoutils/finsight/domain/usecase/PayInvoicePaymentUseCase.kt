@@ -11,12 +11,7 @@ import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.TransactionLeg
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 import kotlin.time.ExperimentalTime
 
@@ -32,12 +27,10 @@ import kotlin.time.ExperimentalTime
  * the dimension onto it would have the whole transaction refused (design D15).
  */
 class PayInvoicePaymentUseCase(
-    private val transactionRepository: ITransactionRepository,
+    private val writeInvoicePayment: WriteInvoicePaymentUseCase,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val payInvoiceUseCase: PayInvoiceUseCase,
-    private val harvestExchangeRate: HarvestExchangeRateUseCase,
-    private val accountRepository: IAccountRepository,
 ) {
     /**
      * @param paidAmount what leaves [account], when it is not what the invoice owes.
@@ -61,7 +54,9 @@ class PayInvoicePaymentUseCase(
             InvoiceException(InvoiceError.NotFound)
         }
 
-        ensure(invoice.status == Invoice.Status.CLOSED) {
+        // The domain owns which invoices are discharged by paying them; enumerating
+        // the status here would be a second copy of that rule.
+        ensure(invoice.acceptsFullSettlement) {
             InvoiceException(InvoiceError.InvoiceNotClosed)
         }
 
@@ -80,45 +75,14 @@ class PayInvoicePaymentUseCase(
         }
 
         catch {
-            transactionRepository.createTransaction(
-                TransactionIntent(
-                    title = null,
-                    date = date,
-                    legs = listOf(
-                        // The money leaves the account undimensioned; only the card's
-                        // leg carries the invoice's sub-ledger, or the two would
-                        // cancel it out.
-                        TransactionLeg(
-                            type = TransactionType.EXPENSE,
-                            amount = leaving,
-                            accountId = account.id,
-                        ),
-                        TransactionLeg(
-                            type = TransactionType.INCOME,
-                            amount = currentBillAmount,
-                            accountId = invoice.creditCard.accountId,
-                            dimensionId = invoice.dimensionId,
-                        ),
-                    ),
-                )
+            writeInvoicePayment(
+                invoice = invoice,
+                account = account,
+                leaving = leaving,
+                settling = currentBillAmount,
+                date = date,
             )
         }.bind()
-
-        // The rate the payment applied, learned from its own two ends. It is written to
-        // the archive and never to the transaction, and it survives the transaction
-        // being deleted (design D11, D27).
-        catch {
-            val cardCurrency = accountRepository.getAccountById(invoice.creditCard.accountId)?.currency
-            if (cardCurrency != null) {
-                harvestExchangeRate(
-                    sourceAmount = leaving,
-                    sourceCurrency = account.currency,
-                    targetAmount = currentBillAmount,
-                    targetCurrency = cardCurrency,
-                    date = date,
-                )
-            }
-        }
 
         payInvoiceUseCase(
             invoiceId = invoiceId,

@@ -212,6 +212,7 @@ private class FakeCreditCardRepository(private val cards: List<CreditCard>) : IC
 
 private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvoiceRepository {
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = MutableStateFlow(invoices)
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = MutableStateFlow(invoices)
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
@@ -235,10 +236,13 @@ private class FakeTransactionRepository(private val transactions: List<Transacti
     override fun observeAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(transactions)
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = transactions
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        transactions.filter { it.id in ids }
+
     override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) =
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) =
         throw NotImplementedError()
 
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()
@@ -300,7 +304,6 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?) = AccountFlows("BRL", 0.0, 0.0, 0.0, 0.0, 0.0)
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = 0
     override suspend fun dimensionOwedByCurrency(dimensionId: Long) = MoneyByCurrency.of("BRL", 0.0)
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long) = DimensionFlowsByCurrency(
         expense = MoneyByCurrency.of("BRL", 0.0),
@@ -311,6 +314,7 @@ private object FlatEntryRepository : IEntryRepository {
     override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()

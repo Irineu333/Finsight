@@ -199,6 +199,7 @@ private class TheInvoice(private val invoice: Invoice) : IInvoiceRepository {
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
     override suspend fun getInvoiceById(id: Long): Invoice? = throw NotImplementedError()

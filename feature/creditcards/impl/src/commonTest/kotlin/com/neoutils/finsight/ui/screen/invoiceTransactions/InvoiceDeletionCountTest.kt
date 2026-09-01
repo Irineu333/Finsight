@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
 import app.cash.turbine.test
+import com.neoutils.finsight.RecordingAnalytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
@@ -112,6 +113,7 @@ class InvoiceDeletionCountTest {
         ),
         recurringRepository = NoRecurring,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
+        analytics = RecordingAnalytics(),
         crashlytics = NoCrashlytics,
         clock = Clock.System,
     )

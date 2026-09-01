@@ -13,7 +13,6 @@ import com.neoutils.finsight.ui.model.TransactionFacadeResolver
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import org.koin.core.module.dsl.viewModel
@@ -47,14 +46,6 @@ val transactionsModule = module {
     single<TransactionsEntry> { TransactionsEntryImpl() }
 
     viewModel {
-        ViewAdjustmentViewModel(
-            transactionId = it.get(),
-            transactionRepository = get(),
-            facadeResolver = get(),
-            crashlytics = get(),
-        )
-    }
-    viewModel {
         ViewTransactionViewModel(
             transactionId = it.get(),
             transactionRepository = get(),
@@ -66,6 +57,7 @@ val transactionsModule = module {
         TransactionsViewModel(
             filterLabel = getOrNull(),
             filterTarget = getOrNull(),
+            filterCategoryId = getOrNull(),
             transactionRepository = get(),
             categoryRepository = get(),
             installmentRepository = get(),
@@ -78,6 +70,7 @@ val transactionsModule = module {
     }
     viewModel {
         AddTransactionViewModel(
+            origin = it.getOrNull(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),

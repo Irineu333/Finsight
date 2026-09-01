@@ -21,6 +21,8 @@ import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.GetRecurringCyclesUseCase
+import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -54,7 +56,8 @@ class DashboardAccountsOverviewTest {
             override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
         },
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(ThrowingEntryRepository, reducer()),
-        getPendingRecurringUseCase = GetPendingRecurringUseCase(),
+        getPendingRecurringUseCase = GetPendingRecurringUseCase(GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase())),
+        getUnhandledRecurringUseCase = GetUnhandledRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
             override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
                 throw NotImplementedError()
@@ -81,7 +84,7 @@ class DashboardAccountsOverviewTest {
         val component = builder().build(
             key = DashboardComponentType.ACCOUNTS_OVERVIEW.key,
             input = input(accounts),
-            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            context = DashboardBuilderContext(pendingRecurring = emptyList(), unhandledRecurring = emptyList()),
             config = config,
         )
         return (component as DashboardComponent.AccountsOverview).accounts
@@ -137,7 +140,7 @@ class DashboardAccountsOverviewTest {
         val component = builder().build(
             key = DashboardComponentType.CONCRETE_BALANCE_STATS.key,
             input = input(listOf(accountA)).copy(transactions = transactions),
-            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            context = DashboardBuilderContext(pendingRecurring = emptyList(), unhandledRecurring = emptyList()),
             config = emptyMap(),
         )
         val stats = component as DashboardComponent.ConcreteBalanceStats
@@ -150,7 +153,7 @@ class DashboardAccountsOverviewTest {
         val component = builder().build(
             key = DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key,
             input = input(emptyList()),
-            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            context = DashboardBuilderContext(pendingRecurring = emptyList(), unhandledRecurring = emptyList()),
             config = emptyMap(),
         )
         val stats = component as DashboardComponent.CreditCardBalanceStats
@@ -192,7 +195,7 @@ class DashboardAccountsOverviewTest {
                 today = LocalDate(2026, 7, 19),
                 targetMonth = YearMonth(2026, 3),
             ),
-            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            context = DashboardBuilderContext(pendingRecurring = emptyList(), unhandledRecurring = emptyList()),
             config = emptyMap(),
         )
 
@@ -211,7 +214,6 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     // Month-wide card stats the credit-card balance widget reads (task 4.11): expense 60, payment 25.
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) =
         com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency(
@@ -238,6 +240,7 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()

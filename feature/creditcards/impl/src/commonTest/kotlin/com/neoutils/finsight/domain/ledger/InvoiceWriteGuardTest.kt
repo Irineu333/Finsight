@@ -87,6 +87,7 @@ private class SingleInvoiceRepository(private val invoice: Invoice) : IInvoiceRe
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = flowOf(listOf(invoice))
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = flowOf(invoice)
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = flowOf(listOf(invoice))
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = listOf(invoice)
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = listOf(invoice)
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = invoice

@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.yearMonth
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -72,7 +74,14 @@ class ConfirmRecurringViewModel(
      */
     private val recurringCurrency = recurring.account?.currency ?: recurring.creditCard?.currency
 
-    private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
+    /**
+     * The month this confirmation is about, taken from the date it was opened on and
+     * fixed for as long as it is open — the caller decided which cycle is being
+     * confirmed, and the date field may not undo that decision.
+     */
+    private val confirmableDates = confirmableDates(targetDate.yearMonth, currentDate)
+
+    private val confirmDate = MutableStateFlow(targetDate.coerceIn(confirmableDates))
     private val selectedTarget = MutableStateFlow(initialTarget)
     private val selectedAccount = MutableStateFlow(initialAccount)
     private val selectedCreditCard = MutableStateFlow(initialCreditCard)
@@ -142,6 +151,7 @@ class ConfirmRecurringViewModel(
         ConfirmRecurringUiState(
             recurring = recurring,
             confirmDate = date,
+            confirmableDates = confirmableDates,
             categories = category.offered,
             selectedCategory = category.selected,
             selectedTarget = target,
@@ -163,7 +173,8 @@ class ConfirmRecurringViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ConfirmRecurringUiState(
             recurring = recurring,
-            confirmDate = targetDate.takeIf { it <= currentDate } ?: currentDate,
+            confirmDate = targetDate.coerceIn(confirmableDates),
+            confirmableDates = confirmableDates,
             selectedTarget = initialTarget,
             selectedAccount = initialAccount,
             selectedCreditCard = initialCreditCard,
@@ -184,7 +195,7 @@ class ConfirmRecurringViewModel(
             is ConfirmRecurringAction.AccountSelected -> selectedAccount.value = action.account
             is ConfirmRecurringAction.CreditCardSelected -> selectedCreditCard.value = action.creditCard
             is ConfirmRecurringAction.DateChanged -> {
-                confirmDate.value = action.date.takeIf { it <= currentDate } ?: currentDate
+                confirmDate.value = action.date.coerceIn(confirmableDates)
             }
 
             is ConfirmRecurringAction.InvoiceSelected -> selectedInvoice.value = action.invoice
@@ -195,7 +206,7 @@ class ConfirmRecurringViewModel(
     }
 
     private fun confirm(amount: String, title: String) = viewModelScope.launch {
-        val date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate
+        val date = confirmDate.value.coerceIn(confirmableDates)
 
         val parsedAmount = amount.filter { it.isDigit() }
             .toLongOrNull()
@@ -213,7 +224,7 @@ class ConfirmRecurringViewModel(
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
             // Blank is an absence, not the template's title: a transaction with no title
             // of its own is displayed by its category, which is the rule the whole app
-            // reads titles by (`displayTitleOf`). Falling back to the template here would
+            // reads titles by (`displayTitleOrNull`). Falling back to the template here would
             // hand the user a name they had just erased.
             title = title.trim().takeIf { it.isNotBlank() },
             category = selectedCategory.value,
@@ -237,7 +248,7 @@ class ConfirmRecurringViewModel(
         modalManager.show(
             SkipRecurringModal(
                 recurring = recurring,
-                date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate,
+                date = confirmDate.value.coerceIn(confirmableDates),
                 target = uiState.value.selectedTarget,
             )
         )
@@ -295,5 +306,24 @@ internal fun offeredCategories(
  * A recurring that names neither account nor card has nothing to constrain, and everything
  * is offered.
  */
+/**
+ * The dates this confirmation may take: **inside the month of the cycle it is
+ * confirming**, and never after today.
+ *
+ * The month is the content of the decision, not a consequence of the date. The occurrence
+ * is filed under the month of whatever date is picked, while the pending list asks about
+ * the month of the cycle — so a date from another month filed the confirmation where the
+ * pending list never looks: the card stayed, a second confirmation was accepted (the
+ * re-entry check is by `(recurringId, yearMonth)`, and the months differed), and the same
+ * monthly expense entered the ledger twice.
+ *
+ * A month still ahead — which no surface offers — collapses onto its first day rather
+ * than inverting, so the range is always one `coerceIn` can be applied to.
+ */
+internal fun confirmableDates(cycleMonth: YearMonth, today: LocalDate): ClosedRange<LocalDate> {
+    val first = cycleMonth.firstDay
+    return first..maxOf(first, minOf(today, cycleMonth.lastDay))
+}
+
 internal fun <T> List<T>.offeredFor(currency: String?, currencyOf: (T) -> String?): List<T> =
     if (currency == null) this else filter { currencyOf(it) == currency }

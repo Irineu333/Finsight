@@ -3,6 +3,8 @@ package com.neoutils.finsight.ui.modal.deleteExchangeRate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.database.repository.RateArchive
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.DeleteExchangeRate
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.feature.backup.api.CaptureRefusal
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
@@ -33,6 +35,7 @@ class DeleteExchangeRateViewModel(
     private val rate: ExchangeRate,
     private val exchangeRateRepository: RateArchive,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
     vaultOffer: VaultOffer,
     coverage: PreventiveCoverage,
 ) : ViewModel() {
@@ -78,6 +81,7 @@ class DeleteExchangeRateViewModel(
 
         refusal.attempt { withoutCopy ->
             exchangeRateRepository.remove(rate, withoutCopy)
+            analytics.logEvent(DeleteExchangeRate(rate.currency, rate.counterCurrency))
             // The form underneath goes with it: what it was open on no longer exists.
             modalManager.dismissAll()
         }

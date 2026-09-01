@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.transaction_error_generic
 import com.neoutils.finsight.util.UiText
@@ -129,12 +130,12 @@ class EditTransactionViewModel(
     }
 
     /**
-     * The selected card's currency, read off the `LIABILITY` account it projects onto:
-     * the card facade names the account, and the account is the only place a currency is
-     * stated (design D17). Resolved here, beside the card, so the two cannot disagree.
+     * The selected card's currency, asked of the rule that owns it (design D17). `null`
+     * while no card is selected, which is what leaves the amount undenominated until one
+     * is.
      */
     private val creditCardCurrency = selectedCreditCard.map { card ->
-        card?.let { accountRepository.getAccountById(it.accountId)?.currency }
+        card?.let { accountRepository.currencyOf(it) }
     }
 
     private val categories = categoryRepository.observeAllCategories()
@@ -279,7 +280,7 @@ class EditTransactionViewModel(
                     id = transaction.id,
                     title = intent.title,
                     date = intent.date,
-                    leg = intent.legs.first(),
+                    legs = intent.legs,
                     contra = intent.contra,
                 )
             }

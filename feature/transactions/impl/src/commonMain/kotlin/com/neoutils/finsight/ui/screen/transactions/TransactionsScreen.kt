@@ -34,7 +34,6 @@ import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.SummaryCard
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.ListState
 import com.neoutils.finsight.util.LocalDateFormats
@@ -53,8 +52,9 @@ import com.neoutils.finsight.ui.theme.Transfer as TransferColor
 fun TransactionsScreen(
     categoryLabel: TransactionLabel? = null,
     target: TransactionTarget? = null,
+    filterCategoryId: Long? = null,
     viewModel: TransactionsViewModel = koinViewModel {
-        parametersOf(categoryLabel, target)
+        parametersOf(categoryLabel, target, filterCategoryId)
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -178,11 +178,7 @@ private fun TransactionsContent(
                                 .fillMaxWidth()
                                 .animateItem(),
                             onClick = {
-                                if (transactionUi.label == TransactionLabel.ADJUSTMENT) {
-                                    detailController.show(ViewAdjustmentModal(transactionUi.id))
-                                } else {
-                                    detailController.show(ViewTransactionModal(transactionUi.id))
-                                }
+                                detailController.show(ViewTransactionModal(transactionUi.id))
                             }
                         )
                     }
@@ -348,7 +344,12 @@ private fun CategoryFilterChip(
     FilterChip(
         selected = selectedSubject != null,
         onClick = { expanded = true },
-        label = { Text(label) },
+        modifier = Modifier.testTag("transactions_filter_category"),
+        // The tag on the chip cannot answer for the word inside it — the chip's own node
+        // carries no text. When what the control *says* is the claim ("the list opened
+        // cut by this category"), the assertion has to read the node that renders it, the
+        // same way `category_retire_label` does for the retire button.
+        label = { Text(label, modifier = Modifier.testTag("transactions_filter_category_label")) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -432,6 +433,7 @@ private fun TypeFilterChip(
     FilterChip(
         selected = selectedLabel != null,
         onClick = { expanded = true },
+        modifier = Modifier.testTag("transactions_filter_type"),
         label = {
             Text(
                 selectedLabel
@@ -485,6 +487,7 @@ private fun RecurringFilterChip(
     FilterChip(
         selected = enabled,
         onClick = { onAction(TransactionsAction.ToggleRecurring(!enabled)) },
+        modifier = Modifier.testTag("transactions_filter_recurring"),
         label = {
             Text(stringResource(Res.string.transactions_filter_recurring))
         },
@@ -499,6 +502,7 @@ private fun InstallmentFilterChip(
     FilterChip(
         selected = enabled,
         onClick = { onAction(TransactionsAction.ToggleInstallment(!enabled)) },
+        modifier = Modifier.testTag("transactions_filter_installment"),
         label = {
             Text(stringResource(Res.string.transactions_filter_installment))
         },
@@ -515,6 +519,7 @@ private fun TargetFilterChip(
     FilterChip(
         selected = selectedTarget != null,
         onClick = { expanded = true },
+        modifier = Modifier.testTag("transactions_filter_target"),
         label = {
             Text(
                 when (selectedTarget) {

@@ -7,6 +7,9 @@ package com.neoutils.finsight.ui.screen.creditCards
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
+import com.neoutils.finsight.feature.transactions.api.TransactionOrigin
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.navigation.ArchivedCreditCardsRoute
@@ -22,6 +25,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.FilterAltOff
@@ -48,14 +52,13 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
-import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.ui.modal.archiveCreditCard.ArchiveCreditCardModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
-import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
+import com.neoutils.finsight.ui.modal.invoicePayment.InvoicePaymentModal
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Info
@@ -101,6 +104,42 @@ private fun CreditCardsContent(
     val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
     val navController = LocalNavController.current
+
+    // The card in focus is the pager's, never the route's: the route names the card the screen was
+    // opened on, and the user swipes past it.
+    val focusedCardId = (uiState as? CreditCardsUiState.Content)
+        ?.let { it.domainCards.getOrNull(it.selectedCardIndex)?.id }
+
+    ChromeEffect(
+        actions = if (uiState is CreditCardsUiState.Content) {
+            remember(modalManager, transactionsEntry, focusedCardId) {
+                listOfNotNull(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.credit_cards_create,
+                        testTag = "credit_cards_add",
+                        onClick = { modalManager.show(CreditCardFormModal()) },
+                    ),
+                    focusedCardId?.let { creditCardId ->
+                        ChromeAction(
+                            icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                            labelRes = Res.string.credit_cards_add_transaction,
+                            testTag = "credit_cards_add_transaction",
+                            onClick = {
+                                modalManager.show(
+                                    transactionsEntry.addTransactionModal(
+                                        TransactionOrigin.CreditCard(creditCardId)
+                                    )
+                                )
+                            },
+                        )
+                    },
+                )
+            }
+        } else {
+            emptyList()
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -156,21 +195,6 @@ private fun CreditCardsContent(
             )
         },
         modifier = Modifier.testTag("screen_credit_cards"),
-        floatingActionButton = {
-            if (uiState is CreditCardsUiState.Content) {
-                FloatingActionButton(
-                    onClick = {
-                        modalManager.show(CreditCardFormModal())
-                    },
-                    modifier = Modifier.testTag("credit_cards_add"),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null
-                    )
-                }
-            }
-        },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
         when (uiState) {
@@ -234,7 +258,6 @@ private fun CreditCardsContent(
                         CardActions(
                             creditCardUi = uiState.creditCards[uiState.selectedCardIndex],
                             creditCard = uiState.domainCards[uiState.selectedCardIndex],
-                            invoice = uiState.domainInvoices[uiState.selectedCardIndex],
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
@@ -308,15 +331,7 @@ private fun CreditCardsContent(
                                             .fillMaxWidth()
                                             .animateItem(),
                                         onClick = {
-                                            when (transactionUi.direction) {
-                                                TransactionType.ADJUSTMENT -> {
-                                                    detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
-                                                }
-
-                                                else -> {
-                                                    detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
-                                                }
-                                            }
+                                            detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                         }
                                     )
                                 }
@@ -477,7 +492,6 @@ private fun CreditCardPager(
 private fun CardActions(
     creditCardUi: CreditCardUi,
     creditCard: CreditCard,
-    invoice: Invoice?,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
@@ -555,43 +569,7 @@ private fun CardActions(
             }
         }
 
-        if (invoiceUi != null && invoice != null) {
-            if (invoiceUi.isOpen) {
-                OutlinedButton(
-                    onClick = {
-                        modalManager.show(
-                            AdvancePaymentModal(
-                                invoice = invoice,
-                                currentBillAmount = invoiceUi.amount,
-                            )
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("credit_card_advance_payment"),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorScheme.primary
-                    ),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(colorScheme.primary.copy(alpha = 0.5f))
-                    ),
-                    contentPadding = PaddingValues(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Payment,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(Res.string.credit_cards_advance_payment),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
+        if (invoiceUi != null) {
             if (invoiceUi.isClosable) {
                 OutlinedButton(
                     onClick = {
@@ -623,51 +601,45 @@ private fun CardActions(
                 }
             }
 
-            if (invoiceUi.isClosed) {
-                if (invoiceUi.canReopen) {
-                    OutlinedButton(
-                        onClick = {
-                            modalManager.show(ReopenInvoiceModal(invoiceUi.id))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFFFA726)
-                        ),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                            brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
-                        ),
-                        contentPadding = PaddingValues(12.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(Res.string.credit_cards_reopen_invoice),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
-                Button(
+            if (invoiceUi.isClosed && invoiceUi.canReopen) {
+                OutlinedButton(
                     onClick = {
-                        modalManager.show(
-                            PayInvoiceModal(
-                                invoice = invoice,
-                                currentBillAmount = invoiceUi.amount
-                            )
-                        )
+                        modalManager.show(ReopenInvoiceModal(invoiceUi.id))
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("credit_card_pay_invoice"),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFFFFA726)
+                    ),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                        brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
+                    ),
                     contentPadding = PaddingValues(12.dp),
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(Res.string.credit_cards_reopen_invoice),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            // One command, and the invoice in view is only what it opens on: the verb
+            // comes from the state, resolved by the mapper.
+            if (invoiceUi.canPay) {
+                val openPayment = { modalManager.show(InvoicePaymentModal(invoiceUi.id)) }
+
+                val payModifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("credit_card_pay_invoice")
+
+                val payContent: @Composable RowScope.() -> Unit = {
                     Icon(
                         imageVector = Icons.Default.Payment,
                         contentDescription = null,
@@ -675,9 +647,42 @@ private fun CardActions(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(Res.string.credit_cards_pay_invoice),
+                        text = stringResource(invoiceUi.payLabel),
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = if (invoiceUi.paySettles) {
+                            FontWeight.Bold
+                        } else {
+                            FontWeight.Medium
+                        }
+                    )
+                }
+
+                // Solid emphasis is the screen's recommendation, and only settling the
+                // invoice earns it: paying part of one is something the user may do, not
+                // something the card is asking for.
+                if (invoiceUi.paySettles) {
+                    Button(
+                        onClick = openPayment,
+                        modifier = payModifier,
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(12.dp),
+                        content = payContent,
+                    )
+                } else {
+                    OutlinedButton(
+                        onClick = openPayment,
+                        modifier = payModifier,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorScheme.primary
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(
+                                colorScheme.primary.copy(alpha = 0.5f)
+                            )
+                        ),
+                        contentPadding = PaddingValues(12.dp),
+                        content = payContent,
                     )
                 }
             }

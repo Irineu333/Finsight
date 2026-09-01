@@ -467,6 +467,18 @@ plataforma, e a do degrau 2 já diz que cobrir a perda do aparelho depende de a 
 por algum serviço (`backup_coverage_folder`). Não há ramo por plataforma a escrever, e não há
 promessa de que o cofre seja local a manter.
 
+**O que isto recusa é adivinhar o provedor, e não ler o próprio armazenamento.** O degrau 1 tem
+três frases e não duas, porque ele é três destinos e não dois: `~/.finance/` no desktop é uma
+pasta no diretório do usuário e sobrevive à desinstalação por natureza (D3), enquanto nas duas
+móveis o armazenamento do app morre com ele. Dizer a frase das móveis no desktop seria afirmar
+o contrário do que o próprio app faz — errando para o lado de subestimar a proteção, que é a
+direção mais suave e ainda assim uma afirmação falsa, na tela que existe justamente para não
+produzir confiança sem lastro. Isso não é o ramo que este item recusa: lá se ignora um provedor
+que o app não tem como consultar e sobre o qual erraria nos dois sentidos; aqui é uma
+propriedade do armazenamento em que o app mesmo escreve, conhecida em tempo de compilação e
+escrita no arquivo daquele destino. A regra tem um dono só (`VaultCoverage`), e as duas telas
+que a dizem a consomem.
+
 *Direção, não decisão:* no momento da escolha o sistema sabe qual provedor a pessoa abriu, e sabe
 dizer o nome dele. Mostrar esse nome é honesto e barato, onde o app adivinhar "local ou nuvem" erra
 nos dois sentidos. Ninguém construiu isso.

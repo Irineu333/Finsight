@@ -6,8 +6,10 @@ import androidx.compose.runtime.Composable
 import com.neoutils.finsight.domain.model.BackupPlatform
 import com.neoutils.finsight.domain.restore.FileOrigin
 import com.neoutils.finsight.domain.vault.BackupRetention
+import com.neoutils.finsight.domain.vault.VaultCoverage
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultInterval
+import com.neoutils.finsight.domain.vault.coverage
 import com.neoutils.finsight.domain.vault.label
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.backup_age_day
@@ -21,6 +23,9 @@ import com.neoutils.finsight.resources.backup_copies_many
 import com.neoutils.finsight.resources.backup_copies_none
 import com.neoutils.finsight.resources.backup_copies_one
 import com.neoutils.finsight.resources.backup_confirm_origin_unknown
+import com.neoutils.finsight.resources.backup_coverage_app
+import com.neoutils.finsight.resources.backup_coverage_app_desktop
+import com.neoutils.finsight.resources.backup_coverage_folder
 import com.neoutils.finsight.resources.backup_destination_app
 import com.neoutils.finsight.resources.backup_destination_folder
 import com.neoutils.finsight.resources.backup_destination_folder_named
@@ -40,6 +45,7 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -186,6 +192,36 @@ fun destinationLabel(destination: VaultDestination, folderName: String? = null):
             ?.let { stringResource(Res.string.backup_destination_folder_named, it) }
             ?: stringResource(Res.string.backup_destination_folder)
     }
+
+/**
+ * Which sentence a [VaultCoverage] is said in — a resource rather than a rendered string,
+ * for the reason [com.neoutils.finsight.ui.modal.confirmRestore.RestoreAftermath] is one:
+ * there is no Compose harness in this repository, so a claim about where somebody's backups
+ * survive can only be pinned by a test if it can be named without being rendered.
+ */
+internal val VaultCoverage.sentence: StringResource
+    get() = when (this) {
+        VaultCoverage.INSIDE_THE_APP -> Res.string.backup_coverage_app
+        VaultCoverage.APP_FOLDER_ON_DESKTOP -> Res.string.backup_coverage_app_desktop
+        VaultCoverage.CHOSEN_FOLDER -> Res.string.backup_coverage_folder
+    }
+
+/**
+ * What the rung does **not** cover, which is the consequence of the place [destinationLabel]
+ * names and the reason the two are said one under the other (design D3).
+ *
+ * It is here beside its own half of the pair for the reason the rest of this file is: the
+ * card on the backup screen and the sheet that chooses between the rungs both say it, and a
+ * rung described one way in one and another way in the other would be two answers about
+ * where somebody's backups survive.
+ *
+ * Which of the three sentences is owed is [VaultCoverage]'s and not this function's — the
+ * app's own storage outlives the app on the desktop and not on either mobile platform, and
+ * that belongs with the destination rather than in a screen.
+ */
+@Composable
+fun coverageOf(destination: VaultDestination): String =
+    stringResource(destination.coverage.sentence)
 
 /**
  * What a month is worth when a span is being said out loud: a round thirty days, and not a

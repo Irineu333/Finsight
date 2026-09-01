@@ -1033,6 +1033,7 @@
     <string name="backup_destination_folder">Numa pasta que você escolheu</string>
     <string name="backup_destination_folder_named">Na pasta "%1$s"</string>
     <string name="backup_coverage_app">As cópias ficam neste aparelho e dentro do app. Desinstalar o app leva todas junto, e recuperar seus dados em outro aparelho continua dependendo do arquivo que você exportar.</string>
+    <string name="backup_coverage_app_desktop">As cópias ficam na pasta do app neste computador e continuam lá se você desinstalar o app. Cobrir a perda do computador depende de você escolher uma pasta sincronizada, ou do arquivo que você exportar.</string>
     <string name="backup_coverage_folder">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</string>
     <string name="backup_destination_title">Onde as cópias ficam</string>
     <string name="backup_folder_unreachable">Não foi possível chegar até a pasta escolhida. As cópias novas estão sendo guardadas dentro do app, provisoriamente, até você decidir.</string>

@@ -165,14 +165,28 @@ A tela SHALL declarar, para o destino em vigor, o que ele **não** protege. Um d
 sobrevive à desinstalação do app SHALL ser apresentado como tal, e o app MUST NOT apresentar o
 cofre como proteção contra perda do aparelho quando as cópias ficam apenas nele.
 
+A frase é do destino, e o armazenamento próprio do app não é o mesmo destino nas três
+plataformas: no desktop ele é uma pasta no diretório do usuário, que nenhuma desinstalação
+esvazia. O app MUST NOT dizer de um destino que ele morre com o app onde ele não morre. Isso
+não reabre a fala por plataforma que o desenho recusa para a pasta apontada — lá o que se
+ignora é o provedor que o app não tem como consultar; aqui é uma propriedade do
+armazenamento em que o próprio app escreve, conhecida em tempo de compilação.
+
 Onde as cópias fiquem numa pasta apontada pelo usuário, o app SHALL escrever direto nela, sem
 subpasta própria no caminho, e MUST NOT tratar como suas quaisquer outros arquivos da pasta
 escolhida: o nome filtra o que é candidato, e o conteúdo — verificado pelo mesmo gate do fluxo de
 restauração — é o que autoriza mexer nele antes de qualquer remoção.
 
 #### Scenario: O degrau padrão diz que morre com o app
-- **WHEN** o usuário liga o cofre sem escolher pasta
+- **WHEN** o usuário liga o cofre sem escolher pasta, numa plataforma móvel
 - **THEN** a tela declara que as cópias ficam dentro do app e que desinstalar o app as leva junto
+
+#### Scenario: O degrau padrão do desktop não é dito como o das móveis
+- **WHEN** o usuário liga o cofre sem escolher pasta, no desktop
+- **THEN** a tela **não** afirma que desinstalar o app leva as cópias junto — o armazenamento
+  próprio do app ali é uma pasta no diretório do usuário, e nenhuma desinstalação a esvazia —
+  e declara, em vez disso, que cobrir a perda do computador depende de uma pasta sincronizada
+  ou do arquivo exportado
 
 #### Scenario: Uma pasta com arquivos do usuário
 - **WHEN** o usuário aponta uma pasta que contém arquivos seus

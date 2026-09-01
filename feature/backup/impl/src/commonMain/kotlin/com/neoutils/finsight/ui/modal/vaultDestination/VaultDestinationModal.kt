@@ -24,8 +24,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.backup_coverage_app
-import com.neoutils.finsight.resources.backup_coverage_folder
 import com.neoutils.finsight.resources.backup_destination_app
 import com.neoutils.finsight.resources.backup_destination_folder
 import com.neoutils.finsight.resources.backup_destination_title
@@ -34,6 +32,7 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.screen.backup.GroupGap
 import com.neoutils.finsight.ui.screen.backup.RowGap
 import com.neoutils.finsight.ui.screen.backup.TileShape
+import com.neoutils.finsight.ui.screen.backup.coverageOf
 import com.neoutils.finsight.ui.theme.BackgroundTileRipple
 import org.jetbrains.compose.resources.stringResource
 
@@ -87,7 +86,7 @@ class VaultDestinationModal(
 
             DestinationTile(
                 title = stringResource(Res.string.backup_destination_app),
-                coverage = stringResource(Res.string.backup_coverage_app),
+                coverage = coverageOf(VaultDestination.APP_STORAGE),
                 isSelected = selected == VaultDestination.APP_STORAGE,
                 tag = "backup_destination_app_option",
                 onSelect = {
@@ -99,7 +98,7 @@ class VaultDestinationModal(
 
             DestinationTile(
                 title = stringResource(Res.string.backup_destination_folder),
-                coverage = stringResource(Res.string.backup_coverage_folder),
+                coverage = coverageOf(VaultDestination.USER_FOLDER),
                 isSelected = selected == VaultDestination.USER_FOLDER,
                 tag = "backup_destination_folder_option",
                 // Offered even while it is the one in force: pointing at a folder again is

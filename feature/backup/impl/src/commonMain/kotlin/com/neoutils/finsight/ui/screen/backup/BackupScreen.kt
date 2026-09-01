@@ -56,15 +56,12 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.restore.RestoreConfirmation
-import com.neoutils.finsight.domain.vault.VaultDestination
 import com.neoutils.finsight.domain.vault.VaultInterval
 import com.neoutils.finsight.domain.vault.VaultRung
 import com.neoutils.finsight.domain.vault.VaultState
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.backup_coverage_app
-import com.neoutils.finsight.resources.backup_coverage_folder
 import com.neoutils.finsight.resources.backup_folder_keep_in_app
 import com.neoutils.finsight.resources.backup_folder_reconnect
 import com.neoutils.finsight.resources.backup_folder_unreachable
@@ -592,13 +589,6 @@ private fun LastBackupCard(
             }
         }
     }
-}
-
-/** What each rung of protection does not cover, in its own words (design D3). */
-@Composable
-private fun coverageOf(destination: VaultDestination): String = when (destination) {
-    VaultDestination.APP_STORAGE -> stringResource(Res.string.backup_coverage_app)
-    VaultDestination.USER_FOLDER -> stringResource(Res.string.backup_coverage_folder)
 }
 
 /**

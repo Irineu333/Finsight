@@ -36,6 +36,7 @@ import com.neoutils.finsight.resources.backup_confirm_message
 import com.neoutils.finsight.resources.backup_confirm_title
 import com.neoutils.finsight.resources.backup_confirm_transactions
 import com.neoutils.finsight.resources.backup_copy_facts_accounts
+import com.neoutils.finsight.resources.backup_copy_facts_cards
 import com.neoutils.finsight.resources.backup_copy_facts_origin
 import com.neoutils.finsight.resources.backup_scope
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -258,12 +259,18 @@ private fun FileFacts(confirmation: RestoreConfirmation, modifier: Modifier = Mo
             value = originWithVersion(origin),
             tag = "backup_restore_confirm_origin",
         )
-        // Accounts and cards on one line, because they are read together: what a person
-        // recognises is the shape of their own archive, not two figures.
+        // A line each, like every other figure in this list. Sharing one put two numbers
+        // under a label naming two things, and the reader had to pair them off by position
+        // — the one row here where reading it meant decoding it.
         FactRow(
             label = stringResource(Res.string.backup_copy_facts_accounts),
-            value = "${counts.accounts} · ${counts.creditCards}",
+            value = counts.accounts.toString(),
             tag = "backup_restore_confirm_accounts",
+        )
+        FactRow(
+            label = stringResource(Res.string.backup_copy_facts_cards),
+            value = counts.creditCards.toString(),
+            tag = "backup_restore_confirm_cards",
         )
         FactRow(
             label = stringResource(Res.string.backup_confirm_transactions),

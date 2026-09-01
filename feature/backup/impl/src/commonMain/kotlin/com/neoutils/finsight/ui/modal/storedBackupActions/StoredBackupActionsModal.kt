@@ -35,6 +35,7 @@ import com.neoutils.finsight.resources.backup_confirm_categories
 import com.neoutils.finsight.resources.backup_confirm_transactions
 import com.neoutils.finsight.resources.backup_copy_facts_accounts
 import com.neoutils.finsight.resources.backup_copy_facts_captured
+import com.neoutils.finsight.resources.backup_copy_facts_cards
 import com.neoutils.finsight.resources.backup_copy_facts_origin
 import com.neoutils.finsight.resources.backup_copy_facts_size
 import com.neoutils.finsight.resources.backup_copy_facts_unreadable
@@ -271,12 +272,18 @@ private fun CopyFacts(
             } ?: absent,
             tag = "backup_copy_facts_captured",
         )
-        // Accounts and cards on one line, because they are read together: what a person
-        // recognises is the shape of their own archive, not two figures.
+        // A line each, like every other figure in this list. Sharing one put two numbers
+        // under a label naming two things, and the reader had to pair them off by position
+        // — the one row here where reading it meant decoding it.
         FactRow(
             label = stringResource(Res.string.backup_copy_facts_accounts),
-            value = held?.let { "${it.counts.accounts} · ${it.counts.creditCards}" } ?: absent,
+            value = held?.counts?.accounts?.toString() ?: absent,
             tag = "backup_copy_facts_accounts",
+        )
+        FactRow(
+            label = stringResource(Res.string.backup_copy_facts_cards),
+            value = held?.counts?.creditCards?.toString() ?: absent,
+            tag = "backup_copy_facts_cards",
         )
         FactRow(
             label = stringResource(Res.string.backup_confirm_transactions),

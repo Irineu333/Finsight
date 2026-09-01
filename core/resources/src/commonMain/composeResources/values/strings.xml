@@ -1115,7 +1115,8 @@
     <string name="backup_confirm_file_age">Este arquivo foi criado %1$s.</string>
     <string name="backup_copy_facts_origin">Origem</string>
     <string name="backup_copy_facts_captured">Capturada em</string>
-    <string name="backup_copy_facts_accounts">Contas · Cartões</string>
+    <string name="backup_copy_facts_accounts">Contas</string>
+    <string name="backup_copy_facts_cards">Cartões</string>
     <string name="backup_copy_facts_size">Tamanho</string>
     <string name="backup_copy_facts_unreadable">Não foi possível abrir esta cópia para ver o que ela guarda. Ela pode ter saído da pasta, ou estar danificada.</string>
     <string name="backup_remove_confirm_title">Esta cópia vai ser excluída</string>

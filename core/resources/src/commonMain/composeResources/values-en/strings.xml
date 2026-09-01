@@ -1114,7 +1114,8 @@
     <string name="backup_confirm_file_age">This file was created %1$s.</string>
     <string name="backup_copy_facts_origin">Origin</string>
     <string name="backup_copy_facts_captured">Captured on</string>
-    <string name="backup_copy_facts_accounts">Accounts · Cards</string>
+    <string name="backup_copy_facts_accounts">Accounts</string>
+    <string name="backup_copy_facts_cards">Cards</string>
     <string name="backup_copy_facts_size">Size</string>
     <string name="backup_copy_facts_unreadable">This copy could not be opened to see what it holds. It may have left the folder, or be damaged.</string>
     <string name="backup_remove_confirm_title">This copy will be deleted</string>

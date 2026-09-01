@@ -422,11 +422,17 @@ class ArchiveImportTest {
     /**
      * The imported copy occupies a slot in the count and is swept out of it in its turn.
      *
-     * It is the oldest file in the folder — it was written first, and it carries the earliest
-     * of the names, which is what breaks a tie between two files stamped in the same
-     * millisecond — so the sweep behind the fifth capture is what reaches it. Nothing here
-     * sweeps on its own: retention hangs off a capture that landed (design D10), and the
-     * imported file survives untouched until one happens.
+     * It is the oldest file in the folder — it was written first, and it carries the
+     * earliest **stamp**, which is what breaks a tie between two files the destination
+     * reports at the same instant — so the sweep behind the fifth capture is what reaches
+     * it. Nothing here sweeps on its own: retention hangs off a capture that landed
+     * (design D10), and the imported file survives untouched until one happens.
+     *
+     * The stamp and not the name: an imported copy's name carries `imported-` where a
+     * captured one carries a date, and that mark outranks every date there is. This test
+     * passed over that for as long as it ran against a destination whose own timestamps
+     * decide, where the tie never breaks — see [ImportedCopyOrderTest], which asks the
+     * ordering directly.
      */
     @Test
     fun `retention counts an imported copy and sweeps it in its turn`() = runTest {

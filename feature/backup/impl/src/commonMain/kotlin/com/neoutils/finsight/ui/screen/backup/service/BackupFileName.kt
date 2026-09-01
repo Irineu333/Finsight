@@ -150,6 +150,35 @@ internal fun freeBackupFileName(name: String, isTaken: (String) -> Boolean): Str
         .first { !isTaken(it) }
 }
 
+/**
+ * The stamp [name] carries, or nothing at all where it carries none — what orders two
+ * copies a destination cannot tell apart by time.
+ *
+ * **The raw name is not that stamp, and taking it for one had a cost.** Every name here
+ * opens with the same prefix, so a comparison of raw names is decided by whatever comes
+ * next — and for an imported copy that is `imported-`, which sorts *above* every dated
+ * name there is (`i` after `2`, and the order is newest first). A destination that answers
+ * the same time for every file, which the SAF rung does when a provider keeps no
+ * modification time, therefore had every imported copy ranking as newer than a copy taken
+ * a moment ago. Retention counts in this order, so the copy a capture had just written
+ * could be the one the sweep behind that same capture removed — while the person was told
+ * their backup succeeded. Dropping the mark is the whole of the difference: what is left is
+ * the moment the copy was asked to carry, which is what was meant by breaking a tie with
+ * the name all along.
+ *
+ * **A name with no stamp answers empty, and empty sorts last** — the copy taken before a
+ * migration carries a reserved name rather than a date (design D10), and a file the person
+ * renamed by hand may carry anything and still be listed (design D9's filter is deliberately
+ * loose). Neither has a claim to being the newest thing in the destination, and letting one
+ * ride at the top of a tie is the same mistake in a smaller size. Retention never counts
+ * the pre-migration copy — it is filtered out before the limit is applied — so what this
+ * settles for it is only where it sits in the list.
+ */
+internal fun backupNameStamp(name: String): String {
+    val stamp = name.removePrefix(NAME_PREFIX).removePrefix(IMPORTED_MARK)
+    return if (stamp.firstOrNull()?.isDigit() == true) stamp else ""
+}
+
 private fun Int.padded(): String = toString().padStart(PAD_WIDTH, '0')
 
 /** What ISO-8601 puts between a date and a time, and the one part of it a file name keeps. */

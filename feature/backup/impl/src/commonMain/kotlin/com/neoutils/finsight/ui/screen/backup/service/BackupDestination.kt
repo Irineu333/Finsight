@@ -117,9 +117,18 @@ data class StoredBackup(
  * in.
  *
  * The file system's own timestamp decides rather than the name, because the name is not
- * authority (design D9) and a provider may have altered it. The name breaks a tie, where
- * it is worth exactly what it is worth: two copies written in the same second are ordered
- * by the second they were asked to carry.
+ * authority (design D9) and a provider may have altered it. What breaks a tie is the stamp
+ * the name carries, worth exactly what it is worth: two copies the destination reports at
+ * the same instant are ordered by the moment they were asked to carry.
+ *
+ * **The stamp, and not the name it sits in** — see [backupNameStamp]. The names share a
+ * prefix, so comparing them raw is decided by what follows it, which for an imported copy
+ * is `imported-` and outranks every date. On a destination that answers one time for every
+ * file, that put imported copies above a copy taken seconds ago, in the very order
+ * retention counts in. The raw name stays as the last resort, where two copies carry the
+ * same stamp and something still has to decide.
  */
 internal val NEWEST_FIRST: Comparator<StoredBackup> =
-    compareByDescending<StoredBackup> { it.savedAt }.thenByDescending { it.name }
+    compareByDescending<StoredBackup> { it.savedAt }
+        .thenByDescending { backupNameStamp(it.name) }
+        .thenByDescending { it.name }

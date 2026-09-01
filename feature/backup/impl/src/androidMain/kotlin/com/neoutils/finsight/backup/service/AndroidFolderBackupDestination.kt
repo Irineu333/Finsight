@@ -228,10 +228,16 @@ class AndroidFolderBackupDestination(
  * What the provider says about a copy, and nothing read out of the copy itself — which is
  * the whole of what a listing is allowed to be (design D9).
  *
- * A provider that keeps no modification time answers zero, and the copies then order
- * themselves by name, which for this app's dated names is the same order. What it costs is
- * a date on the screen that is not the date the copy was taken, and never an order that
- * puts the newest copy where retention can reach it.
+ * A provider that keeps no modification time answers zero, and every copy then ties — so
+ * what orders them is the stamp their names carry, which for a destination this app writes
+ * is the same order ([com.neoutils.finsight.ui.screen.backup.service.backupNameStamp]).
+ * What it costs is a date on the screen that is not the date the copy was taken, and never
+ * an order that puts the newest copy where retention can reach it.
+ *
+ * That last half is a property of the stamp and not of the name it sits in, and it was
+ * false while the raw name broke the tie: every name here opens with the same prefix, and
+ * an imported copy's next character outranks any date, so this rung — the only one that can
+ * tie every file at once — ranked imported copies above a copy taken seconds before.
  */
 private fun SafChild.asStoredBackup() = StoredBackup(
     name = name,

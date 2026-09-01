@@ -1013,8 +1013,8 @@
     <string name="backup_group_automatic">Automatic backup</string>
     <string name="backup_group_manual">Export and restore</string>
     <string name="backup_vault_title">Keep copies automatically</string>
-    <string name="backup_vault_on_both">Every %1$s, and before deleting anything</string>
-    <string name="backup_vault_on_periodic">Every %1$s</string>
+    <string name="backup_vault_on_both">When you open the app after %1$s, and before deleting anything</string>
+    <string name="backup_vault_on_periodic">When you open the app after %1$s</string>
     <string name="backup_vault_on_preventive">Before deleting anything</string>
     <string name="backup_vault_on_update_only">Only before an update that rewrites the database</string>
     <string name="backup_interval_1">1 day</string>

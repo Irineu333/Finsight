@@ -632,6 +632,15 @@ private fun neverHint(vault: VaultState): String = when {
  * vault, the consequence of that instead: nothing is kept, and getting the data back is
  * down to the file the user exported (`local-backup` spec). The switch beside it already
  * shows off, so the subtitle spends its line on what off *means*.
+ *
+ * **The periodic occasion is named as the opening of the app, never as a cadence.** The
+ * spec forbids this screen a promise of *"a cada N dias"* in as many words — no supported
+ * platform lets an app keep one — and requires it to say instead that the copy happens when
+ * the app is opened. This is the line that says it in the state a person is in for as long
+ * as the vault works: the sheet behind the settings tile says the same thing at length, and
+ * the sentence under the last-copy date says it only while no copy has been taken yet or
+ * one has aged past the wait. The interval is still stated, because *after* how long is
+ * half the occasion; what it is not allowed to be is the whole of it.
  */
 @Composable
 private fun vaultSubtitle(vault: VaultState): String {

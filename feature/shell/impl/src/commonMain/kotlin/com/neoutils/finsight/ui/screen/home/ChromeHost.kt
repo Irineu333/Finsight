@@ -167,7 +167,10 @@ fun ChromeHost(
     // and not a change. Holding the bar back would not be enough: a child `AnimatedVisibility` seeds
     // from the parent's `currentState`, so the parent is what has to start over. The key flips once.
     val chromeTransition = key(isDestinationResolved) {
-        updateTransition(targetState = effectiveConfig, label = "ChromeTransition")
+        updateTransition(
+            targetState = ChromeState(effectiveConfig, isWideWindow),
+            label = "ChromeTransition",
+        )
     }
 
     // What a screen with nothing of its own to offer is served, so that it keeps the button.
@@ -221,7 +224,15 @@ fun ChromeHost(
     // back-dates it to a state never reached when a second change lands mid-flight — so a button
     // visibly mid-exit could be read as gone, and `Place` would teleport it sideways. Retargeted
     // only by its own visibility, it cannot be back-dated by the bar's comings and goings.
-    val isButtonWanted = effectiveConfig.actionButton.isOverContent
+    //
+    // The width is one of its terms: from `WIDE` upwards the button over the content gives way to
+    // the rail's header, and crossing the breakpoint is a disappearance like any other — one the
+    // button owes an exit. And a place the shell cannot yet name is not a button either: narrowing
+    // from `WIDE`, the bar is measured only in the frame after it composes, and reading `null` as
+    // "no button to draw" is what leaves the entrance to play a frame later instead of never.
+    val isButtonWanted = !isWideWindow &&
+        effectiveConfig.actionButton.isOverContent &&
+        fabTarget != null
 
     val fabVisibility = key(isDestinationResolved) {
         updateTransition(targetState = isButtonWanted, label = "FabVisibility")
@@ -244,60 +255,56 @@ fun ChromeHost(
             Scaffold(
                 contentWindowInsets = WindowInsets(),
                 bottomBar = {
-                    if (!isWideWindow) {
-                        chromeTransition.AnimatedVisibility(
-                            visible = { it.isBottomBarVisible },
-                            enter = slideInVertically { it } + expandVertically(),
-                            exit = shrinkVertically() + slideOutVertically { it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aboveSharedElements(OverlayPriority.NavigationChrome),
-                        ) {
-                            BottomNavigationBar(
-                                items = bottomItems,
-                                selectedItem = selectedItem ?: bottomItems.first(),
-                                onItemSelected = onItemSelected,
-                                // On the bar, not on the `AnimatedVisibility` above it: the child
-                                // is measured at full size on every frame, so this is the resting
-                                // height whatever size the animation reports upwards.
-                                modifier = Modifier.onSizeChanged { size ->
-                                    bottomBarHeight = with(density) { size.height.toDp() }
-                                },
-                            )
-                        }
+                    chromeTransition.AnimatedVisibility(
+                        visible = { it.isBottomBarVisible },
+                        enter = slideInVertically { it } + expandVertically(),
+                        exit = shrinkVertically() + slideOutVertically { it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aboveSharedElements(OverlayPriority.NavigationChrome),
+                    ) {
+                        BottomNavigationBar(
+                            items = bottomItems,
+                            selectedItem = selectedItem ?: bottomItems.first(),
+                            onItemSelected = onItemSelected,
+                            // On the bar, not on the `AnimatedVisibility` above it: the child is
+                            // measured at full size on every frame, so this is the resting height
+                            // whatever size the animation reports upwards.
+                            modifier = Modifier.onSizeChanged { size ->
+                                bottomBarHeight = with(density) { size.height.toDp() }
+                            },
+                        )
                     }
                 },
             ) { padding ->
                 Row(modifier = Modifier.fillMaxSize()) {
-                    if (isWideWindow) {
-                        chromeTransition.AnimatedVisibility(
-                            visible = { it.isBottomBarVisible },
-                            enter = slideInHorizontally { -it } + expandHorizontally() + fadeIn(),
-                            exit = shrinkHorizontally() + slideOutHorizontally { -it } + fadeOut(),
-                            modifier = Modifier.aboveSharedElements(OverlayPriority.NavigationChrome),
-                        ) {
-                            NavigationRailBar(
-                                items = railItems,
-                                selectedItem = selectedItem ?: railItems.first(),
-                                onItemSelected = onItemSelected,
-                                header = {
-                                    chromeTransition.AnimatedVisibility(
-                                        visible = { it.actionButton.isBesideContent },
-                                        enter = fadeIn(),
-                                        exit = fadeOut(),
-                                    ) {
-                                        FloatingActionMenuButton(
-                                            actions = actions,
-                                            expanded = isMenuExpanded,
-                                            onExpandedChange = { isMenuExpanded = it },
-                                            modifier = Modifier.onGloballyPositioned {
-                                                railButtonWindowY = it.positionInWindow().y
-                                            },
-                                        )
-                                    }
-                                },
-                            )
-                        }
+                    chromeTransition.AnimatedVisibility(
+                        visible = { it.isRailVisible },
+                        enter = slideInHorizontally { -it } + expandHorizontally() + fadeIn(),
+                        exit = shrinkHorizontally() + slideOutHorizontally { -it } + fadeOut(),
+                        modifier = Modifier.aboveSharedElements(OverlayPriority.NavigationChrome),
+                    ) {
+                        NavigationRailBar(
+                            items = railItems,
+                            selectedItem = selectedItem ?: railItems.first(),
+                            onItemSelected = onItemSelected,
+                            header = {
+                                chromeTransition.AnimatedVisibility(
+                                    visible = { it.isRailButtonVisible },
+                                    enter = fadeIn(),
+                                    exit = fadeOut(),
+                                ) {
+                                    FloatingActionMenuButton(
+                                        actions = actions,
+                                        expanded = isMenuExpanded,
+                                        onExpandedChange = { isMenuExpanded = it },
+                                        modifier = Modifier.onGloballyPositioned {
+                                            railButtonWindowY = it.positionInWindow().y
+                                        },
+                                    )
+                                }
+                            },
+                        )
                     }
 
                     Box(
@@ -359,51 +366,52 @@ fun ChromeHost(
                     onDismissRequest = { isMenuExpanded = false },
                     modifier = Modifier.aboveSharedElements(OverlayPriority.ActionScrim),
                 )
+            }
 
-                // No button until there is a place to put it in — one or two frames of a cold
-                // start. A provisional position is one the button then has to leave.
-                if (fabTarget != null) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .windowInsetsPadding(
-                                WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-                            )
-                            .padding(horizontal = FabMargin)
-                            .padding(bottom = bottomAnchor),
-                    ) {
-                        // How far below its own place *hidden* is, measured from wherever on the
-                        // line the button stands — which is what keeps the descent straight.
-                        //
-                        // Docked, the distance is the bar's own: two things on one clock descend as
-                        // one only if they descend the same distance. In the corner it is the
-                        // button's height plus the clearance it was resting at.
-                        val hiddenOffsetY: (Int) -> Int = { fullHeight ->
-                            with(density) {
-                                lerp(
-                                    start = bottomBarHeight ?: cornerAnchor,
-                                    stop = cornerAnchor + fullHeight.toDp(),
-                                    fraction = fabProgress,
-                                ).roundToPx()
-                            }
-                        }
-
-                        fabVisibility.AnimatedVisibility(
-                            visible = { it },
-                            enter = fadeIn() + slideInVertically(initialOffsetY = hiddenOffsetY),
-                            exit = fadeOut() + slideOutVertically(targetOffsetY = hiddenOffsetY),
-                            modifier = Modifier
-                                .align(BiasAlignment(horizontalBias, verticalBias = 1f))
-                                .aboveSharedElements(OverlayPriority.FloatingActionButton),
-                        ) {
-                            FloatingActionMenu(
-                                actions = actions,
-                                expanded = isMenuExpanded,
-                                onExpandedChange = { isMenuExpanded = it },
-                                horizontalAlignment = menuAlignment,
-                            )
-                        }
+            // Composed at every width, and empty of everything but its own visibility whenever the
+            // button is elsewhere. "Not here" has to be a state this can animate out of and into:
+            // removed by a branch, the button owes the breakpoint an exit it cannot play, and
+            // inserted by one it seeds itself already visible and skips the entrance. Whether it
+            // has a place to be in at all is folded into that visibility, for the same reason.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                    )
+                    .padding(horizontal = FabMargin)
+                    .padding(bottom = bottomAnchor),
+            ) {
+                // How far below its own place *hidden* is, measured from wherever on the line the
+                // button stands — which is what keeps the descent straight.
+                //
+                // Docked, the distance is the bar's own: two things on one clock descend as one
+                // only if they descend the same distance. In the corner it is the button's height
+                // plus the clearance it was resting at.
+                val hiddenOffsetY: (Int) -> Int = { fullHeight ->
+                    with(density) {
+                        lerp(
+                            start = bottomBarHeight ?: cornerAnchor,
+                            stop = cornerAnchor + fullHeight.toDp(),
+                            fraction = fabProgress,
+                        ).roundToPx()
                     }
+                }
+
+                fabVisibility.AnimatedVisibility(
+                    visible = { it },
+                    enter = fadeIn() + slideInVertically(initialOffsetY = hiddenOffsetY),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = hiddenOffsetY),
+                    modifier = Modifier
+                        .align(BiasAlignment(horizontalBias, verticalBias = 1f))
+                        .aboveSharedElements(OverlayPriority.FloatingActionButton),
+                ) {
+                    FloatingActionMenu(
+                        actions = actions,
+                        expanded = isMenuExpanded,
+                        onExpandedChange = { isMenuExpanded = it },
+                        horizontalAlignment = menuAlignment,
+                    )
                 }
             }
         }

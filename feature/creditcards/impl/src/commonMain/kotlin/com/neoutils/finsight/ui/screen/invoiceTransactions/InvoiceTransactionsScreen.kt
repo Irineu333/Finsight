@@ -5,6 +5,7 @@
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -121,6 +122,11 @@ fun InvoiceTransactionsScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("invoice_transactions")
     }
+
+    // Charging the card in view is what the shell's universal action does, so this screen takes the
+    // default chrome — and says so, because silence is what the shell holds a previous screen's
+    // chrome through.
+    ChromeEffect()
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->

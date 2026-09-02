@@ -27,6 +27,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.EmptyStateMessage
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -58,6 +59,11 @@ fun TransactionsScreen(
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // The chrome of a primary tab, and this screen wants nothing else of it: the shell's universal
+    // action *is* recording a transaction, which is what this list holds. Said out loud all the
+    // same — silence is what the shell holds a previous screen's chrome through.
+    ChromeEffect()
 
     TransactionsContent(
         uiState = uiState,

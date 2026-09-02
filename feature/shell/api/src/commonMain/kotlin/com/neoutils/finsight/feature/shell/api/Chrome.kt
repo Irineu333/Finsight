@@ -13,12 +13,9 @@ import org.jetbrains.compose.resources.StringResource
 /**
  * Where a screen will take the app's action button.
  *
- * The button has two homes and the shell picks between them by window width: in a compact window it
- * floats over the bottom-right corner of the content, and from `WIDE` upwards it is the navigation
- * rail's header, beside the content and over nothing. A screen with no room for it usually means
- * only the first — the corner it drew something of its own in — and that is what [BesideContent]
- * says. Which home each width gets is the shell's rule; a screen reading the breakpoint to decide
- * for itself would be a second copy of that rule, in as many screens as ever need it.
+ * It has two homes, and which width gets which is the shell's to know: the bottom-right corner of a
+ * compact window, over the content, and the navigation rail's header from `WIDE` up, beside it. A
+ * screen with no room usually means only the first, which is [BesideContent].
  */
 enum class ActionButtonPresence {
 
@@ -29,7 +26,16 @@ enum class ActionButtonPresence {
     BesideContent,
 
     /** Neither place. */
-    Nowhere,
+    Nowhere;
+
+    /**
+     * Whether the button is drawn over the content — the compact window's corner. Which values
+     * answer yes is this enum's to know, so a fourth one is not a hunt through the shell.
+     */
+    val isOverContent: Boolean get() = this == Anywhere
+
+    /** Whether the button is drawn where it stands **beside** the content — the rail's header. */
+    val isBesideContent: Boolean get() = this != Nowhere
 }
 
 data class ChromeConfig(
@@ -44,9 +50,8 @@ data class ChromeConfig(
         )
 
         /**
-         * The chrome of a screen that has no room for a button over its content — because it drew
-         * its own affordance in that corner, or because the universal action it would be served
-         * has nothing to do with what the screen is for.
+         * For a screen with no room for a button over its content: it drew its own affordance in
+         * that corner, or the universal action it would be served is not what the screen is for.
          */
         val NoButtonOverContent = ChromeConfig(
             actionButton = ActionButtonPresence.BesideContent,
@@ -55,15 +60,12 @@ data class ChromeConfig(
 }
 
 /**
- * One action a screen offers the app's action button, in the shell's own vocabulary.
- *
- * Concrete counterpart of [FloatingActionItem], declared here for the same reason [NavDestination]
- * is: `:core:designsystem` owns the component and the shape of what it renders, and the shell owns
- * the values the app actually publishes.
+ * One action a screen offers the app's action button. Concrete counterpart of [FloatingActionItem],
+ * declared here for the same reason [NavDestination] is: `:core:designsystem` owns the shape,
+ * the shell owns the values.
  *
  * **The list a screen publishes must be memoized.** [onClick] is compared by reference, so a list
- * rebuilt on every recomposition is never equal to the one before it. `remember(what the action
- * depends on)` is the whole of it — for the categories screen, the filter in force.
+ * rebuilt on every recomposition is never equal to the one before it.
  */
 data class ChromeAction(
     override val icon: ImageVector,
@@ -73,11 +75,9 @@ data class ChromeAction(
 ) : FloatingActionItem
 
 /**
- * What a screen tells the shell about the chrome around it.
- *
- * Everything is keyed by the destination that said it. During a navigation transition two screens
- * are composed at once and both publish, and the one leaving disposes *after* the one entering has
- * already published — a single slot would have the outgoing screen erase the incoming one's word.
+ * What a screen tells the shell about the chrome around it, keyed by the destination that said it:
+ * during a navigation two screens publish at once, and the one leaving disposes *after* the one
+ * entering has spoken.
  */
 interface ChromeController {
     fun publish(destinationId: String, config: ChromeConfig?, actions: List<ChromeAction>)
@@ -99,19 +99,15 @@ val LocalChromeController = staticCompositionLocalOf<ChromeController> {
 }
 
 /**
- * Publishes this screen's chrome — the selector's configuration and the actions its button offers —
- * for as long as the screen is composed.
+ * Publishes this screen's chrome for as long as the screen is composed.
  *
- * **The screen never names its own identity.** Inside any `composable<Route>{}` the destination's
- * `NavBackStackEntry` is the `ViewModelStoreOwner`, so the identity is read from there: no
- * ceremony per screen, and no call site that can forget it. Composed outside a destination there is
- * nothing to attribute the publication to, and it publishes nothing.
+ * The screen never names its own identity: inside any `composable<Route>{}` the destination's
+ * `NavBackStackEntry` is the `ViewModelStoreOwner`, so no call site can forget it. Composed outside
+ * a destination there is nothing to attribute the publication to, and it publishes nothing.
  *
  * **A null [config] is not the default — it is "no word yet".** A screen whose chrome depends on
- * what it is still reading cannot answer, and the answer it would guess is one it has to take back:
- * the bar and the button move once on the guess and again on the reading, and the button is caught
- * halfway to the place the guess sent it. Saying nothing leaves the chrome on screen exactly as it
- * is until the reading lands, and then everything moves once, together and in the right direction.
+ * what it is still reading would otherwise guess, and the guess is one the reading takes back: the
+ * chrome moves once on it and again on the answer. Silent, it moves once, when the answer lands.
  */
 @Composable
 fun ChromeEffect(

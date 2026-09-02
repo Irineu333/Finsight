@@ -4,7 +4,7 @@ import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.DisplayAmount
-import com.neoutils.finsight.extension.displayTitleOf
+import com.neoutils.finsight.extension.displayTitleOrNull
 import com.neoutils.finsight.extension.liabilityLeg
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.toTransactionUi
@@ -55,7 +55,7 @@ class InstallmentUiMapper {
         return InstallmentUi(
             installmentId = installment.id,
             latestTransactionDate = sortedTransactions.maxOf { it.date },
-            title = displayTitleOf(firstTransaction.title, category),
+            title = displayTitleOrNull(firstTransaction.title, category),
             categoryName = category?.name?.uppercase(),
             categoryIcon = category?.icon,
             categoryType = category?.type,

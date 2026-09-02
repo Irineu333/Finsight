@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -251,7 +252,9 @@ class EditInvoiceBalanceModal(
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("edit_invoice_balance_amount")
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -259,7 +262,9 @@ class EditInvoiceBalanceModal(
                     Button(
                         onClick = { viewModel.onAction(EditInvoiceBalanceAction.Submit(newBalance)) },
                         enabled = balanceState.text.isNotBlank() && newBalance != state.currentBalance,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("edit_invoice_balance_save"),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Adjustment),
                     ) {

@@ -43,6 +43,8 @@ import com.neoutils.finsight.resources.balance_card_income
 import com.neoutils.finsight.resources.balance_card_invoices
 import com.neoutils.finsight.resources.balance_card_invoice_payments
 import com.neoutils.finsight.resources.balance_card_pay_invoice
+import com.neoutils.finsight.resources.balance_card_settlement_incoming
+import com.neoutils.finsight.resources.balance_card_settlement_outgoing
 import com.neoutils.finsight.resources.balance_card_pending_expense
 import com.neoutils.finsight.resources.balance_card_pending_income
 import com.neoutils.finsight.ui.util.optionalTestTag
@@ -410,6 +412,44 @@ data class BalanceCardConfig(
             get() = BalanceCardConfig(
                 icon = Icons.Default.ArrowDownward,
                 title = stringResource(Res.string.balance_card_pending_expense),
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = ExpenseColor
+                ),
+                padding = PaddingValues(16.dp),
+                container = ExpenseColor.copy(alpha = 0.1f),
+                shape = shapes.large
+            )
+
+        val SettlementIncoming
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.ArrowUpward,
+                title = stringResource(Res.string.balance_card_settlement_incoming),
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = IncomeColor
+                ),
+                padding = PaddingValues(16.dp),
+                container = IncomeColor.copy(alpha = 0.1f),
+                shape = shapes.large
+            )
+
+        val SettlementOutgoing
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.ArrowDownward,
+                title = stringResource(Res.string.balance_card_settlement_outgoing),
                 style = TextStyle(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,

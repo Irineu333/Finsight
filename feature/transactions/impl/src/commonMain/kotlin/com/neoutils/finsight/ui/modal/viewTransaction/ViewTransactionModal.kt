@@ -29,8 +29,10 @@ import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencySymbols
 import com.neoutils.finsight.extension.format
+import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.navigation.LocalNavController
@@ -44,10 +46,10 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.TransactionLegCard
 import com.neoutils.finsight.ui.component.TransactionLegConnector
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
-import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.RATE_SCALE
 import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.stringUiText
 import kotlin.uuid.ExperimentalUuidApi
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
@@ -203,26 +205,13 @@ class ViewTransactionModal(
                         color = uiState.label.color()
                     )
 
-                    // A transfer and a payment ordinarily carry neither title nor
-                    // category, and are named by what they *are* — which is a fact of
-                    // their form, not a reserve literal standing in for an absence.
-                    // The name says what the nature above it does not: the two lines
-                    // are read together, so "transferência / entre contas" is the whole
-                    // sentence and repeating the first word in the second would waste
-                    // the line.
-                    //
-                    // An expense, an income or an adjustment with neither has no such
-                    // name, and the line is omitted rather than invented.
-                    val fallbackTitle = when (uiState.label) {
-                        TransactionLabel.PAYMENT -> stringResource(Res.string.transaction_card_payment)
-                        TransactionLabel.TRANSFER -> stringResource(Res.string.view_transaction_title_transfer)
-                        else -> null
-                    }
-
-                    (uiState.displayTitle ?: fallbackTitle)?.let { title ->
+                    // The whole name, resolved by the one rule and rendered as it comes:
+                    // the header decides nothing about it beyond having asked for the
+                    // register that sits beside a nature.
+                    uiState.name?.let { name ->
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = title,
+                            text = stringUiText(name),
                             style = MaterialTheme.typography.titleMedium,
                             color = colorScheme.onSurface,
                             maxLines = 2,
@@ -379,6 +368,12 @@ class ViewTransactionModal(
     ) {
 
         val manager = LocalModalManager.current
+        // The transfer form lives in the accounts feature and the invoice payment form
+        // in the cards feature, each owning its operation. They are reached through
+        // those features' public entry points, because one implementation may not name
+        // another.
+        val accountsEntry = koinInject<AccountsEntry>()
+        val creditCardsEntry = koinInject<CreditCardsEntry>()
 
         // Deleting is hidden, not disabled, when it would strand a balance on an
         // archived account: the same reason the invoice branch above hides both.
@@ -415,7 +410,13 @@ class ViewTransactionModal(
         if (uiState.isEditable) {
                 OutlinedButton(
                     onClick = {
-                        manager.show(EditTransactionModal(uiState.transaction))
+                        manager.show(
+                            editFormFor(
+                                transaction = uiState.transaction,
+                                accountsEntry = accountsEntry,
+                                creditCardsEntry = creditCardsEntry,
+                            )
+                        )
                     },
                     modifier = Modifier
                         .weight(1f)

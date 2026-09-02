@@ -1,5 +1,6 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
+import com.neoutils.finsight.extension.operationFormNames
 import com.neoutils.finsight.di.commonModule
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
@@ -179,6 +180,7 @@ class ReportExportFootnoteTest {
     }
 
     private val strings = ReportExportStrings(
+        languageTag = "en",
         title = "Report",
         generatedAtPrefix = "Generated at",
         summaryBalance = "Balance",
@@ -191,10 +193,9 @@ class ReportExportFootnoteTest {
         sectionSpendingByCategory = "Spending by category",
         sectionIncomeByCategory = "Income by category",
         sectionTransactions = "Transactions",
-        transactionTransfer = "Transfer",
-        transactionPayment = "Payment",
-        transactionBalanceAdjustment = "Balance adjustment",
-        transactionInvoiceAdjustment = "Invoice adjustment",
+        // The document names a line by the one rule; the export only resolves what it
+        // answers, and the rule itself owns which cells exist.
+        operationForms = operationFormNames().associateWith { "form" },
         uncategorized = UNCATEGORIZED,
         columnCategory = "Category",
         columnTransaction = "Transaction",

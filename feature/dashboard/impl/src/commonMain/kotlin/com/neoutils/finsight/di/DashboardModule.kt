@@ -1,8 +1,10 @@
 package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.repository.DashboardPreferencesRepository
+import com.neoutils.finsight.domain.model.ArchiveReplacedHook
 import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
+import com.neoutils.finsight.domain.usecase.DashboardArchiveReplacedHook
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
@@ -17,6 +19,13 @@ val dashboardModule = module {
         )
     }
 
+    // Claimed here, and here only: the three preferences that name an account or a card
+    // by database id are this feature's own, so forgetting them once a restore has
+    // replaced the archive is this feature's to decide, not `ArchiveRestore`'s (design
+    // analogous to `TransactionRemovalPrelude` — a restore proceeds correctly whether or
+    // not anybody claims this).
+    single<ArchiveReplacedHook> { DashboardArchiveReplacedHook(repository = get()) }
+
     factory {
         DashboardComponentsBuilder(
             calculateBalanceUseCase = get(),
@@ -24,6 +33,7 @@ val dashboardModule = module {
             calculateCategoryIncomeUseCase = get(),
             calculateBudgetProgressUseCase = get(),
             getPendingRecurringUseCase = get(),
+            getUnhandledRecurringUseCase = get(),
             invoiceUiMapper = get(),
             calculateAvailableLimit = get(),
             entryRepository = get(),

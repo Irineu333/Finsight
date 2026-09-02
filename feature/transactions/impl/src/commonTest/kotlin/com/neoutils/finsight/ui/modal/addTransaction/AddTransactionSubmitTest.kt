@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.modal.addTransaction
 
 import app.cash.turbine.test
+import arrow.core.Either
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.Event
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
@@ -20,6 +21,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
+import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +36,13 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -140,21 +144,62 @@ class AddTransactionSubmitTest {
         }
     }
 
+    /**
+     * A purchase in parts is refused by the same write boundary as a purchase in one, so it
+     * owes the same answer. The single-transaction path says it; this pins that the
+     * installment path above it does too, instead of recording the refusal and leaving a
+     * sheet that only refuses to close.
+     */
+    @Test
+    fun `a refused installment save is explained and leaves the sheet open`() = runTest(dispatcher) {
+        val modalManager = ModalManager()
+        val crashlytics = FakeCrashlytics()
+        val viewModel = viewModel(
+            today = LocalDate(2026, 3, 10),
+            registerTransaction = Refused,
+            modalManager = modalManager,
+            crashlytics = crashlytics,
+        )
+
+        viewModel.uiState.test {
+            viewModel.onAction(AddTransactionAction.ChangeTarget(TransactionTarget.CREDIT_CARD))
+            viewModel.onAction(AddTransactionAction.ChangeInstallments(3))
+            viewModel.fill(date = "10/03/2026")
+            advanceUntilIdle()
+
+            assertEquals(3, expectMostRecentItem().form.installments, "the installment path is the one taken")
+
+            viewModel.onAction(AddTransactionAction.Submit)
+            advanceUntilIdle()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertIs<ErrorModal>(modalManager.top, "the refusal is said, not swallowed")
+        assertEquals(1, crashlytics.recorded.size)
+    }
+
     private fun AddTransactionViewModel.fill(date: String) {
         onAction(AddTransactionAction.ChangeTitle("Lunch"))
         onAction(AddTransactionAction.ChangeAmount("4500"))
         onAction(AddTransactionAction.ChangeDate(date))
     }
 
-    private fun viewModel(today: LocalDate) = AddTransactionViewModel(
+    private fun viewModel(
+        today: LocalDate,
+        registerTransaction: RegisterTransactionUseCase = NotWritten,
+        modalManager: ModalManager = ModalManager(),
+        crashlytics: FakeCrashlytics = FakeCrashlytics(),
+    ) = AddTransactionViewModel(
+        // Opened from nowhere in particular: nothing is preselected.
+        origin = null,
         categoryRepository = FakeCategoryRepository,
         creditCardRepository = FakeCreditCardRepository,
         invoiceRepository = FakeInvoiceRepository,
         accountRepository = FakeAccountRepository(account),
-        registerTransaction = NotWritten,
-        modalManager = ModalManager(),
+        registerTransaction = registerTransaction,
+        modalManager = modalManager,
         analytics = FakeAnalytics,
-        crashlytics = FakeCrashlytics(),
+        crashlytics = crashlytics,
         validateTransactionForm = ValidateTransactionFormUseCaseImpl(clock = FixedClock(today)),
         clock = FixedClock(today),
     )
@@ -176,6 +221,12 @@ private object NotWritten : RegisterTransactionUseCase {
         form: TransactionForm,
         isRecurring: Boolean,
     ) = throw NotImplementedError()
+}
+
+/** A write boundary that refuses, the way a closed invoice makes it refuse. */
+private object Refused : RegisterTransactionUseCase {
+    override suspend operator fun invoke(form: TransactionForm, isRecurring: Boolean) =
+        Either.Left(IllegalStateException("closed invoice"))
 }
 
 private object FakeCategoryRepository : ICategoryRepository {
@@ -220,6 +271,7 @@ private object FakeInvoiceRepository : IInvoiceRepository {
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> = throw NotImplementedError()

@@ -43,9 +43,11 @@ tags:
     id: "dashboard_component_credit_cards_pager"
 
 # --- Withheld until they have something to say ---------------------------------------------------
-# Pending and card balances hide while empty (HIDE_WHEN_EMPTY).
+# Settlement and card balances hide while empty (HIDE_WHEN_EMPTY). The settlement widget holds
+# position 2 of the default layout, where `balance_stats_pending` used to sit before it was
+# deprecated: a fresh app has no recurring and no invoice, so it has nothing to settle.
 - assertNotVisible:
-    id: "dashboard_component_balance_stats_pending"
+    id: "dashboard_component_month_settlement"
 - assertNotVisible:
     id: "dashboard_component_balance_stats_credit_card"
 

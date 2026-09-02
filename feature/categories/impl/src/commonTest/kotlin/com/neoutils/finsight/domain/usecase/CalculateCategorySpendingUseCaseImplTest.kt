@@ -386,7 +386,6 @@ private class FakeExchangeRateRepository(
     override suspend fun save(rate: ExchangeRate) = Unit
     override suspend fun remove(rate: ExchangeRate) = Unit
     override suspend fun countNaming(currency: String) = 0
-    override suspend fun removeAllNaming(currency: String) = Unit
 }
 
 private class FakeCategoryRepository(private val categories: List<Category>) : ICategoryRepository {
@@ -425,6 +424,7 @@ private class FakeEntryRepository(
         nominalType: AccountType,
     ): Map<Long?, MoneyByCurrency> = totals[nominalType].orEmpty()
 
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
         throw NotImplementedError()
 
@@ -435,7 +435,6 @@ private class FakeEntryRepository(
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): com.neoutils.finsight.domain.repository.AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()

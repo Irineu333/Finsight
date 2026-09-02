@@ -350,11 +350,14 @@ class CreditCardUseCaseIdentityTest {
     ) = PayInvoicePaymentUseCaseImpl(
         validateInvoicePayment = ValidateInvoicePaymentUseCase(),
         clock = StoppedClock(LocalDate(2026, 2, 20)),
-        transactionRepository = writer,
+        writeInvoicePayment = WriteInvoicePaymentUseCase(
+            transactionRepository = writer,
+            harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
+            accountRepository = accounts(),
+        ),
         invoiceRepository = store,
         calculateInvoiceUseCase = OwesFixed(70.0),
         payInvoiceUseCase = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), StoppedClock(LocalDate(2026, 2, 20))),
-        harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
         accountRepository = accounts(),
     )
 
@@ -362,19 +365,27 @@ class CreditCardUseCaseIdentityTest {
         store: RecordingInvoiceStore,
         writer: RecordingTransactionWriter,
     ) = AdvanceInvoicePaymentUseCaseImpl(
-        transactionRepository = writer,
-        invoiceRepository = store,
-        calculateInvoiceUseCase = OwesFixed(70.0),
-        harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
+        writeInvoicePayment = WriteInvoicePaymentUseCase(
+            transactionRepository = writer,
+            harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
+            accountRepository = accounts(),
+        ),
+        validateInvoicePayment = ValidateAdvanceInvoicePaymentUseCase(
+            invoiceRepository = store,
+            calculateInvoiceUseCase = OwesFixed(70.0),
+            clock = StoppedClock(date),
+        ),
         accountRepository = accounts(),
-        clock = StoppedClock(date),
     )
 }
 
 /** Every invoice owes the same, so the payment guards are the only thing under test. */
 private class OwesFixed(private val owed: Double) : CalculateInvoiceUseCase {
-    override suspend fun invoke(invoices: Collection<Invoice>): Map<Long, Double> =
-        invoices.associate { it.id to owed }
+    // The fixed figure whatever is left out: no operation of this test contributes to it.
+    override suspend fun invoke(
+        invoices: Collection<Invoice>,
+        excluding: Long?,
+    ): Map<Long, Double> = invoices.associate { it.id to owed }
 }
 
 /** Answers only the accounts it holds — an unknown id is genuinely absent. */

@@ -31,9 +31,10 @@ class DashboardBalanceWidgetsCatalogTest {
         baseCurrencyRepository = FakeBaseCurrencyRepository(),
     )
 
-    // The edit mode offers every type that is not already present and has a preview
-    // (`DashboardViewModel.buildEditingState`).
+    // The edit mode offers every type that is not deprecated, is not already present and
+    // has a preview (`DashboardViewModel.buildEditingState`).
     private fun availableKeys(presentKeys: Set<String>) = DashboardComponentType.entries
+        .filterNot { it.isDeprecated }
         .filterNot { it.key in presentKeys }
         .map { it.key }
 

@@ -133,6 +133,13 @@ internal fun DashboardComponentContent(
             )
         }
 
+        is DashboardComponentVariant.MonthSettlement -> {
+            DashboardMonthSettlementSection(
+                variant = variant,
+                modifier = modifier,
+            )
+        }
+
         is DashboardComponentVariant.CreditCardBalanceStats -> {
             DashboardCreditCardBalanceSection(
                 variant = variant,
@@ -309,10 +316,10 @@ private fun DashboardRecentsSection(
                     ),
                 onClick = {
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
-                        when {
-                            isLastWithFade -> openTransactions(null, null)
-                            transactionUi.direction.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
-                            else -> detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
+                        if (isLastWithFade) {
+                            openTransactions(null, null)
+                        } else {
+                            detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                         }
                     }
                 },
@@ -511,6 +518,45 @@ private fun DashboardPendingBalanceSection(
     }
 }
 
+/**
+ * The pair always reads as a pair: both classes are rendered whatever the sources say,
+ * and a class with nothing in it reads zero rather than disappearing.
+ *
+ * The header is the widget's own preference and, like the other flow widgets', it opens
+ * off: a fresh dashboard stacks these rows and a caption over each would be more chrome
+ * than reading. It is one toggle away for whoever wants the window named on screen.
+ */
+@Composable
+private fun DashboardMonthSettlementSection(
+    variant: DashboardComponentVariant.MonthSettlement,
+    modifier: Modifier = Modifier,
+) {
+    val component = variant.component
+    val seeRates = LocalNavController.current.seeRates()
+
+    DashboardFlowStatsSection(
+        title = stringResource(Res.string.component_month_settlement),
+        showHeader = variant.config.showHeader(variant.key),
+        modifier = modifier,
+    ) {
+        BalanceCard(
+            balance = component.incoming,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.SettlementIncoming,
+            onSeeRates = seeRates,
+            amountTestTag = "dashboard_settlement_incoming_amount",
+        )
+
+        BalanceCard(
+            balance = component.outgoing,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.SettlementOutgoing,
+            onSeeRates = seeRates,
+            amountTestTag = "dashboard_settlement_outgoing_amount",
+        )
+    }
+}
+
 @Composable
 private fun DashboardCreditCardBalanceSection(
     variant: DashboardComponentVariant.CreditCardBalanceStats,
@@ -634,20 +680,14 @@ private fun DashboardCreditCardsSection(
                                     }
                                 }
                             },
+                            // One command, whatever state the invoice is in: the card
+                            // renders the verb the mapper resolved, and the sheet opens
+                            // on the invoice in view.
                             onPayInvoice = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    if (domainInvoice != null && bill != null) {
+                                    bill?.let {
                                         modalManager.show(
-                                            creditCardsEntry.payInvoiceModal(invoice = domainInvoice, currentBillAmount = bill.amount)
-                                        )
-                                    }
-                                }
-                            },
-                            onAdvancePayment = {
-                                if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    if (domainInvoice != null && bill != null) {
-                                        modalManager.show(
-                                            creditCardsEntry.advancePaymentModal(invoice = domainInvoice, currentBillAmount = bill.amount)
+                                            creditCardsEntry.invoicePaymentModal(invoiceId = it.id)
                                         )
                                     }
                                 }

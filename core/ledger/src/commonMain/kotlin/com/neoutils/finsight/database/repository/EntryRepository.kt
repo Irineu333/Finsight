@@ -36,18 +36,10 @@ class EntryRepository(
     private fun EntryWithAccount.toDomain() = Entry(
         id = entry.id,
         transactionId = entry.transactionId,
-        account = Account(
-            id = account.id,
-            name = account.name,
-            type = account.type.toDomain(),
-            currency = account.currency,
-            iconKey = account.iconKey,
-            isDefault = account.isDefault,
-            createdAt = account.createdAt,
-            // Closure travels with the account: a leg that drops it reports every
-            // archived account as open, and the rules derived from it go quiet.
-            isArchived = account.isArchived,
-        ),
+        // Mapped by the account mapper rather than field by field: a leg that drops a
+        // field reports something false about the account it posts to — closure most of
+        // all, which every rule derived from the account reads.
+        account = account.toDomain(),
         amount = entry.amount,
         // No `currency` here: it is derived from the account, and the account is
         // hydrated whole from the join. The row's own column is what
@@ -91,6 +83,17 @@ class EntryRepository(
     ): MoneyByCurrency =
         entryDao.dimensionBalanceInMonth(dimensionId, month.toString()).toMoney { it.total }
 
+    override suspend fun dimensionMonthlySeriesByCurrency(
+        dimensionId: Long,
+        upTo: YearMonth,
+    ): Map<YearMonth, MoneyByCurrency> = entryDao
+        .dimensionMonthlySeries(dimensionId, upTo.toString())
+        // The query already orders by month, so grouping preserves that order and the
+        // series is consumed the way it reads. Cents become a figure through the same
+        // single path every other read here takes.
+        .groupBy { YearMonth.parse(it.yearMonth) }
+        .mapValues { (_, rows) -> rows.toMoney { it.total } }
+
     override suspend fun accountFlows(
         month: YearMonth,
         accountId: Long,
@@ -105,10 +108,6 @@ class EntryRepository(
             adjustment = totals.adjustment / CENTS_PER_UNIT,
             settlement = totals.settlement / CENTS_PER_UNIT,
         )
-    }
-
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int {
-        return entryDao.dimensionEntryCountInMonth(dimensionId, month.toString())
     }
 
     override suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency =
@@ -222,18 +221,6 @@ class EntryRepository(
         )
     }
 }
-
-/**
- * One field of a grouped projection, lifted from cents to a figure per currency. The
- * row list carries several figures at once (income *and* expense *and* …), so each is
- * read out with its own selector rather than by mapping the list once.
- */
-private inline fun <T : CurrencyScoped> List<T>.toMoney(
-    negated: Boolean = false,
-    value: (T) -> Long,
-) = MoneyByCurrency.of(
-    associate { it.currency to (if (negated) -value(it) else value(it)) / CENTS_PER_UNIT },
-)
 
 /**
  * The total of each dimension, per currency. The `null` key is the unclassified

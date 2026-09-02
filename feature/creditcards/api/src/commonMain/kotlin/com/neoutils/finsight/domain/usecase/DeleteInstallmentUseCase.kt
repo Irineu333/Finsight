@@ -19,13 +19,29 @@ interface DeleteInstallmentUseCase {
      * operation runs**, so what is removed is what points at the installment at that
      * moment and not what a screen listed earlier. An identity that matches nothing is
      * refused with `InstallmentError.NotFound`, and nothing is removed.
+     *
+     * @param withoutCopy the person was told no copy of the N transactions this destroys
+     * could be kept and said to go on anyway. It is a flag this layer interprets, never a
+     * screen naming a different action.
+     *
+     * A copy that was owed and could not be taken refuses by throwing
+     * `PreventiveCaptureException`, which leaves every instalment where it is: only the
+     * person told about it may say to come back [withoutCopy].
      */
-    suspend operator fun invoke(installmentId: Long): Either<Throwable, Unit>
+    suspend operator fun invoke(
+        installmentId: Long,
+        withoutCopy: Boolean = false,
+    ): Either<Throwable, Unit>
 
     /**
      * The convenience for a caller that already holds the installment. It extracts the
      * identity and delegates — not another rule, so not another implementation.
      */
-    suspend operator fun invoke(installment: Installment): Either<Throwable, Unit> =
-        invoke(installment.id)
+    suspend operator fun invoke(
+        installment: Installment,
+        withoutCopy: Boolean = false,
+    ): Either<Throwable, Unit> = invoke(
+        installmentId = installment.id,
+        withoutCopy = withoutCopy,
+    )
 }

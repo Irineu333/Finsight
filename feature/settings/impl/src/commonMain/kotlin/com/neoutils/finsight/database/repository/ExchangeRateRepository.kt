@@ -5,9 +5,29 @@ import com.neoutils.finsight.database.mapper.ExchangeRateMapper
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.feature.backup.api.DestructiveAction
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
+
+/**
+ * The rate archive, plus the one removal that carries the person's answer about the copy.
+ *
+ * [IExchangeRateRepository] lives in `:core:model` and is implemented by every module that
+ * has to answer a rate; the second [remove] is this feature's business alone — an
+ * observation is removed from exactly one screen — so it is declared here instead of
+ * obliging those fakes to know that backup exists. It is an interface rather than the
+ * concrete class only so that the form's test can go on faking the archive.
+ */
+interface RateArchive : IExchangeRateRepository {
+
+    /**
+     * @param withoutCopy the person's answer, after being told that the copy owed before
+     * this removal could not be taken: remove anyway, with nothing kept back.
+     */
+    suspend fun remove(rate: ExchangeRate, withoutCopy: Boolean)
+}
 
 /**
  * The rate archive over the `exchange_rates` table, and **the owner of the declared
@@ -29,12 +49,18 @@ import kotlinx.datetime.LocalDate
  * legitimate place for it: this is the only point that can know at once what is stored
  * and which preference is in force. It replaces an assumption that used to be implicit,
  * and it denominates no figure.
+ *
+ * [PreventiveBackup] is here for [remove], and here rather than in the form above it: an
+ * observation has no use case of its own, so this public method **is** the action, and it
+ * is the boundary every caller of it crosses (design D6). It sits above any transaction —
+ * removing one row opens none — which is what `VACUUM INTO` requires.
  */
 class ExchangeRateRepository(
     private val dao: ExchangeRateDao,
     private val mapper: ExchangeRateMapper,
     private val baseCurrencyRepository: IBaseCurrencyRepository,
-) : IExchangeRateRepository {
+    private val preventiveBackup: PreventiveBackup,
+) : RateArchive {
 
     override suspend fun rateAsOf(currency: String, date: LocalDate): ExchangeRate? {
         return rateBetween(currency, baseCurrencyRepository.observe().value, date)
@@ -113,14 +139,23 @@ class ExchangeRateRepository(
         dao.insert(mapper.toEntity(rate))
     }
 
-    override suspend fun remove(rate: ExchangeRate) {
+    override suspend fun remove(rate: ExchangeRate) = remove(rate, withoutCopy = false)
+
+    /**
+     * The copy comes first, and a copy owed and not taken throws out of here without the
+     * row being touched. An observation is typed work — it may be the correction that
+     * outranked a wrong rate — and nothing derives it back once it is gone.
+     *
+     * [withoutCopy] is a person's answer to that refusal and nothing else: which actions are
+     * worth a copy is still stated here, by naming
+     * [DestructiveAction.REMOVE_EXCHANGE_RATE], whatever the answer was (design D7).
+     */
+    override suspend fun remove(rate: ExchangeRate, withoutCopy: Boolean) {
+        if (!withoutCopy) preventiveBackup.captureBefore(DestructiveAction.REMOVE_EXCHANGE_RATE)
+
         dao.deleteById(rate.id)
     }
 
     override suspend fun countNaming(currency: String): Int =
         dao.countByCurrencyOnEitherEnd(currency)
-
-    override suspend fun removeAllNaming(currency: String) {
-        dao.deleteByCurrencyOnEitherEnd(currency)
-    }
 }

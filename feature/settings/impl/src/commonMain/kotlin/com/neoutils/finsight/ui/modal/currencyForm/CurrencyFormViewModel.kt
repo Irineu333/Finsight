@@ -2,6 +2,9 @@ package com.neoutils.finsight.ui.modal.currencyForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateCurrency
+import com.neoutils.finsight.domain.analytics.event.EditCurrency
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.CurrencyInfo
 import com.neoutils.finsight.domain.usecase.SaveCurrencyUseCase
@@ -30,6 +33,7 @@ class CurrencyFormViewModel(
     private val existing: CurrencyInfo?,
     private val saveCurrency: SaveCurrencyUseCase,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -102,7 +106,18 @@ class CurrencyFormViewModel(
             isEditing = state.isEditing,
         ).fold(
             ifLeft = { error -> _uiState.update { it.copy(error = error.toUiText()) } },
-            ifRight = { modalManager.dismissAll() },
+            ifRight = {
+                // The code as the use case normalised it, so the event names the row
+                // that exists rather than the keystrokes that produced it.
+                val code = state.code.trim().uppercase()
+                analytics.logEvent(
+                    when {
+                        state.isEditing -> EditCurrency(code)
+                        else -> CreateCurrency(code, isCustom = platformCurrency(code) == null)
+                    }
+                )
+                modalManager.dismissAll()
+            },
         )
     }
 }

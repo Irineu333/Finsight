@@ -442,5 +442,4 @@ internal class FakeRates(
 
     override suspend fun remove(rate: ExchangeRate) { saved.remove(rate) }
     override suspend fun countNaming(currency: String) = 0
-    override suspend fun removeAllNaming(currency: String) = Unit
 }

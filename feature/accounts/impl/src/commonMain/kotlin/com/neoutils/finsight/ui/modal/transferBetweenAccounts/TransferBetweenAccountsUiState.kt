@@ -10,6 +10,13 @@ data class TransferBetweenAccountsUiState(
     val selectedDestinationAccount: Account? = null,
     /** What the rate archive implies arrives, when it has anything to say (design D24). */
     val suggestion: CrossCurrencyAmountSuggestion? = null,
+    /**
+     * Whether the form is correcting an operation instead of registering one — derived
+     * from the transaction it was opened with, never declared by the screen. It changes
+     * what the form *announces* and which use case the submission reaches, and nothing
+     * about what the form offers: the fields of a transfer are the same either way.
+     */
+    val isEditMode: Boolean = false,
 ) {
     /**
      * Whether the two ends are denominated differently — the one condition that reveals

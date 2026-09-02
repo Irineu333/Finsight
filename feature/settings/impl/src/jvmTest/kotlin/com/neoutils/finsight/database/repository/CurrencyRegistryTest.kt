@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.repository.RateSyncState
 import com.neoutils.finsight.domain.usecase.ArchiveCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.SaveCurrencyUseCase
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,6 +73,7 @@ class CurrencyRegistryTest {
         dao = db.exchangeRateDao(),
         mapper = ExchangeRateMapper(),
         baseCurrencyRepository = base,
+        preventiveBackup = PreventiveBackup.None,
     )
 
     private val save = SaveCurrencyUseCase(repository = repository)
@@ -84,6 +86,7 @@ class CurrencyRegistryTest {
         rateSyncStateRepository = syncState,
         accountDao = db.accountDao(),
         budgetDao = db.budgetDao(),
+        preventiveBackup = PreventiveBackup.None,
     )
 
     private val archive = ArchiveCurrencyUseCase(

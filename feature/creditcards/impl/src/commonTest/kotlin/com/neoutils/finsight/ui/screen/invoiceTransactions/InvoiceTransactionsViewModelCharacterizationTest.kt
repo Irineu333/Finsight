@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
+import com.neoutils.finsight.RecordingAnalytics
 import app.cash.turbine.test
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
@@ -109,6 +110,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             ),
             recurringRepository = NoRecurring,
             unarchiveCreditCard = UnarchiveCreditCardUseCaseImpl(FakeCreditCardRepository(card)),
+            analytics = RecordingAnalytics(),
             crashlytics = NoCrashlytics,
             clock = Clock.System,
         )

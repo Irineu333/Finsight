@@ -66,6 +66,18 @@ class DashboardViewModel(
             invoices.associateBy { it.creditCard.id }
         }
 
+    /**
+     * The invoices whose settlement window is already open — a perimeter of its own,
+     * taken from the read that applies the cut rather than from [invoices], which keeps
+     * one invoice per card and could not answer this.
+     *
+     * The month is resolved when the flow is collected, not when this ViewModel is
+     * built, so a screen subscribed again after the month turns reads the new one.
+     */
+    private val invoicesToSettle = flow {
+        emitAll(invoiceRepository.observeInvoicesToSettle(instant.toYearMonth()))
+    }
+
     private val preferences = getDashboardPreferences()
         .stateIn(
             scope = viewModelScope,
@@ -97,6 +109,7 @@ class DashboardViewModel(
 
     private val viewingState: Flow<DashboardUiState> = combine(
         invoices,
+        invoicesToSettle,
         transactionsWithFacades,
         creditCardRepository.observeAllCreditCards(),
         accountRepository.observeAllAccounts(),
@@ -105,7 +118,7 @@ class DashboardViewModel(
         recurringOccurrenceRepository.observeAllOccurrences(),
         dashboardPreferencesRepository.observeEditTipDismissed(),
         preferences,
-    ) { invoices, transactionsAndFacades, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
+    ) { invoices, invoicesToSettle, transactionsAndFacades, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
         val (transactions, facadeLookup) = transactionsAndFacades
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
@@ -114,6 +127,7 @@ class DashboardViewModel(
                 transactions = transactions,
                 creditCards = creditCards,
                 invoicesByCreditCardId = invoices,
+                invoicesToSettle = invoicesToSettle,
                 accounts = accounts,
                 budgets = budgets,
                 recurringList = recurringList,
@@ -227,7 +241,7 @@ class DashboardViewModel(
             )
         }
         dashboardPreferencesRepository.save(prefs)
-        analytics.logEvent(SaveDashboardLayout(editing.activeItems.joinToString(",") { it.key }))
+        analytics.logEvent(SaveDashboardLayout(editing.activeItems.map { it.key }))
         editingState.value = null
     }
 
@@ -298,7 +312,10 @@ class DashboardViewModel(
 
         val presentKeys = preferences.map { it.key }.toSet()
 
+        // The showcase is the one place deprecation acts: a deprecated type is not offered
+        // to be added. Everything already saved keeps being built, previewed and rendered.
         val availableItems = DashboardComponentType.entries
+            .filterNot { it.isDeprecated }
             .filterNot { it.key in presentKeys }
             .mapNotNull { entry ->
                 val preview = dashboardPreviewFactory.createPreview(entry.key, yearMonth.lastDay)

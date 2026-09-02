@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.RecurringException
+import com.neoutils.finsight.domain.extension.currencyOf
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.transaction_error_generic
 import com.neoutils.finsight.util.UiText
@@ -28,6 +29,7 @@ import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
+import com.neoutils.finsight.feature.transactions.api.TransactionOrigin
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.isAccept
@@ -42,6 +44,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class AddTransactionViewModel(
+    private val origin: TransactionOrigin?,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -86,12 +89,12 @@ class AddTransactionViewModel(
     }
 
     /**
-     * The selected card's currency, read off the `LIABILITY` account it projects onto:
-     * the card facade names the account, and the account is the only place a currency is
-     * stated (design D17). Resolved here, beside the card, so the two cannot disagree.
+     * The selected card's currency, asked of the rule that owns it (design D17). `null`
+     * while no card is selected, which is what leaves the amount undenominated until one
+     * is.
      */
     private val creditCardCurrency = selectedCreditCard.map { card ->
-        card?.let { accountRepository.getAccountById(it.accountId)?.currency }
+        card?.let { accountRepository.currencyOf(it) }
     }
 
     private val categories = categoryRepository.observeAllCategories()
@@ -107,6 +110,31 @@ class AddTransactionViewModel(
     private val accounts = accountRepository.observeAllAccounts()
 
     init {
+        // What the screen that opened the form was looking at, resolved from its id.
+        //
+        // It cannot be an initial value: the ViewModel holds an `Account`/`CreditCard`, not an id,
+        // and reading one costs a suspension. What it must not do is race the defaults — so the
+        // card is selected *before* the target is aimed at it, or the collector below would see a
+        // card target with nothing selected and choose one of its own.
+        origin?.let { origin ->
+            viewModelScope.launch {
+                when (origin) {
+                    is TransactionOrigin.Account -> {
+                        selectedAccount.value = accountRepository.getAccountById(origin.accountId)
+                    }
+
+                    is TransactionOrigin.CreditCard -> {
+                        val creditCard = creditCardRepository
+                            .getCreditCardById(origin.creditCardId)
+                            ?: return@launch
+
+                        applyCreditCardSelection(creditCard)
+                        input.update { it.copy(target = TransactionTarget.CREDIT_CARD) }
+                    }
+                }
+            }
+        }
+
         // With a single card there is nothing to choose, so aiming at the card target
         // chooses it. It belongs here and not in the sheet: it is a decision about state,
         // and it also settles which invoice the expense lands on.
@@ -261,6 +289,10 @@ class AddTransactionViewModel(
     }
 
     private fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
+        applyCreditCardSelection(creditCard)
+    }
+
+    private suspend fun applyCreditCardSelection(creditCard: CreditCard?) {
         // Cleared first so that no pair of the new card with the old card's invoice is ever
         // observed: that pair names a window neither selection stands for, and the date
         // would be placed in it before being placed again in the right one.

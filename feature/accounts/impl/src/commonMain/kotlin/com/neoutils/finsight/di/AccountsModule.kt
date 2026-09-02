@@ -28,7 +28,9 @@ import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCaseImpl
+import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
+import com.neoutils.finsight.domain.usecase.ValidateTransferUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.impl.AccountsEntryImpl
@@ -108,11 +110,24 @@ val accountsModule = module {
             calculateBalanceUseCase = get(),
         )
     }
+    factory {
+        ValidateTransferUseCase(
+            accountRepository = get(),
+            clock = get(),
+        )
+    }
     factory<TransferBetweenAccountsUseCase> {
         TransferBetweenAccountsUseCaseImpl(
             harvestExchangeRate = get(),
             transactionRepository = get(),
-            accountRepository = get(),
+            validateTransfer = get(),
+        )
+    }
+    factory {
+        UpdateTransferUseCase(
+            harvestExchangeRate = get(),
+            transactionRepository = get(),
+            validateTransfer = get(),
         )
     }
 
@@ -193,6 +208,7 @@ val accountsModule = module {
             accountId = it.get(),
             accountRepository = get(),
             unarchiveAccount = get(),
+            analytics = get(),
             crashlytics = get(),
         )
     }
@@ -204,9 +220,12 @@ val accountsModule = module {
     viewModel {
         TransferBetweenAccountsViewModel(
             initialSourceAccount = it.get(),
+            transaction = it.getOrNull(),
             transferBetweenAccountsUseCase = get(),
+            updateTransferUseCase = get(),
             suggestCrossCurrencyAmount = get(),
             accountRepository = get(),
+            clock = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

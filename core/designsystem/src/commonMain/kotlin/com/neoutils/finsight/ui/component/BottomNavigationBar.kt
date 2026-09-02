@@ -28,11 +28,12 @@ fun <T : BottomNavigationItem> BottomNavigationBar(
     items: List<T>,
     selectedItem: T?,
     onItemSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag("bottom_navigation_bar")
     ) {

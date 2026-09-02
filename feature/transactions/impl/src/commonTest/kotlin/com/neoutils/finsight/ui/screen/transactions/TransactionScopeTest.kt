@@ -118,7 +118,7 @@ class TransactionScopeTest {
         }
 
     private fun viewModel(transactions: List<Transaction> = everything) = TransactionsViewModel(
-        filterLabel = null, filterTarget = null,
+        filterLabel = null, filterTarget = null, filterCategoryId = null,
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,

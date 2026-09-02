@@ -21,6 +21,7 @@ class HtmlReportDocumentRendererTest {
     @Test
     fun renderBuildsHtmlWithSummaryAndSections() {
         val layout = ReportLayout(
+            languageTag = "pt-BR",
             title = "Relatório",
             generatedAtLabel = "Gerado em: 2026-03-12",
             context = ReportContext(
@@ -79,6 +80,7 @@ class HtmlReportDocumentRendererTest {
     @Test
     fun renderEscapesHtmlSensitiveCharacters() {
         val layout = ReportLayout(
+            languageTag = "pt-BR",
             title = "Relatório <script>",
             generatedAtLabel = "Gerado em: 2026-03-12",
             context = ReportContext(

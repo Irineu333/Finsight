@@ -1,0 +1,130 @@
+appId: com.neoutils.finsight
+name: backup_vault
+tags:
+  - backup
+---
+# Turning the vault on is not a preference that takes effect later: the switch moves, the screen
+# grows the two tiles only an enabled vault has, and a copy of the archive is already in the
+# destination — listed on the kept-copies screen and marked as the one the archive came from.
+#
+# That simultaneity is what only the assembled app can answer. `VaultSwitch` writes the preference
+# and asks `BackupVault.captureIfNeeded` for the copy, and the decision has unit tests of its own
+# (`VaultSwitchTest`, plus the destination's suite in this feature). What no layer below mounts is
+# three readers agreeing at once: the switch that moved, the screen that changed shape around it,
+# and a *second screen* listing the file that landed while the first one was still being looked at.
+# A vault that turned on and captured nothing leaves every one of those green except the last.
+#
+# Nothing here leaves the app, which is why this fits where exporting does not (`backup/reach`
+# argues that exclusion). On Android the vault's destination is the app's own external files
+# directory (`AndroidBackupDestination`): no picker, no permission, no provider this suite does not
+# own. And the first copy is owed on a fresh install by `covers()` — a vault that has never
+# captured has nothing that could cover the archive — so the capture is a consequence of the tap
+# rather than of what a previous run happened to leave behind.
+#
+# Both absences carry a premise, per §5.3: the two tiles are read as missing while `backup_export`,
+# a *later* row of the same list, is on screen.
+
+- runFlow: ../../subflows/launch_fresh.yaml
+
+# --- Backup is reached through settings, and only through settings -------------------------------
+# That the door exists at all is `backup/reach`'s claim, not this one's; here it is merely the way
+# in, and it is asserted only as far as needed to be standing on the right screen.
+- runFlow:
+    file: ../../subflows/open_section.yaml
+    env:
+      SECTION: settings
+- extendedWaitUntil:
+    visible:
+      id: "screen_settings"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "settings_backup"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "settings_backup"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+
+# --- With no vault, the screen offers its settings tile to nobody --------------------------------
+# This is the `false` half of the offer; the `true` half is asserted below on the same id, with
+# nothing changed but the switch. `backup_export` is the premise: it is laid out after it, so the
+# row that would carry that id was composed and is genuinely not there.
+#
+# The copies tile is asserted *present* here, and that is the point of asserting it at all. The
+# destination is chosen on the screen it opens, and a fresh install has the vault off — so a tile
+# withheld until the switch moves withholds the folder chooser from the one person who most needs
+# it, somebody who has just reinstalled onto a phone with their copies already sitting in a folder
+# (design D4, design D15).
+- assertVisible:
+    id: "backup_vault"
+- assertVisible:
+    id: "backup_export"
+- assertVisible:
+    id: "backup_history_tile"
+- assertNotVisible:
+    id: "backup_vault_settings_tile"
+
+# --- I turn the vault on -------------------------------------------------------------------------
+# The tile *is* the switch — the whole row is `toggleable` and the `Switch` takes no callback of
+# its own — so this tap is the setting, not a tap next to it.
+- tapOn:
+    id: "backup_vault"
+
+# The settings tile arrives under the id that was absent a moment ago, which is what makes that
+# absence mean "off" rather than "not composed yet".
+- extendedWaitUntil:
+    visible:
+      id: "backup_vault_settings_tile"
+    timeout: 15000
+- assertVisible:
+    id: "backup_vault_settings_tile"
+
+# And the screen stops being silent about the destination: this card exists only while there is a
+# vault to have one, and the line under it is what that destination does *not* protect against.
+- assertVisible:
+    id: "backup_last_capture"
+- assertVisible:
+    id: "backup_coverage"
+
+# --- and by then the copy is already kept --------------------------------------------------------
+- tapOn:
+    id: "backup_history_tile"
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup_history"
+    timeout: 15000
+
+# The list, not the empty state — of what sits below the header and the two action cards, those
+# two are the exclusive branches of one `when`, so reaching this one is reaching a folder with
+# something in it. The header and the actions stand outside that `when`, in every state, so their
+# presence proves nothing about which branch is on screen. Nothing on this screen captures and no
+# trigger has had an occasion to fire: the file can only have been written by the tap above.
+- extendedWaitUntil:
+    visible:
+      id: "backup_history_list"
+    timeout: 15000
+- assertVisible:
+    id: "backup_history_destination"
+- assertVisible:
+    id: "backup_copy"
+
+# The row is marked as the copy the archive came from. This is the assertion a stale file could not
+# satisfy: the mark is written by `recordCapture`, in the same breath as the copy that landed, so
+# it says *this* capture — not merely that the folder is not empty.
+- assertVisible:
+    id: "backup_copy_current_label"
+
+# --- The history is a destination of its own -----------------------------------------------------
+# Back returns to the backup screen rather than to settings or the dashboard, so it is a second
+# destination in the feature's subgraph and not a panel the first screen drew over itself.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_backup"
+    timeout: 15000
+- assertVisible:
+    id: "backup_history_tile"

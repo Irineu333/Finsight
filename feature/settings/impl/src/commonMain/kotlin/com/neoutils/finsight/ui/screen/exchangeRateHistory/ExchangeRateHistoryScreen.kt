@@ -45,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.model.ExchangeRate
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rate_history_empty
 import com.neoutils.finsight.resources.exchange_rate_history_filter_clear
@@ -95,6 +97,10 @@ fun ExchangeRateHistoryScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("exchange_rate_history")
     }
+
+    // An archive is read here, not written: the universal action a screen with none of its own is
+    // served records a transaction, which is nothing this list is about.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     Scaffold(
         topBar = {

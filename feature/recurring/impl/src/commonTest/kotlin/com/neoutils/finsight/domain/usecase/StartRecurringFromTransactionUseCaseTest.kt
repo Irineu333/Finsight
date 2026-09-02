@@ -150,7 +150,7 @@ class StartRecurringFromTransactionUseCaseTest {
         StartRecurringFromTransactionUseCase(recorder, clock)(form(), intent(today))
 
         val (recurring, _, occurrence) = recorder.created.single()
-        val pending = GetPendingRecurringUseCase()(
+        val pending = GetPendingRecurringUseCase(GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase()))(
             recurringList = listOf(recurring),
             occurrences = listOf(occurrence),
             today = today,
@@ -171,7 +171,7 @@ class StartRecurringFromTransactionUseCaseTest {
         StartRecurringFromTransactionUseCase(recorder, clock)(form(day = 3), intent(backdated))
 
         val (recurring, _, occurrence) = recorder.created.single()
-        val pending = GetPendingRecurringUseCase()(
+        val pending = GetPendingRecurringUseCase(GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase()))(
             recurringList = listOf(recurring),
             occurrences = listOf(occurrence),
             today = today,

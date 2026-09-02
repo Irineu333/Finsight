@@ -23,5 +23,11 @@ sealed class TransferBetweenAccountsAction {
          */
         val destinationAmount: Double,
         val date: LocalDate,
+        /**
+         * Why the money moved, as the user stated it. Optional, like every title in the
+         * app: blank is an absence, and the view model is the single place that turns
+         * one into `null`.
+         */
+        val title: String,
     ) : TransferBetweenAccountsAction()
 }

@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -35,6 +34,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -42,6 +42,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.exchange_rates_add
 import com.neoutils.finsight.resources.exchange_rates_base_not_covered
@@ -96,6 +98,19 @@ fun ExchangeRatesScreen(
         analytics.logScreenView("exchange_rates")
     }
 
+    ChromeEffect(
+        actions = remember(modalManager) {
+            listOf(
+                ChromeAction(
+                    icon = Icons.Default.Add,
+                    labelRes = Res.string.exchange_rates_add,
+                    testTag = "exchange_rates_add",
+                    onClick = { modalManager.show(ExchangeRateFormModal()) },
+                )
+            )
+        }
+    )
+
     Scaffold(
         modifier = Modifier.testTag("screen_exchange_rates"),
         topBar = {
@@ -127,17 +142,6 @@ fun ExchangeRatesScreen(
                     }
                 },
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { modalManager.show(ExchangeRateFormModal()) },
-                modifier = Modifier.testTag("exchange_rates_add"),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(Res.string.exchange_rates_add),
-                )
-            }
         },
     ) { padding ->
         ExchangeRatesContent(

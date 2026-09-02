@@ -6,6 +6,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.neoutils.finsight.database.entity.InvoiceEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.YearMonth
 
 @Dao
 interface InvoiceDao {
@@ -41,6 +42,20 @@ interface InvoiceDao {
 
     @Query("SELECT * FROM invoices WHERE status NOT IN ('PAID', 'RETROACTIVE') ORDER BY openingMonth DESC")
     fun observeUnpaidInvoices(): Flow<List<InvoiceEntity>>
+
+    /**
+     * Every invoice that has not been paid and whose due month is not later than
+     * [month] — the debt whose settlement window has already arrived, overdue months
+     * included.
+     *
+     * The criterion is the negation of `PAID`, not a whitelist of statuses, so
+     * `RETROACTIVE` is in it: a retroactive invoice carrying a balance is debt being
+     * regularised, and this read is the one place that says so. `FUTURE` past its due
+     * month is in for the same reason — its instalments were posted in advance and are
+     * owed now.
+     */
+    @Query("SELECT * FROM invoices WHERE status != 'PAID' AND dueMonth <= :month ORDER BY dueMonth ASC")
+    fun observeInvoicesToSettle(month: YearMonth): Flow<List<InvoiceEntity>>
 
     @Query("""
         SELECT * FROM invoices 

@@ -453,11 +453,13 @@ internal class WorldAdjustInvoice(
                 id = existing.id,
                 title = existing.title,
                 date = existing.date,
-                leg = TransactionLeg(
-                    type = TransactionType.ADJUSTMENT,
-                    amount = newAmount,
-                    accountId = invoice.creditCard.accountId,
-                    dimensionId = invoice.dimensionId,
+                legs = listOf(
+                    TransactionLeg(
+                        type = TransactionType.ADJUSTMENT,
+                        amount = newAmount,
+                        accountId = invoice.creditCard.accountId,
+                        dimensionId = invoice.dimensionId,
+                    ),
                 ),
                 contra = ContraLeg(AccountType.EQUITY),
             )
@@ -524,7 +526,7 @@ internal class WorldAdjustBalance(
                 id = existing.id,
                 title = existing.title,
                 date = existing.date,
-                leg = TransactionLeg(TransactionType.ADJUSTMENT, newAmount, accountId),
+                legs = listOf(TransactionLeg(TransactionType.ADJUSTMENT, newAmount, accountId)),
                 contra = ContraLeg(AccountType.EQUITY),
             )
         }.bind()
@@ -551,6 +553,7 @@ internal class WorldTransfer(
         amount: Double,
         date: LocalDate,
         destinationAmount: Double?,
+        title: String?,
     ): Either<TransferException, Transaction> = either {
         ensure(amount > 0.0) { TransferException(TransferError.InvalidAmount) }
         ensure(destinationAmount == null || destinationAmount > 0.0) {
@@ -571,7 +574,7 @@ internal class WorldTransfer(
         val transaction = catch {
             transactionRepository.createTransaction(
                 TransactionIntent(
-                    title = null,
+                    title = title,
                     date = date,
                     legs = listOf(
                         TransactionLeg(TransactionType.EXPENSE, amount, source.id),

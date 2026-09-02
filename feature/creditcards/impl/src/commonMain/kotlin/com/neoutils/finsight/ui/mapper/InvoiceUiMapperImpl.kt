@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.ui.mapper
 
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.isReopenable
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.extension.DisplayAmount
 import com.neoutils.finsight.extension.toUiText
+import com.neoutils.finsight.extension.paymentLabel
 import com.neoutils.finsight.extension.today
 import com.neoutils.finsight.ui.extension.color
 import com.neoutils.finsight.ui.model.InvoiceUi
@@ -30,7 +31,7 @@ class InvoiceUiMapperImpl(
     ): InvoiceUi {
         val outstandingDebt = calculateInvoiceUseCase(invoice).coerceAtLeast(0.0)
         // Mono-currency by construction, so exact: nothing was converted to get here.
-        val currency = accountRepository.currencyOf(invoice.creditCard)
+        val currency = accountRepository.requireCurrencyOf(invoice.creditCard)
         val hasProgress = outstandingDebt > 0 && limit.usage != 0.0
         val status = invoice.status
         val currentDate = clock.today()
@@ -60,6 +61,9 @@ class InvoiceUiMapperImpl(
             isClosed = status.isClosed,
             isRetroactive = status.isRetroactive,
             isEditable = status.isEditable,
+            canPay = invoice.acceptsPayment,
+            payLabel = invoice.paymentLabel,
+            paySettles = invoice.acceptsFullSettlement,
             statusColor = status.color,
             statusLabel = status.toUiText(),
         )

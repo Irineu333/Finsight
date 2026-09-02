@@ -22,9 +22,10 @@ feature/
 | **api** | Rotas de navegação **externamente navegáveis** (data classes), interfaces de repositório, interfaces de use cases públicos, entry point de UI (`<Nome>Entry`) | Qualquer implementação |
 | **impl** | Telas, ViewModels, modais, use cases (públicos e privados), implementações de repositório, mappers, rotas de destinos internos, módulo Koin da feature | Tipos consumidos por outras features |
 
-Features: `shell`, `dashboard`, `transactions`, `accounts`, `creditcards`, `categories`, `budgets`,
-`recurring`, `report`, `settings` (moeda base e acervo de taxas de câmbio), `mcp` (o servidor MCP
-local, hospedado por `settings`) e `support`.
+Features: `shell` (a casca — catálogo de navegação e contrato de chrome), `dashboard`,
+`transactions`, `accounts`, `creditcards`, `categories`, `budgets`, `recurring`, `report`,
+`settings` (moeda base e acervo de taxas de câmbio), `mcp` (o servidor MCP local, hospedado por
+`settings`) e `support`.
 
 **Critério de triagem:** só entra na `api` o que **outro módulo consome**. Tudo o mais é detalhe de implementação e vive no `impl`. Na dúvida, comece no `impl` — promover para a `api` depois é barato; o inverso quebra consumidores.
 
@@ -67,7 +68,7 @@ coexistem sem ciclo, porque as apis não se enxergam.
 |---|---|---|---|
 | **feature:\*:api** | ✅ | ❌ | ❌ |
 | **feature:\*:impl** | ✅ | ✅ (qualquer) | ❌ |
-| **:app:shared** (shell) | ✅ | ✅ | ✅ (é o agregador) |
+| **:app:shared** (agregador) | ✅ | ✅ | ✅ (é o agregador) |
 
 O `:app:shared` é o único módulo que enxerga os `impl` — é ele quem faz o wiring do Koin
 (`appModules`) e registra os grafos de navegação. O framework iOS vive em `:app:ios`.
@@ -166,6 +167,11 @@ tela da seção tem `SettingsGraph` na sua `hierarchy`, e o seletor da chrome (`
 por ela sem que o catálogo declare nada. Registrar o grafo como top-level no `AppNavHost` não erra
 nenhuma navegação, mas deixa a seção sem dono para quem lê a hierarquia.
 
+O mecanismo é anterior ao `mcp`: existiu pelo `home`, que aninhava os grafos de `dashboard` e
+`transactions` dentro do seu `navigation<HomeGraph>`. O `home` deixou de existir — a casca virou
+`feature/shell` e os dois grafos passaram a ser de primeiro nível, invocados direto pelo
+`AppNavHost`.
+
 O `NavGraphBuilder` é um **context parameter**, não um parâmetro comum: o receiver implícito do
 `navigation<>` o satisfaz, então o call site é só `entry.register()`, e o compilador impede que
 `register()` seja chamado fora da construção de um grafo. Mesmo mecanismo do
@@ -210,8 +216,10 @@ fun NavGraphBuilder.settingsGraph() {
     }
 }
 
-// :app:shared — AppNavHost: só chamadas a <nome>Graph()
-NavHost(...) {
+// :app:shared — AppNavHost: só chamadas a <nome>Graph(), as demais de primeiro nível
+NavHost(startDestination = DashboardGraph) {
+    dashboardGraph()
+    transactionsGraph()
     settingsGraph()   // e, dentro dele, o grafo do mcp
     supportGraph()
     budgetsGraph()
@@ -225,16 +233,19 @@ NavHost(...) {
 Toda rota implementa um marcador de `:core:navigation` — `NavGraphRoute` para os nós de grafo,
 `NavRoute` para as telas (`NavGraphRoute : NavRoute`). Os marcadores não declaram nada: existem para
 que "quem são as rotas do app" e "quem navega" sejam uma busca por implementações, e para que campos
-que guardam rotas (`NavigationItem.route`, `QuickActionType.route`) não sejam tipados como `Any`.
+que guardam rotas (`NavDestination.route`, no catálogo da casca) não sejam tipados como `Any`.
 
 **Onde o `<Nome>Graph` mora segue o mesmo critério de triagem de qualquer tipo:** na `api` só se
 outro módulo navegar até ele. `SupportGraph`, `ReportGraph` e `SettingsGraph` estão na `api` porque
-o dashboard abre as duas primeiras pela entrada e o `AppNavCatalog` do shell nomeia a terceira. `BudgetsGraph` e `AccountsGraph` ficam no `impl`, ao lado da extension,
-porque quem navega até `budgets` e `accounts` mira a tela (`BudgetsRoute`, `AccountsRoute(id)`) e
-nunca o grafo. `DashboardGraph` está na `api` porque o `:app:shared` o nomeia como `startDestination`
-do `NavHost` — o `startDestination` precisa ser um filho direto do grafo, e o filho direto é
-o subgrafo, não a tela. `McpGraph` fica no `impl` mesmo sendo aninhado por outra feature: quem chega
-à seção mira `McpRoute`, e o host registra o grafo pelo `McpEntry`, sem nomeá-lo.
+o dashboard abre as duas primeiras pela entrada e o `AppNavCatalog` da casca nomeia a terceira.
+`AccountsGraph`, `BudgetsGraph`, `CategoriesGraph`, `CreditCardsGraph`, `RecurringGraph` e
+`TransactionsGraph` ficam no `impl`, ao lado da extension, porque quem navega até elas mira a tela
+(`BudgetsRoute`, `AccountsRoute(id)`) e nunca o grafo. `DashboardGraph` está na `api` porque o
+`AppNavHost` o nomeia como `startDestination` do `NavHost` — e o `startDestination` precisa ser um
+filho direto, que é o subgrafo e não a tela. `McpGraph` fica no `impl` mesmo sendo aninhado por
+outra feature: quem chega à seção mira `McpRoute`, e o host registra o grafo pelo `McpEntry`, sem
+nomeá-lo. Uma feature que não é destino de ninguém não cria módulo `api` para hospedar rota alguma.
+
 *Registro via Koin, só quando necessário:* o `:app:shared` enxerga os `impl` e chama as extensions
 diretamente. Uma **feature** que hospeda o grafo de outra não pode, e aí passa pelo `register()` do
 entry point. É a exceção que o `mcp` obriga, não a regra.
@@ -270,20 +281,25 @@ As assinaturas dos entry points só referenciam tipos do core (`:core:model`,
 
 O app é dividido em quatro módulos de responsabilidade única sob `app/`:
 
-- **`:app:shared`** (KMP library, convenção `finsight.app.shared`) — o **único módulo agregador**,
-  reduzido a shell puro:
-  - `App` (com o `Scaffold` da chrome do Home: bottom bar + FAB), `AppNavHost` (agrega os
-    `xxxGraph()` de cada `impl`);
-  - `HomeGraph` (o subgrafo das abas) e `NavigationItem` — o único lugar do projeto autorizado a
-    enumerar as features;
+- **`:app:shared`** (KMP library, convenção `finsight.app.shared`) — o **único módulo agregador**:
+  - `App` — tema, `LocalNavController`, `ModalManagerHost`, `DetailPaneHost`,
+    `SharedTransitionProvider`, e a invocação do `ChromeHost` de `feature:shell:impl`. Não declara
+    `Scaffold`, bottom bar, `NavigationRail` nem botão de ação: a chrome inteira é da casca;
+  - `AppNavHost` — só chamadas a `<nome>Graph()`, todas de primeiro nível;
   - `appModules`: a lista de agregação dos módulos Koin dos cores injetáveis + de todas as features.
+
+  **Enumerar as features é da casca, não daqui.** O catálogo único é o `AppNavCatalog`
+  (`feature:shell:impl`), que serve a `NavCatalog` da `feature:shell:api`; cada item é um
+  `NavDestination`, que carrega a rota, se é `primaryTab` e se é `mobileOnly`. O contrato de chrome
+  — `ChromeConfig`, `ChromeAction`, `ChromeController`, `ChromeEffect` — mora na mesma `api`, e é
+  por ele que cada tela publica a configuração do seletor e as ações que o botão oferece.
 - **`:app:android`** (`com.android.application`, não-KMP) — `MainActivity`, `AndroidApp` (`startKoin`),
   Manifest, mipmaps, signing/keystore, `google-services.json`, crashlytics, `versionCode`/`versionName`.
 - **`:app:desktop`** (`kotlin("jvm")`) — `main.kt` + `compose.desktop` com `nativeDistributions`.
 - **`:app:ios`** (KMP só-iOS) — `MainViewController` + framework `ComposeApp` com export seletivo
   de `:core:*` + `feature:*:api`.
 
-Os singletons cross-cutting **não** vivem mais num `shellModule`: cada binding Koin fica no core dono
+Os singletons cross-cutting **não** vivem num módulo do agregador: cada binding Koin fica no core dono
 (`databaseModule` em `:core:database`, `commonModule` — `Settings`/`CurrencyFormatter`/`DebounceManager` —
 em `:core:common`, `designsystemModule` — `ModalManager` — em `:core:designsystem`); `:app:shared`
 apenas os agrega em `appModules`.

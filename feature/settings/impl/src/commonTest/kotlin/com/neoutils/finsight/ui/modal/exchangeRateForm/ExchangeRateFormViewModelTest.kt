@@ -2,11 +2,12 @@
 
 package com.neoutils.finsight.ui.modal.exchangeRateForm
 
+import com.neoutils.finsight.RecordingAnalytics
 import androidx.compose.runtime.Composable
 import com.neoutils.finsight.FakeCurrencyRepository
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
-import com.neoutils.finsight.domain.repository.IExchangeRateRepository
+import com.neoutils.finsight.database.repository.RateArchive
 import com.neoutils.finsight.ui.component.Modal
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.CompletableDeferred
@@ -68,30 +69,6 @@ class ExchangeRateFormViewModelTest {
         assertTrue(modal.isDismissed)
         assertEquals(5.4, repository.saved.single().rate)
         assertEquals(ExchangeRate.Source.USER, repository.saved.single().source)
-    }
-
-    @Test
-    fun `removing dismisses only after the write returns`() = runTest {
-        val existing = ExchangeRate(
-            id = 1,
-            currency = "USD",
-            counterCurrency = "BRL",
-            date = date,
-            rate = 5.4,
-            source = ExchangeRate.Source.USER,
-        )
-        val repository = FakeExchangeRateRepository()
-        val modal = RecordingModal()
-        val manager = ModalManager().apply { show(modal) }
-
-        viewModel(repository, manager, existing).onAction(ExchangeRateFormAction.Remove)
-
-        assertFalse(modal.isDismissed, "dismissed before the write returned")
-
-        repository.release()
-
-        assertTrue(modal.isDismissed)
-        assertEquals(listOf(existing), repository.removed)
     }
 
     /** A form that cannot state a rate has nothing to write, and nothing to dismiss for. */
@@ -180,16 +157,62 @@ class ExchangeRateFormViewModelTest {
         assertEquals("USD", state.to)
     }
 
+    /**
+     * A hand-stated rate is the whole of what the local archive holds beyond what the
+     * sync brings, and until now nothing reported that anyone stated one. The pair
+     * travels in the direction it was observed in, like the row itself.
+     */
+    @Test
+    fun `stating a rate reports the pair in the direction it was observed`() = runTest {
+        val repository = FakeExchangeRateRepository()
+        val analytics = RecordingAnalytics()
+
+        val viewModel = viewModel(repository, ModalManager(), analytics = analytics)
+        viewModel.onAction(ExchangeRateFormAction.SelectFrom("BRL"))
+        viewModel.onAction(ExchangeRateFormAction.SelectTo("USD"))
+        viewModel.onAction(ExchangeRateFormAction.ChangeRate(0.18))
+        viewModel.onAction(ExchangeRateFormAction.Submit)
+        repository.release()
+
+        assertEquals(listOf("create_exchange_rate"), analytics.events.map { it.name })
+        assertEquals(mapOf("pair" to "BRL_USD"), analytics.events.single().params)
+    }
+
+    /** The rate itself never travels: it is the user's figure, and no report needs it. */
+    @Test
+    fun `correcting a rate is told apart from stating one`() = runTest {
+        val existing = ExchangeRate(
+            id = 1,
+            currency = "USD",
+            counterCurrency = "BRL",
+            date = date,
+            rate = 5.4,
+            source = ExchangeRate.Source.USER,
+        )
+        val repository = FakeExchangeRateRepository()
+        val analytics = RecordingAnalytics()
+
+        val viewModel = viewModel(repository, ModalManager(), existing, analytics)
+        viewModel.onAction(ExchangeRateFormAction.ChangeRate(5.5))
+        viewModel.onAction(ExchangeRateFormAction.Submit)
+        repository.release()
+
+        assertEquals(listOf("edit_exchange_rate"), analytics.events.map { it.name })
+        assertTrue(analytics.events.single().params.values.none { it.contains("5.5") })
+    }
+
     private fun viewModel(
-        repository: IExchangeRateRepository,
+        repository: RateArchive,
         manager: ModalManager,
         existing: ExchangeRate? = null,
+        analytics: RecordingAnalytics = RecordingAnalytics(),
     ) = ExchangeRateFormViewModel(
         existing = existing,
         baseCurrencyRepository = FakeBaseCurrencyRepository(),
         exchangeRateRepository = repository,
         currencyRepository = FakeCurrencyRepository(),
         modalManager = manager,
+        analytics = analytics,
     )
 }
 
@@ -213,7 +236,7 @@ private class FakeBaseCurrencyRepository : IBaseCurrencyRepository {
 }
 
 /** Suspends every write until [release], so the order of the two steps is observable. */
-private class FakeExchangeRateRepository : IExchangeRateRepository {
+private class FakeExchangeRateRepository : RateArchive {
 
     private val gate = CompletableDeferred<Unit>()
 
@@ -235,10 +258,11 @@ private class FakeExchangeRateRepository : IExchangeRateRepository {
         saved += rate
     }
 
-    override suspend fun remove(rate: ExchangeRate) {
+    override suspend fun remove(rate: ExchangeRate) = remove(rate, withoutCopy = false)
+
+    override suspend fun remove(rate: ExchangeRate, withoutCopy: Boolean) {
         gate.await()
         removed += rate
     }
     override suspend fun countNaming(currency: String) = 0
-    override suspend fun removeAllNaming(currency: String) = Unit
 }

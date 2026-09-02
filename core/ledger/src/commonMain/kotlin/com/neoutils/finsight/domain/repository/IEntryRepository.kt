@@ -200,6 +200,31 @@ interface IEntryRepository {
     ): MoneyByCurrency
 
     /**
+     * The whole **monthly series** of [dimensionId], per month and per currency, up to
+     * and including [upTo] — the same aggregate as [dimensionBalanceInMonthByCurrency],
+     * grouped by month instead of filtered to one. A window of N months is one read, not
+     * N.
+     *
+     * **A month with no entry is absent from the map, not a zero row.** A grouped
+     * aggregate has no empty row, and the absence of a line is the honest answer to "no
+     * movement". Whoever needs the zeros of a window supplies them where the window is
+     * decided, which is above the ledger: the ledger does not know what window this is.
+     *
+     * **[upTo] is a parameter, and the ledger derives it from no clock.** Entries dated in
+     * the future are an ordinary state — a purchase in instalments writes one per month —
+     * so a read that could not be told where to stop would leave every consumer free to
+     * filter on its own, or to forget. It is the same cut [accountBalanceUpTo] already
+     * takes, and the ledger knows no "current month" here either.
+     *
+     * Per currency, like every read that can span accounts: a dimension has no currency
+     * of its own, and the ledger reduces none.
+     */
+    suspend fun dimensionMonthlySeriesByCurrency(
+        dimensionId: Long,
+        upTo: YearMonth,
+    ): Map<YearMonth, MoneyByCurrency>
+
+    /**
      * The income/expense/adjustment/invoice-payment flows of [accountId] in [month].
      *
      * [yieldDimensionId] is the dimension whose income is to be reported on its own
@@ -212,9 +237,6 @@ interface IEntryRepository {
         accountId: Long,
         yieldDimensionId: Long? = null,
     ): AccountFlows
-
-    /** Number of ledger entries carrying [dimensionId] within [month]. */
-    suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int
 
     /** Amount owed on a sub-ledger (positive), per currency, from the entries carrying its dimension. */
     suspend fun dimensionOwedByCurrency(dimensionId: Long): MoneyByCurrency

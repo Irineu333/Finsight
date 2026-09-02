@@ -82,7 +82,7 @@ class TransactionsEmptyStateTest {
         filterLabel: com.neoutils.finsight.domain.model.TransactionLabel? = null,
         filterTarget: TransactionTarget? = null,
     ) = TransactionsViewModel(
-        filterLabel = filterLabel, filterTarget = filterTarget,
+        filterLabel = filterLabel, filterTarget = filterTarget, filterCategoryId = null,
         transactionRepository = FakeTransactionRepository(transactions),
         categoryRepository = FakeCategoryRepository(),
         installmentRepository = NoInstallments,

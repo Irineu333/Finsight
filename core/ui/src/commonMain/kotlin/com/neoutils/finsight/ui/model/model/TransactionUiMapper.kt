@@ -5,7 +5,7 @@ import com.neoutils.finsight.domain.model.SpendingSubject
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.matches
 import com.neoutils.finsight.extension.deriveTransactionLabel
-import com.neoutils.finsight.extension.displayTitleOf
+import com.neoutils.finsight.extension.displayTitleOrNull
 import com.neoutils.finsight.extension.deriveTransactionType
 
 /**
@@ -44,7 +44,7 @@ fun Transaction.toTransactionUi(
         id = id,
         label = label,
         direction = deriveTransactionType(leg.amount, entries),
-        title = displayTitleOf(title, category),
+        title = displayTitleOrNull(title, category),
         amount = itemDisplayAmount(
             label = label,
             legAmountCents = figure.amount,

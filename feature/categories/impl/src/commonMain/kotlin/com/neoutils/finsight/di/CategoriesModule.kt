@@ -5,6 +5,7 @@ import com.neoutils.finsight.database.repository.CategoryRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCaseImpl
+import com.neoutils.finsight.domain.usecase.CalculateCategoryOverviewUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CreateCategoryUseCase
@@ -54,6 +55,13 @@ val categoriesModule = module {
             categoryRepository = get(),
             entryRepository = get(),
             consolidateMoney = get(),
+        )
+    }
+    factory {
+        CalculateCategoryOverviewUseCase(
+            entryRepository = get(),
+            consolidateMoney = get(),
+            clock = get(),
         )
     }
     factory { ValidateCategoryNameUseCase(repository = get()) }
@@ -148,11 +156,11 @@ val categoriesModule = module {
         ViewCategoryViewModel(
             categoryId = it.get(),
             categoryRepository = get(),
-            entryRepository = get(),
+            calculateOverview = get(),
             resolveRetirability = get(),
             unarchiveCategory = get(),
-            consolidateMoney = get(),
             observeConsolidationChanges = get(),
+            analytics = get(),
             crashlytics = get(),
         )
     }

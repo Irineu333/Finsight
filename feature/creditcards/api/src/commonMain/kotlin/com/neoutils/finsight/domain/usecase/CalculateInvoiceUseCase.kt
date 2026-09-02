@@ -32,10 +32,29 @@ interface CalculateInvoiceUseCase {
      * An invoice with no dimension, or whose dimension carries no entry, is present
      * with zero: what is asked about is the invoice, and every invoice owes something,
      * even if that something is nothing.
+     *
+     * @param excluding the operation whose own contribution is to be left out — the
+     * ceiling a correction is judged by, since an operation that is being rewritten
+     * already reduced the figure it is about to state again.
+     *
+     * One formula covers the three situations, without a branch between them: on a
+     * creation the operation does not exist and nothing is left out; on a correction
+     * over the same invoice what it settled comes back; on a correction that switched
+     * invoices it has nothing there and, again, nothing is left out.
+     *
+     * **The default is the current owed**, which is what every read that is not a
+     * correction wants. It carries a default where `contra` in `updateTransaction` and
+     * `account` in `InvoicePaymentAction.Submit` deliberately do not, and the difference
+     * is what the omitted value means: there it is *wrong* — an unbalanced write, the
+     * default account instead of the chosen one — and here it is the ordinary, correct
+     * case.
      */
-    suspend operator fun invoke(invoices: Collection<Invoice>): Map<Long, Double>
+    suspend operator fun invoke(
+        invoices: Collection<Invoice>,
+        excluding: Long? = null,
+    ): Map<Long, Double>
 
     /** One invoice. Not another number, so not another implementation. */
-    suspend operator fun invoke(invoice: Invoice): Double =
-        invoke(listOf(invoice))[invoice.id] ?: 0.0
+    suspend operator fun invoke(invoice: Invoice, excluding: Long? = null): Double =
+        invoke(listOf(invoice), excluding)[invoice.id] ?: 0.0
 }

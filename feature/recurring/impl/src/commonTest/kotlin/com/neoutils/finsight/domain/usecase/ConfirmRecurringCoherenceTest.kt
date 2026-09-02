@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.flow.Flow
@@ -260,6 +261,7 @@ private class RecordingIntent : IRecurringOccurrenceRepository {
     override suspend fun getAllOccurrences(): List<RecurringOccurrence> = emptyList()
     override suspend fun getOccurrenceBy(recurringId: Long, yearMonth: YearMonth): RecurringOccurrence? = null
     override suspend fun getOccurrenceBy(recurringId: Long, cycleNumber: Int): RecurringOccurrence? = null
+    override suspend fun settledIn(month: YearMonth): RecurringSettledMoney = RecurringSettledMoney.none
     override suspend fun save(occurrence: RecurringOccurrence): Long = throw NotImplementedError()
 }
 

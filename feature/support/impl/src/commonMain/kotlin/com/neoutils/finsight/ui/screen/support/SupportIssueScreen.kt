@@ -29,6 +29,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.SupportMessage
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.LocalDateFormats
@@ -59,6 +61,12 @@ fun SupportIssueScreen(
             }
         }
     }
+
+    // The reply field ends in a send button, in the bottom-right corner. A screen that offers no
+    // action of its own is served the universal one, so a button over this content lands on top of
+    // send and the press meant for it opens a transaction form instead. Beside the content there is
+    // nothing to land on, and where each width puts the button is the shell's to know.
+    ChromeEffect(config = ChromeConfig.NoButtonOverContent)
 
     Scaffold(
         modifier = Modifier.testTag("screen_support_issue"),

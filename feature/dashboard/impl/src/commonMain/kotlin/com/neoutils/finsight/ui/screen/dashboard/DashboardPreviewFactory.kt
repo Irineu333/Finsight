@@ -93,11 +93,24 @@ class DashboardPreviewFactory(
             )
         }
 
+        // Deprecated, and previewed all the same: `DashboardViewModel.buildEditingState`
+        // drops from `activeItems` every saved key with no preview, so removing this branch
+        // would make the widget vanish from the edit mode of whoever still has it saved —
+        // including the affordance to remove it.
         DashboardComponentType.PENDING_BALANCE_STATS.key -> {
             DashboardComponentVariant.PendingBalanceStats.Preview(
                 component = DashboardComponent.PendingBalanceStats(
                     pendingIncome = figure(500.0, on),
                     pendingExpense = figure(300.0, on),
+                ),
+            )
+        }
+
+        DashboardComponentType.MONTH_SETTLEMENT.key -> {
+            DashboardComponentVariant.MonthSettlement.Preview(
+                component = DashboardComponent.MonthSettlement(
+                    incoming = figure(500.0, on),
+                    outgoing = figure(1840.0, on),
                 ),
             )
         }

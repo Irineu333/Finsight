@@ -254,9 +254,12 @@ private class CountingTransactions(
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
-    ) = delegate.updateTransaction(id, title, date, leg, contra)
+    ) = delegate.updateTransaction(id, title, date, legs, contra)
+
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        delegate.getTransactionsByIds(ids)
 
     override suspend fun deleteTransactionById(id: Long) = delegate.deleteTransactionById(id)
 

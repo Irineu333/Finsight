@@ -6,7 +6,13 @@ object CreateCreditCard : Event("create_credit_card")
 
 object EditCreditCard : Event("edit_credit_card")
 
+/** The row is gone. Retiring one that must be preserved is [ArchiveCreditCard] instead. */
 object DeleteCreditCard : Event("delete_credit_card")
+
+/** Retired but kept, and reversible by [UnarchiveCreditCard] — not a deletion. */
+object ArchiveCreditCard : Event("archive_credit_card")
+
+object UnarchiveCreditCard : Event("unarchive_credit_card")
 
 object CloseInvoice : Event("close_invoice")
 
@@ -19,5 +25,7 @@ object CreateInvoice : Event("create_invoice")
 object DeleteFutureInvoice : Event("delete_future_invoice")
 
 object AdvanceInvoicePayment : Event("advance_invoice_payment")
+
+object EditAdvanceInvoicePayment : Event("edit_advance_invoice_payment")
 
 object AdjustInvoiceBalance : Event("adjust_invoice_balance")

@@ -106,6 +106,7 @@ internal class RecordingInvoiceStore(vararg seed: Invoice) : IInvoiceRepository 
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = notUnderTest()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = notUnderTest()
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> = notUnderTest()
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = notUnderTest()
 }
 
 internal class SingleCardRepository(private val card: CreditCard) : ICreditCardRepository {
@@ -142,15 +143,17 @@ internal class RecordingTransactionWriter(
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = notUnderTest()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = notUnderTest()
     override suspend fun getAllTransactions(): List<Transaction> = notUnderTest()
-
     override suspend fun getTransactionsBetween(
         startDate: LocalDate,
         endDate: LocalDate,
     ): List<Transaction> = notUnderTest()
+
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        notUnderTest()
     override suspend fun getTransactionById(id: Long): Transaction? = notUnderTest()
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = notUnderTest()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = notUnderTest()
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = notUnderTest()
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) = notUnderTest()
     override suspend fun deleteTransactionById(id: Long) = notUnderTest()
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = notUnderTest()
 }

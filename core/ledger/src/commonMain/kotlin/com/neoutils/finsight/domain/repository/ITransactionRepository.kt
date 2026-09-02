@@ -1,5 +1,6 @@
 package com.neoutils.finsight.domain.repository
 
+import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.ContraLeg
@@ -47,6 +48,22 @@ interface ITransactionRepository {
      */
     suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long>
 
+    /**
+     * The transactions [ids] names, in one query.
+     *
+     * It exists because the two reads beside it are both wrong for a list that starts
+     * from a set of identities: [getTransactionById] per row is the N+1 a list pays on
+     * every emission, and [getAllTransactions] reads the whole ledger to keep a handful
+     * of rows. Whoever already holds the ids — a screen listing the transactions of
+     * confirmed cycles, of an installment, of anything the ledger hands identities for —
+     * asks for exactly those.
+     *
+     * An id with no row is an **absence, not an error**: the result holds the
+     * transactions that exist, in no guaranteed correspondence with [ids]. Order is the
+     * ledger's own — most recent first — and never the caller's.
+     */
+    suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction>
+
     /** Writes the user's [intent] as a balanced set of ledger entries. */
     suspend fun createTransaction(intent: TransactionIntent): Transaction
 
@@ -58,16 +75,12 @@ interface ITransactionRepository {
     suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction>
 
     /**
-     * Rewrites the transaction's row and its ledger legs from [leg] and its [contra].
+     * Rewrites the transaction's row and its ledger legs from [legs] and [contra].
      *
-     * ⚠️ Takes a **single** leg: the rewrite deletes every old entry and rebuilds from
-     * this one plus the contra. That is only correct for a transaction with exactly one
-     * monetary leg — an expense or an income. A transfer or a card payment has two, and
-     * routing one through here would drop the second silently. What the rewrite can
-     * express is decided by `Transaction.editObstacle`, the single owner both the screen
-     * and `UpdateTransactionUseCase` read: the screen to decide whether to offer the
-     * edit, the use case to refuse it. Any future support for editing those must change
-     * this shape.
+     * The rewrite deletes every old entry and rebuilds from the set given, which is
+     * the same vocabulary [createTransaction] accepts: an operation with two monetary
+     * legs — a transfer — states both, and the boundary completes and balances the
+     * intent exactly as it does on creation, conversion legs included.
      *
      * [contra] has no default on purpose: a rewrite deletes the old entries, so a caller
      * that forgets it turns a one-sided intent into an unbalanced write — refused at the
@@ -78,7 +91,7 @@ interface ITransactionRepository {
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     )
 
@@ -86,4 +99,24 @@ interface ITransactionRepository {
 
     /** Removes several transactions as one unit — see [createTransactions]. */
     suspend fun deleteTransactionsByIds(ids: List<Long>)
+
+    /**
+     * Removes [id], saying the [announcement] to
+     * [com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude] on the way.
+     *
+     * Spelling it out is what this overload is for; the removals above are the same
+     * removal with [RemovalAnnouncement.Announced], which is why forgetting the argument
+     * cannot cost anybody the announcement.
+     *
+     * The default carries the answer no further, because an implementation with no prelude
+     * has nothing to withhold: [beforeRemoval][com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude.beforeRemoval]
+     * is the only thing it governs, and where it is not spoken both answers are the same
+     * removal.
+     */
+    suspend fun deleteTransactionById(id: Long, announcement: RemovalAnnouncement) =
+        deleteTransactionById(id)
+
+    /** [deleteTransactionsByIds], with the [announcement] spelled out — see above. */
+    suspend fun deleteTransactionsByIds(ids: List<Long>, announcement: RemovalAnnouncement) =
+        deleteTransactionsByIds(ids)
 }

@@ -246,7 +246,7 @@ internal class WorldUpdateTransaction(
                 id = transactionId,
                 title = intent.title,
                 date = intent.date,
-                leg = intent.legs.first(),
+                legs = intent.legs,
                 contra = intent.contra,
             )
         }.bind()
@@ -260,7 +260,10 @@ internal class WorldUpdateTransaction(
 internal class WorldDeleteTransaction(
     private val transactionRepository: ITransactionRepository,
 ) : DeleteTransactionUseCase {
-    override suspend fun invoke(transactionId: Long): Either<Throwable, Unit> = either {
+    override suspend fun invoke(
+        transactionId: Long,
+        withoutCopy: Boolean,
+    ): Either<Throwable, Unit> = either {
         ensureNotNull(transactionRepository.getTransactionById(transactionId)) {
             TransactionException(TransactionError.NOT_FOUND)
         }
@@ -737,7 +740,10 @@ internal class WorldDeleteInstallment(
     private val transactionRepository: ITransactionRepository,
     private val installmentRepository: IInstallmentRepository,
 ) : DeleteInstallmentUseCase {
-    override suspend fun invoke(installmentId: Long): Either<Throwable, Unit> = either {
+    override suspend fun invoke(
+        installmentId: Long,
+        withoutCopy: Boolean,
+    ): Either<Throwable, Unit> = either {
         ensureNotNull(installmentRepository.getInstallmentById(installmentId)) {
             InstallmentException(InstallmentError.NotFound)
         }
@@ -802,7 +808,10 @@ internal class WorldDeleteFutureInvoice(
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
 ) : DeleteFutureInvoiceUseCase {
-    override suspend fun invoke(invoiceId: Long): Either<InvoiceException, Unit> = either {
+    override suspend fun invoke(
+        invoiceId: Long,
+        withoutCopy: Boolean,
+    ): Either<InvoiceException, Unit> = either {
         val invoice = ensureNotNull(invoiceRepository.getInvoiceById(invoiceId)) {
             InvoiceException(InvoiceError.NotFound)
         }

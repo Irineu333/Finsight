@@ -119,7 +119,7 @@ class UpdateTransactionUseCaseTest {
         assertEquals(expense.id, rewrite.id)
         assertEquals(intent.title, rewrite.title)
         assertEquals(intent.date, rewrite.date)
-        assertEquals(intent.legs.single(), rewrite.leg)
+        assertEquals(intent.legs, rewrite.legs)
         assertEquals(
             intent.contra,
             rewrite.contra,

@@ -14,6 +14,9 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +64,43 @@ fun SupportScreen(
         }
     }
 
+    // Three states, three answers, and the middle one is the reason the configuration can be null.
+    // Whether this screen wants a button is a fact about the list, and the list is what is being
+    // read: answering while the read is in flight is answering twice, and the second answer is one
+    // the chrome has to walk back. Silent, the bar and the button hold, and the reading moves them
+    // once — out to the corner beside a list of issues, or straight down over an empty state that
+    // renders the create command as its own button.
+    ChromeEffect(
+        config = when (uiState) {
+            is SupportUiState.Loading -> null
+
+            is SupportUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is SupportUiState.Content -> ChromeConfig.Default
+        },
+        actions = when (uiState) {
+            is SupportUiState.Loading,
+            is SupportUiState.Empty -> emptyList()
+
+            is SupportUiState.Content -> remember(modalManager, viewModel) {
+                listOf(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.support_create_issue,
+                        testTag = "support_add",
+                        onClick = {
+                            modalManager.show(
+                                CreateSupportIssueModal(
+                                    onSubmit = { draft -> viewModel.createIssue(draft = draft) },
+                                )
+                            )
+                        },
+                    )
+                )
+            }
+        }
+    )
+
     Scaffold(
         modifier = Modifier.testTag("screen_support"),
         topBar = {
@@ -88,29 +128,6 @@ fun SupportScreen(
                     )
                 },
             )
-        },
-        floatingActionButton = {
-            if (uiState is SupportUiState.Content) {
-                FloatingActionButton(
-                    onClick = {
-                        modalManager.show(
-                            CreateSupportIssueModal(
-                                onSubmit = { draft ->
-                                    viewModel.createIssue(
-                                        draft = draft,
-                                    )
-                                },
-                            )
-                        )
-                    },
-                    modifier = Modifier.testTag("support_add"),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                    )
-                }
-            }
         },
     ) { paddingValues ->
         when (uiState) {
@@ -212,7 +229,8 @@ private fun EmptySupportState(
         )
         androidx.compose.material3.Button(
             onClick = onCreateIssue,
-            // The same command as the FAB this state replaces: the two never stand together.
+            // The same command as the action button this state replaces, hence the same id: the
+            // two never stand together, because this state publishes no button over the content.
             modifier = Modifier
                 .padding(top = 16.dp)
                 .testTag("support_add"),

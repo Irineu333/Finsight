@@ -5,6 +5,7 @@
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -39,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import com.neoutils.finsight.ui.util.exposeTestTags
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,14 +58,13 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.ui.component.TransactionCard
-import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.ui.modal.archiveCreditCard.ArchiveCreditCardModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.createInvoice.CreateInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
-import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
+import com.neoutils.finsight.ui.modal.invoicePayment.InvoicePaymentModal
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceModal
@@ -78,7 +79,6 @@ import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_spending_uncategorized
 import com.neoutils.finsight.resources.credit_cards_unarchive
-import com.neoutils.finsight.resources.invoice_transactions_advance_payment
 import com.neoutils.finsight.resources.invoice_transactions_advance_payments
 import com.neoutils.finsight.resources.invoice_transactions_adjustments
 import com.neoutils.finsight.resources.invoice_transactions_close_invoice
@@ -97,7 +97,6 @@ import com.neoutils.finsight.resources.invoice_transactions_filter_type_adjustme
 import com.neoutils.finsight.resources.invoice_transactions_filter_type_all
 import com.neoutils.finsight.resources.invoice_transactions_filter_type_expense
 import com.neoutils.finsight.resources.invoice_transactions_filter_type_payment
-import com.neoutils.finsight.resources.invoice_transactions_pay_invoice
 import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
 import com.neoutils.finsight.resources.invoice_transactions_total
 import com.neoutils.finsight.resources.transactions_empty_filter_action
@@ -123,6 +122,11 @@ fun InvoiceTransactionsScreen(
     LaunchedEffect(Unit) {
         analytics.logScreenView("invoice_transactions")
     }
+
+    // Charging the card in view is what the shell's universal action does, so this screen takes the
+    // default chrome — and says so, because silence is what the shell holds a previous screen's
+    // chrome through.
+    ChromeEffect()
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -176,7 +180,10 @@ private fun InvoiceTransactionsContent(
                         var menuExpanded by remember { mutableStateOf(false) }
 
                         Box {
-                            IconButton(onClick = { menuExpanded = true }) {
+                            IconButton(
+                                onClick = { menuExpanded = true },
+                                modifier = Modifier.testTag("invoice_transactions_more_options"),
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.MoreVert,
                                     contentDescription = "Menu",
@@ -185,7 +192,10 @@ private fun InvoiceTransactionsContent(
 
                             DropdownMenu(
                                 expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false }
+                                onDismissRequest = { menuExpanded = false },
+                                // A popup is its own composition root: without this, no
+                                // tag on the options below reaches the E2E driver.
+                                modifier = Modifier.exposeTestTags(),
                             ) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(Res.string.invoice_transactions_edit_card)) },
@@ -405,15 +415,7 @@ private fun InvoiceTransactionsContent(
                                     .fillMaxWidth()
                                     .animateItem(),
                                 onClick = {
-                                    when (transactionUi.direction) {
-                                        TransactionType.ADJUSTMENT -> {
-                                            detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
-                                        }
-
-                                        else -> {
-                                            detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
-                                        }
-                                    }
+                                    detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                 }
                             )
                         }
@@ -625,42 +627,6 @@ private fun InvoiceActions(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        if (summary.status.isOpen) {
-            OutlinedButton(
-                onClick = {
-                    modalManager.show(
-                        AdvancePaymentModal(
-                            invoice = invoice,
-                            currentBillAmount = summary.total,
-                        )
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("invoice_advance_payment"),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = colorScheme.primary
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(colorScheme.primary.copy(alpha = 0.5f))
-                ),
-                contentPadding = PaddingValues(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Payment,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = stringResource(Res.string.invoice_transactions_advance_payment),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-
         if (summary.isClosable) {
             OutlinedButton(
                 onClick = { modalManager.show(CloseInvoiceModal(summary.invoiceId, summary.closingDate)) },
@@ -690,7 +656,17 @@ private fun InvoiceActions(
 
         if (summary.status.isDeletable) {
             OutlinedButton(
-                onClick = { modalManager.show(DeleteFutureInvoiceModal(invoice)) },
+                onClick = {
+                    modalManager.show(
+                        DeleteFutureInvoiceModal(
+                            invoice = invoice,
+                            // Counted where the invoice's own transactions are already
+                            // known, and handed over: the sheet states what the deletion
+                            // takes, and the count and the invoice are one answer.
+                            transactionsToRemove = summary.transactionCount,
+                        )
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
@@ -715,47 +691,43 @@ private fun InvoiceActions(
             }
         }
 
-        if (summary.status.isClosed) {
-            if (summary.canReopen) {
-                OutlinedButton(
-                    onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFFFFA726)
-                    ),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
-                    ),
-                    contentPadding = PaddingValues(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(Res.string.invoice_transactions_reopen_invoice),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            Button(
-                onClick = {
-                    modalManager.show(
-                        PayInvoiceModal(
-                            invoice = invoice,
-                            currentBillAmount = summary.total
-                        )
-                    )
-                },
+        if (summary.status.isClosed && summary.canReopen) {
+            OutlinedButton(
+                onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFFFFA726)
+                ),
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                    brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
+                ),
                 contentPadding = PaddingValues(12.dp),
             ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = stringResource(Res.string.invoice_transactions_reopen_invoice),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        // One command, and the invoice on screen is only what it opens on: the verb
+        // comes from the state, resolved by the view model.
+        if (summary.canPay) {
+            val openPayment = { modalManager.show(InvoicePaymentModal(summary.invoiceId)) }
+
+            val payModifier = Modifier
+                .fillMaxWidth()
+                .testTag("invoice_pay_invoice")
+
+            val payContent: @Composable RowScope.() -> Unit = {
                 Icon(
                     imageVector = Icons.Default.Payment,
                     contentDescription = null,
@@ -763,9 +735,38 @@ private fun InvoiceActions(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = stringResource(Res.string.invoice_transactions_pay_invoice),
+                    text = stringResource(summary.payLabel),
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = if (summary.paySettles) FontWeight.Bold else FontWeight.Medium
+                )
+            }
+
+            // Solid emphasis is the screen's recommendation, and only settling the
+            // invoice earns it: paying part of one is something the user may do, not
+            // something the screen is asking for.
+            if (summary.paySettles) {
+                Button(
+                    onClick = openPayment,
+                    modifier = payModifier,
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(12.dp),
+                    content = payContent,
+                )
+            } else {
+                OutlinedButton(
+                    onClick = openPayment,
+                    modifier = payModifier,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colorScheme.primary
+                    ),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                        brush = androidx.compose.ui.graphics.SolidColor(
+                            colorScheme.primary.copy(alpha = 0.5f)
+                        )
+                    ),
+                    contentPadding = PaddingValues(12.dp),
+                    content = payContent,
                 )
             }
         }

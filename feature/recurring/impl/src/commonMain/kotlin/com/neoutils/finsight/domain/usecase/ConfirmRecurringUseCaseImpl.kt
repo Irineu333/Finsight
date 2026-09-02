@@ -23,13 +23,10 @@ import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.isAccept
-import com.neoutils.finsight.extension.monthsUntil
-import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 class ConfirmRecurringUseCaseImpl(
     private val recurringRepository: IRecurringRepository,
@@ -60,10 +57,19 @@ class ConfirmRecurringUseCaseImpl(
             ?: throw RecurringException(RecurringError.NOT_FOUND)
 
         val yearMonth = date.yearMonth
-        val cycleNumber = Instant
-            .fromEpochMilliseconds(recurring.createdAt)
-            .toYearMonth()
-            .monthsUntil(yearMonth) + 1
+
+        // Which cycle this is, asked of the template rather than counted here. The
+        // answer is absent for a month before the series began, and that is a refusal
+        // and not a zero: an occurrence numbered 0 was persisted and read back onto the
+        // screen as "Aluguel • 0".
+        //
+        // First, so that nothing is written before it. The date picker of the
+        // confirmation is what makes this unreachable by the designed path; this is the
+        // net behind it, like the currency refusal below.
+        val cycleNumber = requireNotNull(recurring.cycleNumberIn(yearMonth)) {
+            "Recurring ${recurring.id} has no cycle in $yearMonth: " +
+                "its series begins in ${recurring.originMonth}"
+        }
 
         // Omitting one of these asks for the cycle the template describes, and the
         // template is what answers. Resolved here rather than announced as a default on
@@ -89,7 +95,7 @@ class ConfirmRecurringUseCaseImpl(
 
         // Blank is an absence, not the template's title: a transaction with no title of
         // its own is displayed by its category, which is the rule the whole app reads
-        // titles by (`displayTitleOf`). Falling back to the template here would hand the
+        // titles by (`displayTitleOrNull`). Falling back to the template here would hand the
         // user a name they had just erased — so the fallback does not exist, for anyone.
         val cycleTitle = title?.trim()?.takeIf { it.isNotBlank() }
 

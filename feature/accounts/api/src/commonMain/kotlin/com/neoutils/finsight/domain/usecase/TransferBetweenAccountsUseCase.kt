@@ -24,6 +24,9 @@ interface TransferBetweenAccountsUseCase {
      *
      * @param destinationAmount what arrives, when it is not what left. `null` means the
      * two ends are the same number, which is the whole of the mono-currency case.
+     * @param title why the money moved, as the user stated it, and `null` when they had
+     * nothing to state. It names the operation and classifies nothing: a transfer has no
+     * analytic axis, and a title does not give it one.
      */
     suspend operator fun invoke(
         sourceAccountId: Long,
@@ -31,5 +34,6 @@ interface TransferBetweenAccountsUseCase {
         amount: Double,
         date: LocalDate,
         destinationAmount: Double? = null,
+        title: String? = null,
     ): Either<TransferException, Transaction>
 }

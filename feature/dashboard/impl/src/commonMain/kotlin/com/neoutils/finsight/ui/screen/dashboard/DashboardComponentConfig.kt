@@ -30,6 +30,15 @@ object IncomeByCategoryConfig {
     const val ALL = "-1"
 }
 
+/**
+ * Which of the two sources make up the settlement figure. Both are on by default, and
+ * each is read on its own: they are perimeters, not a mode.
+ */
+object MonthSettlementConfig {
+    const val INCLUDE_RECURRING = "include_recurring"
+    const val INCLUDE_INVOICES = "include_invoices"
+}
+
 object PendingRecurringConfig {
     const val UPCOMING_DAYS_AHEAD = "upcoming_days_ahead"
     const val DEFAULT_UPCOMING_DAYS_AHEAD = 0
@@ -66,3 +75,10 @@ fun Map<String, String>.showHeader(defaultValue: Boolean = true): Boolean =
  */
 fun Map<String, String>.showHeader(key: String): Boolean =
     showHeader(defaultValue = DashboardComponentType.fromKey(key)?.defaultConfig?.showHeader() ?: true)
+
+/**
+ * Whether a source of a widget's perimeter is on, under [key]. Absent means on: a
+ * preference saved before the widget declared the source cannot be read as a refusal
+ * of it, and every source this governs ships on.
+ */
+fun Map<String, String>.isSourceOn(key: String): Boolean = get(key)?.toBoolean() ?: true

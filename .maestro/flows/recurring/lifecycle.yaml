@@ -138,10 +138,41 @@ env:
     id: "recurring_card_amount"
     text: "[$]77[.,]00"
 
+# --- The group folds, and goes on saying how many it holds ---------------------------------------
+# Both are pending, so the two rows above are that one group. Folding it takes the rows away and
+# leaves the heading and its count — which is the only thing that makes folding one worth doing.
+# Asserted on the count's own node: a heading that survived while the count did not would still
+# read as a fold and would have lost the answer.
+- tapOn:
+    id: "recurring_section_pending"
+- assertVisible:
+    id: "recurring_section_pending_count"
+    text: "2"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]940[.,]00"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]77[.,]00"
+- tapOn:
+    id: "recurring_section_pending"
+- extendedWaitUntil:
+    visible:
+      id: "recurring_card_amount"
+      text: "[$]940[.,]00"
+    timeout: 15000
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]77[.,]00"
+
 # --- A recurring is not money --------------------------------------------------------------------
 # Two things are due and the balance is still zero: what the app knows it will ask for has not been
-# asked for yet. The pending row appears to say exactly that — the day-zero story asserts its
+# asked for yet. The settlement row appears to say exactly that — the day-zero story asserts its
 # absence, and this is the other half.
+#
+# That widget spans the whole month rather than only what is past its day, and it sums unpaid
+# invoices besides. Both recurrings here fall on day 1 and there is no card in this flow, so the two
+# perimeters coincide and the figures below are the templates' own.
 - back
 - scrollUntilVisible:
     element:
@@ -152,12 +183,12 @@ env:
     id: "dashboard_total_balance_amount"
     text: "[$]0[.,]00"
 - assertVisible:
-    id: "dashboard_component_balance_stats_pending"
+    id: "dashboard_component_month_settlement"
 - assertVisible:
-    id: "dashboard_pending_income_amount"
+    id: "dashboard_settlement_incoming_amount"
     text: "[$]940[.,]00"
 - assertVisible:
-    id: "dashboard_pending_expense_amount"
+    id: "dashboard_settlement_outgoing_amount"
     text: "[$]77[.,]00"
 
 - scrollUntilVisible:
@@ -226,10 +257,10 @@ env:
     id: "dashboard_income_amount"
     text: "[$]865[.,]00"
 - assertVisible:
-    id: "dashboard_pending_income_amount"
+    id: "dashboard_settlement_incoming_amount"
     text: "[$]0[.,]00"
 - assertVisible:
-    id: "dashboard_pending_expense_amount"
+    id: "dashboard_settlement_outgoing_amount"
     text: "[$]77[.,]00"
 
 # --- I skip the rent -----------------------------------------------------------------------------
@@ -267,7 +298,8 @@ env:
       id: "confirm_recurring_skip"
     timeout: 15000
 
-# Nothing is owed for this month any more, so both pending components go away — and skipping moved
+# Nothing is owed for this month any more, so the settlement row and the pending list both go away
+# — and skipping moved
 # no money: the balance is still what the salary put there, and no expense was recorded.
 # The premise for the two absences is the pair of components that surround them: the cards pager
 # (position 5) and recents (position 9) were laid out, so positions 2 and 8 were too.
@@ -279,7 +311,7 @@ env:
 - assertVisible:
     id: "dashboard_component_credit_cards_pager"
 - assertNotVisible:
-    id: "dashboard_component_balance_stats_pending"
+    id: "dashboard_component_month_settlement"
 - assertVisible:
     id: "dashboard_total_balance_amount"
     text: "[$]865[.,]00"
@@ -329,6 +361,21 @@ env:
     visible:
       id: "screen_recurring"
     timeout: 15000
+# The posted section draws the list's one row, and publishes the same ids as the other three: the
+# figure is read on `recurring_card_amount`, exactly as it is for the pending rows above. What it
+# says is the ledger's $865.00 — what this cycle was confirmed for — and never the $940.00 the model
+# goes on asking for, which no row of this screen shows once the cycle has posted.
+- scrollUntilVisible:
+    element:
+      id: "recurring_section_posted"
+    direction: DOWN
+    timeout: 15000
+- assertVisible:
+    id: "recurring_card_amount"
+    text: "[$]865[.,]00"
+- assertNotVisible:
+    id: "recurring_card_amount"
+    text: "[$]940[.,]00"
 - tapOn: ${INCOME_TITLE}
 - extendedWaitUntil:
     visible:
@@ -401,17 +448,22 @@ env:
 - assertNotVisible:
     id: "recurring_card_amount"
     text: "[$]940[.,]00"
+# The archive is a destination of its own, reached from the overflow — not a cut of this
+# list. An archived recurring generates no cycle in any month, so it belongs to none of
+# the sections here.
 - tapOn:
-    id: "recurring_filter"
+    id: "recurring_more_options"
 - extendedWaitUntil:
     visible:
-      id: "recurring_filter_option_archived"
+      id: "recurring_view_archived"
     timeout: 15000
 - tapOn:
-    id: "recurring_filter_option_archived"
+    id: "recurring_view_archived"
 - extendedWaitUntil:
-    visible: ${INCOME_TITLE}
+    visible:
+      id: "screen_archived_recurring"
     timeout: 15000
+- assertVisible: ${INCOME_TITLE}
 
 # --- The month turns -----------------------------------------------------------------------------
 # The clock moves; the database does not. What was skipped is due again — a skip settles one cycle,
@@ -438,10 +490,10 @@ env:
     id: "dashboard_income_amount"
     text: "[$]0[.,]00"
 - assertVisible:
-    id: "dashboard_pending_expense_amount"
+    id: "dashboard_settlement_outgoing_amount"
     text: "[$]77[.,]00"
 - assertVisible:
-    id: "dashboard_pending_income_amount"
+    id: "dashboard_settlement_incoming_amount"
     text: "[$]0[.,]00"
 
 - scrollUntilVisible:
@@ -467,17 +519,22 @@ env:
     visible:
       id: "screen_recurring"
     timeout: 15000
+# The archive is a destination of its own, reached from the overflow — not a cut of this
+# list. An archived recurring generates no cycle in any month, so it belongs to none of
+# the sections here.
 - tapOn:
-    id: "recurring_filter"
+    id: "recurring_more_options"
 - extendedWaitUntil:
     visible:
-      id: "recurring_filter_option_archived"
+      id: "recurring_view_archived"
     timeout: 15000
 - tapOn:
-    id: "recurring_filter_option_archived"
+    id: "recurring_view_archived"
 - extendedWaitUntil:
-    visible: ${INCOME_TITLE}
+    visible:
+      id: "screen_archived_recurring"
     timeout: 15000
+- assertVisible: ${INCOME_TITLE}
 - tapOn: ${INCOME_TITLE}
 - extendedWaitUntil:
     visible:
@@ -502,6 +559,14 @@ env:
 
 # And it asks again — once, for this month. Reactivating puts a recurring back in circulation; it
 # does not bill for the months it spent archived.
+#
+# Two steps back, not one: the archive is its own destination now, so leaving it lands on the
+# recurring list and only the second back reaches the dashboard.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "screen_recurring"
+    timeout: 15000
 - back
 # Back to the top first: `open_section` left the dashboard scrolled down to the quick-action grid,
 # and the pending row sits above it — scrolling DOWN from there would never reach it.
@@ -555,7 +620,7 @@ env:
     id: "dashboard_expenses_amount"
     text: "[$]77[.,]00"
 - assertVisible:
-    id: "dashboard_pending_expense_amount"
+    id: "dashboard_settlement_outgoing_amount"
     text: "[$]0[.,]00"
 
 - scrollUntilVisible:

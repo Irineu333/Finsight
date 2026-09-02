@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -326,6 +327,7 @@ private class RecordingSkips : IRecurringOccurrenceRepository {
     override suspend fun getAllOccurrences(): List<RecurringOccurrence> = emptyList()
     override suspend fun getOccurrenceBy(recurringId: Long, yearMonth: YearMonth): RecurringOccurrence? = null
     override suspend fun getOccurrenceBy(recurringId: Long, cycleNumber: Int): RecurringOccurrence? = null
+    override suspend fun settledIn(month: YearMonth): RecurringSettledMoney = RecurringSettledMoney.none
 }
 
 private class RecordingConfirmations : IRecurringOccurrenceRepository {
@@ -343,6 +345,7 @@ private class RecordingConfirmations : IRecurringOccurrenceRepository {
     override suspend fun getAllOccurrences(): List<RecurringOccurrence> = emptyList()
     override suspend fun getOccurrenceBy(recurringId: Long, yearMonth: YearMonth): RecurringOccurrence? = null
     override suspend fun getOccurrenceBy(recurringId: Long, cycleNumber: Int): RecurringOccurrence? = null
+    override suspend fun settledIn(month: YearMonth): RecurringSettledMoney = RecurringSettledMoney.none
     override suspend fun save(occurrence: RecurringOccurrence): Long = throw NotImplementedError()
 }
 

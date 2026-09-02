@@ -173,7 +173,6 @@ class AgentFigureTest {
         override suspend fun save(rate: ExchangeRate) = error("the surface never writes a rate")
         override suspend fun remove(rate: ExchangeRate) = error("the surface never writes a rate")
         override suspend fun countNaming(currency: String): Int = 0
-        override suspend fun removeAllNaming(currency: String) = error("the surface never writes a rate")
     }
 
     private object NoAccounts : GetAccountCurrenciesUseCase {

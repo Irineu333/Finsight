@@ -15,10 +15,12 @@ kotlin {
             implementation(projects.core.resources)
             implementation(projects.core.analytics)
             implementation(projects.core.crashlytics)
+            implementation(projects.feature.shell.api)
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.categories.api)
             implementation(projects.feature.recurring.api)
             implementation(projects.feature.settings.api)
+            implementation(projects.feature.transactions.api)
             implementation(projects.feature.budgets.api)
 
             implementation(libs.arrow.core)

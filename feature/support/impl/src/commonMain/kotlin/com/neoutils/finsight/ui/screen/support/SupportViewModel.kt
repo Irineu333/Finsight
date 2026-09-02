@@ -28,14 +28,17 @@ class SupportViewModel(
         _showActive,
     ) { issues, showActive ->
 
-        if (issues.isEmpty()) {
+        val scoped = issues.filter { it.isActive == showActive }
+
+        // Decided on the filtered list: emptiness is a fact about the scope on screen,
+        // not about the archive behind it. Judged before the filter, a scope with
+        // nothing in it drew a Content of no rows — a dead screen with no empty state.
+        if (scoped.isEmpty()) {
             return@combine SupportUiState.Empty(showActive = showActive)
         }
 
         SupportUiState.Content(
-            issues = issues
-                .filter { it.isActive == showActive }
-                .sortedByDescending { it.updatedAt },
+            issues = scoped.sortedByDescending { it.updatedAt },
             showActive = showActive,
         )
     }.stateIn(

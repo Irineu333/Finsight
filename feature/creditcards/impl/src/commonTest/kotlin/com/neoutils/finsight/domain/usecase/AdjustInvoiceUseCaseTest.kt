@@ -1,5 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
+import com.neoutils.finsight.domain.ledger.WithheldAnnouncement
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
@@ -68,6 +70,36 @@ class AdjustInvoiceUseCaseTest {
         useCase(invoice = invoice, target = 200.0, adjustmentDate = date).getOrNull()
 
         assertEquals(200.0, ledger.dimensionOwed(invoice.id))
+    }
+
+    /**
+     * The invoice half of what `AdjustBalanceUseCase` says for an account: clearing an
+     * adjustment removes a figure the ledger derived, not work anybody typed —
+     * `DestructiveClass.DERIVED_VALUE`, which the preventive copy does not cover (design D7 of
+     * `automatic-backup`). The removal travels through the two methods every removal shares,
+     * and those cannot tell one removal from another; this use case is the only place that
+     * knows which one this is, so it has to say so out loud.
+     */
+    @OptIn(WithheldAnnouncement::class)
+    @Test
+    fun `clearing an adjustment withholds the announcement that would take a copy`() = runTest {
+        val ledger = InvoiceLedgerStore(card)
+        val repository = FakeTransactionRepository(ledger)
+        val useCase = AdjustInvoiceUseCaseImpl(
+            invoiceRepository = RecordingInvoiceStore(invoice),
+            transactionRepository = repository,
+            calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(ledger)),
+        )
+
+        useCase(invoice = invoice, target = 100.0, adjustmentDate = date).getOrNull()
+        useCase(invoice = invoice, target = 0.0, adjustmentDate = date).getOrNull()
+
+        assertEquals(0.0, ledger.dimensionOwed(invoice.id), "the adjustment was not cleared")
+        assertEquals<List<RemovalAnnouncement>>(
+            listOf(RemovalAnnouncement.Withheld),
+            repository.announcements,
+            "clearing an adjustment asked the vault for a copy",
+        )
     }
 
     /**
@@ -178,6 +210,14 @@ class InvoiceLedgerStore(card: CreditCard) {
 }
 
 class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITransactionRepository {
+
+    /**
+     * What each removal said to [com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude],
+     * in order. A removal that omits the argument is recorded as the announcement it makes by
+     * omission, so *withheld* and *never asked* cannot read alike here.
+     */
+    val announcements = mutableListOf<RemovalAnnouncement>()
+
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         val transactionId = ledger.create(intent.date, intent.legs)
         return Transaction(
@@ -191,14 +231,24 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> =
         intents.map { createTransaction(it) }
 
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) {
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) {
         ledger.dateByTransaction[id] = date
-        ledger.write(id, listOf(leg))
+        ledger.write(id, legs)
     }
 
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
 
     override suspend fun deleteTransactionById(id: Long) {
+        announcements += RemovalAnnouncement.Announced
+        remove(id)
+    }
+
+    override suspend fun deleteTransactionById(id: Long, announcement: RemovalAnnouncement) {
+        announcements += announcement
+        remove(id)
+    }
+
+    private fun remove(id: Long) {
         ledger.entriesByTransaction.remove(id)
         ledger.dateByTransaction.remove(id)
     }
@@ -220,11 +270,13 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
-
     override suspend fun getTransactionsBetween(
         startDate: LocalDate,
         endDate: LocalDate,
     ): List<Transaction> = throw NotImplementedError()
+
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        ids.mapNotNull { getTransactionById(it) }
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
 }
@@ -240,11 +292,11 @@ class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryReposi
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> =

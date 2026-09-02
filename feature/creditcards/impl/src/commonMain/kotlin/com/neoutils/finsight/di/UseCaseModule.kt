@@ -37,12 +37,15 @@ import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCaseImpl
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCaseImpl
+import com.neoutils.finsight.domain.usecase.ValidateAdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.WriteInvoicePaymentUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
@@ -85,24 +88,47 @@ val useCaseModules = module {
     factory<PayInvoicePaymentUseCase> {
         PayInvoicePaymentUseCaseImpl(
             validateInvoicePayment = get(),
-            harvestExchangeRate = get(),
+            writeInvoicePayment = get(),
             accountRepository = get(),
             clock = get(),
-            transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
         )
     }
 
-    factory<AdvanceInvoicePaymentUseCase> {
-        AdvanceInvoicePaymentUseCaseImpl(
+    // The shape an invoice payment takes in the ledger — one owner, both modes.
+    factory {
+        WriteInvoicePaymentUseCase(
+            transactionRepository = get(),
             harvestExchangeRate = get(),
             accountRepository = get(),
-            transactionRepository = get(),
+        )
+    }
+
+    // Every rule a partial payment is admissible by — one owner, and both modes read
+    // it, so registering one and correcting one cannot drift apart.
+    factory {
+        ValidateAdvanceInvoicePaymentUseCase(
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             clock = get(),
+        )
+    }
+
+    factory<AdvanceInvoicePaymentUseCase> {
+        AdvanceInvoicePaymentUseCaseImpl(
+            writeInvoicePayment = get(),
+            validateInvoicePayment = get(),
+            accountRepository = get(),
+        )
+    }
+
+    factory {
+        UpdateAdvanceInvoicePaymentUseCase(
+            writeInvoicePayment = get(),
+            validateInvoicePayment = get(),
+            transactionRepository = get(),
         )
     }
 

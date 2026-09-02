@@ -60,6 +60,20 @@ class DateFormats(
         day()
     }
 
+    private val dayMonthName = LocalDate.Format {
+        day()
+        chars(" ")
+        monthName(monthNames)
+    }
+
+    private val dayMonthNameYear = LocalDate.Format {
+        day()
+        chars(" ")
+        monthName(monthNames)
+        chars(", ")
+        year()
+    }
+
     private val timeFormat = LocalTime.Format {
         hour()
         chars(":")
@@ -80,17 +94,19 @@ class DateFormats(
         }
     }
 
+    /**
+     * A single date written out in full, in the names this instance was built with.
+     *
+     * It is the same shape [formatReportPeriod] ends on, so a date standing alone in a
+     * document reads like the dates that bound it.
+     */
+    fun formatFullDate(date: LocalDate): String = dayMonthNameYear.format(date)
+
     fun formatReportPeriod(startDate: LocalDate, endDate: LocalDate): String {
-        val short = LocalDate.Format {
-            day(); chars(" "); monthName(monthNames)
-        }
-        val full = LocalDate.Format {
-            day(); chars(" "); monthName(monthNames); chars(", "); year()
-        }
         return if (startDate.year == endDate.year) {
-            "${short.format(startDate)} – ${full.format(endDate)}"
+            "${dayMonthName.format(startDate)} – ${formatFullDate(endDate)}"
         } else {
-            "${full.format(startDate)} – ${full.format(endDate)}"
+            "${formatFullDate(startDate)} – ${formatFullDate(endDate)}"
         }
     }
 

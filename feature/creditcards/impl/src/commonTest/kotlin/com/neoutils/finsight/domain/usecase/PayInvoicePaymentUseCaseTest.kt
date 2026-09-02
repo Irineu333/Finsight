@@ -51,13 +51,16 @@ class PayInvoicePaymentUseCaseTest {
     ) = PayInvoicePaymentUseCaseImpl(
         validateInvoicePayment = ValidateInvoicePaymentUseCase(),
         clock = StoppedClock(LocalDate(2026, 2, 20)),
-        transactionRepository = writer,
+        writeInvoicePayment = WriteInvoicePaymentUseCase(
+            transactionRepository = writer,
+            // Same-currency throughout, so there is no rate to learn and no second
+            // denomination to resolve.
+            harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
+            accountRepository = FakeCardAccountRepository(),
+        ),
         invoiceRepository = store,
         calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(owed)),
         payInvoiceUseCase = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), StoppedClock(LocalDate(2026, 2, 20))),
-        // Same-currency throughout, so there is no rate to learn and no second
-        // denomination to resolve.
-        harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
         accountRepository = FakeCardAccountRepository(),
     )
 
@@ -126,7 +129,7 @@ class PayInvoicePaymentUseCaseTest {
         val result = useCase(store, writer, owed = mapOf(100L to 70.0))(open.id, paymentDay, account)
 
         val error = assertIs<InvoiceException>(result.leftOrNull())
-        assertEquals(InvoiceError.CannotPayOpenInvoice, error.error)
+        assertEquals(InvoiceError.InvoiceNotClosed, error.error)
         assertNull(writer.captured, "nothing is written for a refusal")
     }
 
@@ -208,12 +211,18 @@ class PayInvoicePaymentUseCaseTest {
     }
 
     /**
-     * `Invoice.isPayable` owns which statuses accept a payment, and it accepts a retroactive
-     * invoice. Restating that as `status == CLOSED` here made a bill the domain is willing to
-     * settle unpayable through this path alone.
+     * **This path discharges, and only a closed invoice is discharged by being paid.** Which
+     * ones those are is `Invoice.acceptsFullSettlement`'s and is read rather than restated,
+     * so a status enumerated here could not come to disagree with the screen that offers the
+     * action — `InvoicePaymentUiState.settles` reads the same predicate.
+     *
+     * A retroactive invoice is **not** unpayable: it still takes spending, so what it takes is
+     * a *part* of what it owes, and `AdvanceInvoicePaymentUseCase` is what owns that — the
+     * same door the payment sheet sends it through. Refusing it here is the two paths
+     * agreeing, not a bill nobody can pay.
      */
     @Test
-    fun `a retroactive invoice is payable, as the domain says it is`() = runTest {
+    fun `a retroactive invoice is settled in parts, and not discharged this way`() = runTest {
         val retroactive = testInvoice(
             openingMonth = YearMonth(2026, 1),
             status = Invoice.Status.RETROACTIVE,
@@ -228,7 +237,12 @@ class PayInvoicePaymentUseCaseTest {
             accountId = account.id,
         )
 
-        assertTrue(result.isRight(), "the domain allows paying a retroactive invoice")
-        assertNotNull(writer.captured, "the payment was not posted")
+        val error = assertIs<InvoiceException>(result.leftOrNull())
+        assertEquals(InvoiceError.InvoiceNotClosed, error.error)
+        assertNull(writer.captured, "nothing is written for a refusal")
+        assertTrue(
+            retroactive.acceptsPartialPayment,
+            "and the bill is not unpayable — the partial path is the one that takes it",
+        )
     }
 }

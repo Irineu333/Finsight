@@ -195,11 +195,14 @@ private class RecordingTransactions(
     override fun observeTransactionById(id: Long) = unsupported()
     override suspend fun createTransaction(intent: TransactionIntent) = unsupported()
     override suspend fun createTransactions(intents: List<TransactionIntent>) = unsupported()
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        throw NotImplementedError()
+
     override suspend fun updateTransaction(
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) = unsupported()
 

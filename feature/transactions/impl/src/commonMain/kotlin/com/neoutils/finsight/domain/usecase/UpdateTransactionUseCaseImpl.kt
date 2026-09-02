@@ -41,10 +41,11 @@ class UpdateTransactionUseCaseImpl(
                 id = transactionId,
                 title = intent.title,
                 date = intent.date,
-                // The intent of a form has exactly one leg, and the contra travels with it:
-                // without the contra the rewrite is a one-sided write the boundary refuses,
-                // after the old entries are already gone.
-                leg = intent.legs.first(),
+                // The intent of a form has exactly one leg — `editObstacle` above is what
+                // guarantees it — and the contra travels with it: without the contra the
+                // rewrite is a one-sided write the boundary refuses, after the old entries
+                // are already gone.
+                legs = intent.legs,
                 contra = intent.contra,
             )
         }.bind()

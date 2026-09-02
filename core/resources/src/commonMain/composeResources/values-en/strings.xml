@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The BCP-47 tag of this file's language, for whatever has to declare it -->
+    <string name="app_language_tag">en</string>
+
     <!-- Invoice date labels -->
     <string name="invoice_opens_on">opens on %1$s</string>
     <string name="invoice_closes_on">closes on %1$s</string>
@@ -15,6 +18,7 @@
     <string name="account_error_has_recurring">Recurring entries depend on this. Point them elsewhere or delete them before deleting this.</string>
     <string name="account_error_currency_immutable">An account's currency is set when it is created and cannot be changed. To correct it, delete the account (if it has no entries) and create another.</string>
     <string name="account_error_cannot_archive_default">The default account cannot be archived. Choose another account as the default first.</string>
+    <string name="account_error_cannot_delete_default">The default account cannot be deleted. Choose another account as the default first.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
@@ -202,6 +206,7 @@
     <string name="installments_remaining">Remaining</string>
     <string name="installments_status_active">Active</string>
     <string name="installments_status_completed">Completed</string>
+    <string name="installment_card_installment">Installment</string>
     <string name="installments_filter_category">Category</string>
     <string name="installments_filter_category_all">All</string>
     <string name="installments_filter_type">Type</string>
@@ -215,10 +220,8 @@
     <string name="credit_cards_empty">No credit cards</string>
     <string name="credit_cards_create">Create card</string>
     <string name="credit_cards_edit">Edit</string>
-    <string name="credit_cards_advance_payment">Advance Payment</string>
     <string name="credit_cards_close_invoice">Close Invoice</string>
     <string name="credit_cards_reopen_invoice">Reopen Invoice</string>
-    <string name="credit_cards_pay_invoice">Pay Invoice</string>
     <string name="credit_cards_filter_category">Category</string>
     <string name="credit_cards_filter_category_all">All</string>
     <string name="credit_cards_filter_type">Type</string>
@@ -255,6 +258,7 @@
     <string name="retire_error_has_recurring">Recurring entries depend on this category. Point them at another category or delete them before deleting this one.</string>
     <string name="retire_error_has_yielding_accounts">Accounts that yield classify their yield in this category. Turn yield off on them before deleting.</string>
     <string name="error_modal_dismiss">Got it</string>
+    <string name="success_modal_dismiss">OK</string>
     <string name="accounts_edit">Edit</string>
     <string name="accounts_transfer">Transfer</string>
     <!-- Archived accounts -->
@@ -291,14 +295,14 @@
 
     <!-- Budgets Screen -->
     <string name="budgets_title">Budgets</string>
-    <string name="budgets_limit">Limit</string>
-    <string name="budgets_spent">Spent</string>
-    <string name="budgets_remaining">Remaining</string>
-    <string name="budgets_exceeded_by">Exceeded by</string>
-    <string name="budgets_category_singular">1 category</string>
-    <string name="budgets_category_plural">%1$d categories</string>
     <string name="budgets_empty">No budgets</string>
     <string name="budgets_create">Create budget</string>
+    <string name="budgets_row_spent">spent</string>
+    <string name="budgets_row_categories_more">+%1$d</string>
+    <string name="budgets_row_exceeded">Over budget</string>
+    <string name="budgets_row_derived_limit">Ceiling derived from a recurring income</string>
+    <string name="budgets_period_monthly">Monthly</string>
+    <string name="budgets_period_weekly">Weekly</string>
 
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Edit Card</string>
@@ -306,12 +310,10 @@
     <string name="invoice_transactions_advance_payments">Advance Payments</string>
     <string name="invoice_transactions_adjustments">Adjustments</string>
     <string name="invoice_transactions_total">Total</string>
-    <string name="invoice_transactions_advance_payment">Advance Payment</string>
     <string name="invoice_transactions_close_invoice">Close Invoice</string>
     <string name="invoice_transactions_delete_invoice">Delete Invoice</string>
     <string name="invoice_transactions_create_invoice">Create Invoice</string>
     <string name="invoice_transactions_reopen_invoice">Reopen Invoice</string>
-    <string name="invoice_transactions_pay_invoice">Pay Invoice</string>
     <string name="invoice_transactions_filter_category">Category</string>
     <string name="invoice_transactions_filter_category_all">All</string>
     <string name="invoice_transactions_filter_type">Type</string>
@@ -413,6 +415,7 @@
     <!-- Delete Modals -->
     <string name="delete_transaction_title">Delete Transaction</string>
     <string name="delete_transaction_message">Are you sure you want to delete this transaction? This action cannot be undone.</string>
+    <string name="delete_transaction_message_reversible">Are you sure you want to delete this transaction?</string>
     <string name="delete_transaction_confirm">Delete</string>
 
     <string name="delete_account_title">Delete Account</string>
@@ -443,6 +446,7 @@
 
     <string name="delete_installment_title">Delete Installment</string>
     <string name="delete_installment_message">Are you sure you want to delete this installment? All %1$d installments will be removed. This action cannot be undone.</string>
+    <string name="delete_installment_message_reversible">Are you sure you want to delete this installment? All %1$d installments will be removed.</string>
     <string name="delete_installment_confirm">Delete</string>
 
     <!-- Create Invoice Modal -->
@@ -454,15 +458,11 @@
     <string name="create_invoice_confirm">Create</string>
 
     <string name="delete_future_invoice_title">Delete Invoice</string>
-    <string name="delete_future_invoice_message">Are you sure you want to delete this future invoice? This action cannot be undone.</string>
+    <string name="delete_future_invoice_message">Are you sure you want to delete this invoice? This action cannot be undone.</string>
+    <string name="delete_future_invoice_message_reversible">Are you sure you want to delete this invoice?</string>
+    <string name="delete_future_invoice_message_transactions">Are you sure you want to delete this invoice? The %1$d transaction(s) posted to it will be removed along with it. This action cannot be undone.</string>
+    <string name="delete_future_invoice_message_transactions_reversible">Are you sure you want to delete this invoice? The %1$d transaction(s) posted to it will be removed along with it.</string>
     <string name="delete_future_invoice_confirm">Delete</string>
-
-    <!-- Pay Invoice Modal -->
-    <string name="pay_invoice_title">Pay Invoice</string>
-    <string name="pay_invoice_message">The payment will be the total amount of the invoice.</string>
-    <string name="pay_invoice_amount_label">Invoice Amount</string>
-    <string name="pay_invoice_date_label">Payment Date</string>
-    <string name="pay_invoice_confirm">Pay Invoice</string>
 
     <!-- Close Invoice Modal -->
     <string name="close_invoice_title">Close Invoice</string>
@@ -478,20 +478,34 @@
     <string name="reopen_invoice_confirm">Reopen</string>
     <string name="invoice_error_cannot_reopen">Only the latest closed invoice can be reopened.</string>
 
-    <!-- Advance Payment Modal -->
-    <string name="advance_payment_title">Advance Payment</string>
-    <string name="advance_payment_description">Pay part of the invoice before closing.</string>
-    <string name="advance_payment_amount_label">Amount</string>
-    <string name="advance_payment_date_label">Date</string>
-    <string name="advance_payment_confirm">Advance Payment</string>
+    <!-- Invoice Payment Modal -->
+    <!-- The head names the operation and holds still; the verb is derived from the
+         invoice's state and names the command on every surface that offers it, and the
+         sheet's confirm button. -->
+    <string name="invoice_payment_title">Invoice Payment</string>
+    <string name="invoice_payment_message">Choose the invoice and the account that pays it.</string>
+    <string name="invoice_payment_advance">Advance Payment</string>
+    <string name="invoice_payment_pay">Pay Invoice</string>
+    <string name="invoice_payment_amount_label">Payment Amount</string>
+    <string name="invoice_payment_max">Max</string>
+    <string name="invoice_payment_date_label">Payment Date</string>
+    <string name="invoice_payment_no_debt">This invoice has nothing to pay.</string>
+    <!-- Correcting a payment already registered: the mode is fixed from the moment the
+         sheet opens, so the head names it and the button says what confirming does —
+         the money already moved, and neither "advance" nor "pay" is true of it. -->
+    <string name="invoice_payment_edit_title">Edit payment</string>
+    <string name="invoice_payment_edit_confirm">Save</string>
 
     <!-- Transfer Between Accounts Modal -->
     <string name="transfer_title">Transfer between accounts</string>
+    <string name="transfer_edit_title">Edit transfer</string>
+    <string name="transfer_title_label">Title</string>
     <string name="transfer_source_account_label">Source account</string>
     <string name="transfer_destination_account_label">Destination account</string>
     <string name="transfer_amount_label">Amount</string>
     <string name="transfer_date_label">Date</string>
     <string name="transfer_confirm">Transfer</string>
+    <string name="transfer_edit_confirm">Save</string>
 
     <!-- Cross-currency amount fields (the grammar the three two-value flows share) -->
     <string name="cross_currency_leaves_label">Leaves %1$s</string>
@@ -540,18 +554,27 @@
     <string name="view_transaction_edit">Edit</string>
 
     <!-- View Adjustment Modal -->
-    <string name="view_adjustment_type_label">Adjustment</string>
-    <string name="view_adjustment_balance_adjust">Balance Adjustment</string>
-    <string name="view_adjustment_invoice_adjust">Invoice Adjustment</string>
-    <string name="view_adjustment_date_label">Date</string>
-    <string name="view_adjustment_delete_label">Delete Adjustment</string>
 
     <!-- View Category Modal -->
     <string name="view_category_type_income">Income</string>
     <string name="view_category_type_expense">Expense</string>
     <string name="view_category_total_received">Total Received</string>
     <string name="view_category_total_spent">Total Spent</string>
-    <string name="view_category_transactions_month">Transactions this Month</string>
+    <string name="view_category_this_month">This month</string>
+    <string name="view_category_partial_month">day %1$d of %2$d</string>
+    <plurals name="view_category_month_average">
+        <item quantity="one">Monthly average (%1$d month)</item>
+        <item quantity="other">Monthly average (%1$d months)</item>
+    </plurals>
+    <plurals name="view_category_window_total">
+        <item quantity="one">%1$d-month total</item>
+        <item quantity="other">%1$d-month total</item>
+    </plurals>
+    <string name="view_category_above_average">%1$s above average</string>
+    <string name="view_category_below_average">%1$s below average</string>
+    <string name="view_category_at_average">In line with the period average</string>
+    <string name="view_category_history_range">from %1$s to %2$s</string>
+    <string name="view_category_see_transactions">See transactions</string>
     <string name="view_category_edit">Edit</string>
     <string name="view_category_unarchive">Unarchive</string>
 
@@ -577,6 +600,8 @@
     <string name="balance_card_current_invoice">Current Invoice</string>
     <string name="balance_card_pending_income">Pending Income</string>
     <string name="balance_card_pending_expense">Pending Expenses</string>
+    <string name="balance_card_settlement_incoming">Coming in</string>
+    <string name="balance_card_settlement_outgoing">Going out</string>
 
     <string name="summary_card_opening_balance">Initial Balance</string>
     <string name="summary_card_income">Money In</string>
@@ -599,6 +624,8 @@
     <string name="transaction_card_payment">Invoice Payment</string>
     <string name="transaction_card_balance_adjustment">Balance Adjustment</string>
     <string name="transaction_card_invoice_adjustment">Invoice Adjustment</string>
+    <string name="transaction_card_expense">Expense</string>
+    <string name="transaction_card_income">Income</string>
 
     <string name="target_selector_account">Account</string>
     <string name="target_selector_credit_card">Credit Card</string>
@@ -626,15 +653,12 @@
     <string name="credit_card_ui_edit_invoice">Edit invoice</string>
 
     <string name="dashboard_credit_card_close_invoice">Close Invoice</string>
-    <string name="dashboard_credit_card_pay_invoice">Pay Invoice</string>
-    <string name="dashboard_credit_card_advance">Advance</string>
 
     <string name="invoice_summary_card_expenses">Expenses</string>
     <string name="invoice_summary_card_advance_payments">Advance Payments</string>
     <string name="invoice_summary_card_adjustments">Adjustments</string>
     <string name="invoice_summary_card_invoice">Invoice</string>
     <string name="invoice_summary_card_edit_invoice">Edit invoice</string>
-
 
     <string name="category_spending_card_title">Spending by Category</string>
 
@@ -716,12 +740,32 @@
     <string name="recurring_screen_empty">No recurring transactions</string>
     <string name="recurring_screen_create">Create recurring</string>
     <string name="recurring_screen_day">Day %1$d</string>
-    <string name="recurring_filter_active">Active</string>
-    <string name="recurring_filter_archived">Archived</string>
+    <string name="recurring_filter_all">All</string>
     <string name="recurring_empty_filter">No recurring transactions here.</string>
+    <string name="recurring_view_archived">Archived</string>
+    <string name="recurring_archived_title">Archived recurring</string>
+    <string name="recurring_archived_empty">No archived recurring transactions</string>
+
+    <!-- Recurring Cycle Sections -->
+    <string name="recurring_section_pending">Pending</string>
+    <string name="recurring_section_upcoming">Upcoming</string>
+    <string name="recurring_section_posted">Posted</string>
+    <string name="recurring_section_skipped">Skipped</string>
     <string name="recurring_expense">Expense</string>
     <string name="recurring_income">Income</string>
-    <string name="recurring_card_monthly_amount">Monthly amount</string>
+    <string name="recurring_source_unusable">Source unavailable</string>
+
+    <!-- Recurring Month Summary -->
+    <string name="recurring_summary_settled">Posted this month</string>
+    <string name="recurring_summary_forecast">Not posted yet</string>
+    <string name="recurring_summary_fixed_expense">Fixed expenses</string>
+    <string name="recurring_summary_fixed_income">Fixed income</string>
+    <string name="recurring_expand">Expand</string>
+    <string name="recurring_collapse">Collapse</string>
+    <plurals name="recurring_summary_undenominated">
+        <item quantity="one">%1$d recurring left out of the total: no account denominates it.</item>
+        <item quantity="other">%1$d recurring left out of the total: no account denominates them.</item>
+    </plurals>
 
     <!-- Recurring Form Modal -->
     <string name="recurring_form_title_label">Title</string>
@@ -794,6 +838,7 @@
     <string name="component_balance_stats">Accounts Balance</string>
     <string name="component_overall_balance_stats">Overall Balance</string>
     <string name="component_pending_balance">Pending Balance</string>
+    <string name="component_month_settlement">To settle this month</string>
     <string name="component_credit_card_balance_stats">Card Balance</string>
     <string name="component_accounts_overview">Accounts</string>
     <string name="component_credit_cards">Credit Cards</string>
@@ -828,6 +873,8 @@
     <string name="component_config_hide_single_account">Hide single account</string>
     <string name="component_config_accounts_in_total">Accounts included in the total</string>
     <string name="component_config_hide_when_empty">Hide when empty</string>
+    <string name="component_config_settlement_recurring">This month's recurring</string>
+    <string name="component_config_settlement_invoices">Invoices to pay</string>
     <string name="component_config_show_empty_state">Show empty state</string>
     <string name="component_config_max_categories">Max categories</string>
     <string name="component_config_days_ahead">Days ahead</string>
@@ -860,7 +907,6 @@
     <string name="detail_pane_error_title">Unable to load</string>
     <string name="detail_pane_error">The item was not found or could not be loaded.</string>
     <string name="view_transaction_title">Transaction</string>
-    <string name="view_adjustment_title">Adjustment</string>
     <string name="view_category_title">Category</string>
     <string name="view_budget_title">Budget</string>
     <string name="view_recurring_title">Recurring</string>
@@ -876,6 +922,7 @@
     <string name="money_unresolved_badge">Why something is missing here</string>
     <string name="money_unresolved_title">No single amount to compare against</string>
     <string name="money_unresolved_body">Some part of this period is in a currency with no rate on file, so there is no single amount to compare against — which is why the bar and the proportion are not there. The amounts are still exact, each in its own currency; what is missing is the common measure between them. Add the rate and this works again.</string>
+    <string name="money_unresolved_list_notice">A currency with no rate this month</string>
     <string name="report_export_footnote">≈ marks an amount that passed through an exchange rate. Where no rate was on file, that currency's share stands on its own, unconverted.</string>
     <string name="money_approximate_see_rates">See rates</string>
 
@@ -883,10 +930,13 @@
     <string name="settings_screen_title">Settings</string>
     <string name="settings_group_preferences">Preferences</string>
     <string name="settings_group_currency_data">Currencies and rates</string>
+    <string name="settings_group_data">My data</string>
     <string name="settings_base_currency_title">Base currency</string>
     <string name="settings_base_currency_picker_title">Base currency</string>
     <string name="settings_exchange_rates_title">Exchange rates</string>
     <string name="settings_exchange_rates_subtitle">Register, correct or remove the rates used in conversions</string>
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_subtitle">Keep copies automatically, export your data to a file, or restore it from one</string>
 
     <string name="exchange_rates_screen_title">Exchange rates</string>
     <string name="exchange_rates_empty">No rates yet. An operation that crosses currencies registers its own rate, and you can enter one at any time.</string>
@@ -935,8 +985,14 @@
     <string name="currencies_archive_confirm_action">Archive</string>
     <string name="currencies_delete_confirm_title">Delete %1$s?</string>
     <string name="currencies_delete_confirm_message">The currency stops existing, and this cannot be undone.</string>
+    <string name="currencies_delete_confirm_message_reversible">The currency stops existing.</string>
     <string name="currencies_delete_confirm_message_rates">The currency stops existing and %1$d exchange rate(s) naming it will be removed along with it. This cannot be undone.</string>
+    <string name="currencies_delete_confirm_message_rates_reversible">The currency stops existing and %1$d exchange rate(s) naming it will be removed along with it.</string>
     <string name="currencies_delete_confirm_action">Delete</string>
+    <string name="delete_exchange_rate_title">Remove the %1$s/%2$s rate?</string>
+    <string name="delete_exchange_rate_message">The rate stops existing, and this cannot be undone.</string>
+    <string name="delete_exchange_rate_message_reversible">The rate stops existing.</string>
+    <string name="delete_exchange_rate_confirm">Remove</string>
 
     <string name="view_currency_base_label">Base currency</string>
     <string name="view_currency_accounts">Accounts in this currency</string>
@@ -1048,4 +1104,161 @@
     <string name="mcp_activity_clear_title">Clear the log?</string>
     <string name="mcp_activity_clear_message">The entries go and no posting changes: the log is the trace of what was done, not the accounting. Discarding an entry does not undo the operation it describes.</string>
     <string name="mcp_activity_clear_confirm">Clear the log</string>
+
+    <string name="backup_error_not_a_backup">This file is not a valid backup of this app. Pick the file you exported.</string>
+    <string name="backup_error_file_damaged">This backup is damaged and cannot be read. Use another copy, if you have one.</string>
+    <string name="backup_error_app_out_of_date">This backup was made by a newer version of the app. Update the app to restore it.</string>
+    <string name="backup_error_no_space">There is not enough free space. Free some up and try again.</string>
+    <string name="backup_error_export_failed">The backup could not be exported. Try again.</string>
+    <string name="backup_error_restore_failed">The backup could not be restored. Your data is unchanged.</string>
+    <string name="backup_error_verification_failed">The backup could not be checked. Try again.</string>
+    <string name="backup_export_success">The backup was saved where you chose.</string>
+    <string name="backup_restore_success">The data in this app is now the data in this file.</string>
+
+    <string name="backup_screen_title">Backup</string>
+    <string name="backup_scope">A backup holds your accounts, cards, transactions, categories, budgets, recurring entries, currencies and rates. Preferences of this device, such as the base currency and the dashboard layout, are left out.</string>
+    <string name="backup_no_copies">With the vault off, the app keeps no copies. Getting your data back depends on the file you export.</string>
+    <string name="backup_export_title">Export backup</string>
+    <string name="backup_export_subtitle">Saves a file with your data wherever you choose.</string>
+    <string name="backup_restore_title">Restore from a file</string>
+    <string name="backup_restore_subtitle">Pick a backup exported from this app.</string>
+    <string name="backup_confirm_title">Restore backup</string>
+    <string name="backup_confirm_message">Replace the data in this app with the data in this file?</string>
+    <string name="backup_confirm_origin_unknown">Unknown origin</string>
+    <string name="backup_platform_android">Android</string>
+    <string name="backup_platform_desktop">Desktop</string>
+    <string name="backup_platform_ios">iPhone or iPad</string>
+    <string name="backup_confirm_transactions">Transactions</string>
+    <string name="backup_confirm_categories">Categories</string>
+    <string name="backup_confirm_created">Created</string>
+    <string name="backup_confirm_irreversible_title">This cannot be undone</string>
+    <string name="backup_confirm_irreversible">It replaces everything in the app with the contents of this file, and no copy is kept first.</string>
+    <string name="backup_confirm_cancel">Cancel</string>
+    <string name="backup_confirm_action">Restore</string>
+    <string name="backup_group_automatic">Automatic backup</string>
+    <string name="backup_group_manual">Export and restore</string>
+    <string name="backup_vault_title">Keep copies automatically</string>
+    <string name="backup_vault_on_both">When you open the app after %1$s, and before deleting anything</string>
+    <string name="backup_vault_on_periodic">When you open the app after %1$s</string>
+    <string name="backup_vault_on_preventive">Before deleting anything</string>
+    <string name="backup_vault_on_update_only">Only before an update that rewrites the database</string>
+    <string name="backup_interval_1">1 day</string>
+    <string name="backup_interval_3">3 days</string>
+    <string name="backup_interval_7">7 days</string>
+    <string name="backup_interval_15">15 days</string>
+    <string name="backup_last_title">Last backup</string>
+    <string name="backup_last_never">None yet</string>
+    <string name="backup_last_never_hint">The first copy is taken the next time you open the app, or before you delete anything.</string>
+    <string name="backup_last_never_hint_periodic">The first copy is taken the next time you open the app.</string>
+    <string name="backup_last_never_hint_preventive">The first copy is taken before you delete anything.</string>
+    <string name="backup_last_never_hint_update_only">The first copy is taken only before an update that rewrites the database.</string>
+    <string name="backup_last_overdue">Older than the %1$s interval. Open the app more often so that a new copy is taken.</string>
+    <string name="backup_destination_app">Inside the app</string>
+    <string name="backup_destination_folder">In a folder you chose</string>
+    <string name="backup_destination_folder_named">In the folder "%1$s"</string>
+    <string name="backup_coverage_app">The copies stay on this device and inside the app. Uninstalling the app takes all of them with it, and getting your data back on another device still depends on the file you export.</string>
+    <string name="backup_coverage_app_desktop">The copies stay in the app's folder on this computer and remain there if you uninstall the app. Covering the loss of the computer depends on choosing a synced folder, or on the file you export.</string>
+    <string name="backup_coverage_folder">The copies stay in the folder you chose and remain there if you uninstall the app. Covering the loss of the device depends on that folder being synced by some cloud service.</string>
+    <string name="backup_destination_title">Where the copies are kept</string>
+    <string name="backup_folder_unreachable">The folder you chose could not be reached. New copies are being kept inside the app for now, until you decide.</string>
+    <string name="backup_folder_reconnect">Point at the folder again</string>
+    <string name="backup_folder_keep_in_app">Keep inside the app</string>
+    <string name="backup_carry_title">Bring the copies along?</string>
+    <string name="backup_carry_message">%1$s in the previous destination. Bringing them copies the most recent ones retention allows, and removes none from there.</string>
+    <string name="backup_carry_action">Bring them</string>
+    <string name="backup_carry_leave">Leave them there</string>
+    <string name="backup_carry_done">The copies were copied to the new destination, and none were removed from the old one.</string>
+    <string name="backup_carry_partial">Not everything was copied. What was is already in the new destination, and nothing was removed from the old one.</string>
+    <string name="backup_copies_none">No copies yet</string>
+    <string name="backup_copies_one">1 copy kept</string>
+    <string name="backup_copies_many">%1$d copies kept</string>
+    <string name="backup_settings_title">Vault settings</string>
+    <string name="backup_settings_subtitle">What triggers a copy, and how many are kept</string>
+    <string name="backup_settings_preventive_title">Keep a copy before deleting</string>
+    <string name="backup_settings_preventive_subtitle">Transactions, installments, invoices, currencies and rates.</string>
+    <string name="backup_settings_periodic_title">Keep a copy when you open the app</string>
+    <string name="backup_settings_periodic_subtitle">One copy on the first opening after an interval you choose.</string>
+    <string name="backup_settings_interval_title">Check every</string>
+    <string name="backup_settings_interval_hint">The copy happens when you open the app after that time — the system does not let the app work on its own in the background.</string>
+    <string name="backup_settings_retention_title">How many copies to keep</string>
+    <string name="backup_settings_outcome">About %1$d days of history</string>
+    <string name="backup_settings_outcome_size">%1$d copies of ~%2$s take around %3$s.</string>
+    <string name="backup_settings_outcome_unknown">How much room it takes will be known after the first copy.</string>
+    <string name="backup_settings_retention_all">No copy will be deleted</string>
+    <string name="backup_settings_retention_all_hint">At this rate about %1$s a month piles up, and you are the one who deletes what you no longer want.</string>
+    <string name="backup_settings_retention_all_by_hand">You are the one who deletes what you no longer want.</string>
+    <string name="backup_retention_five">5</string>
+    <string name="backup_retention_ten">10</string>
+    <string name="backup_retention_twenty">20</string>
+    <string name="backup_retention_everything">All</string>
+    <string name="backup_history_title">Kept copies</string>
+    <string name="backup_history_summary">%1$s · %2$s in total</string>
+    <string name="backup_history_empty_title">No copies yet</string>
+    <string name="backup_history_empty_message">The first one is taken the next time you open the app, or before the next deletion.</string>
+    <string name="backup_history_empty_off">The vault is off. Turn it on from the backup screen for the app to start keeping copies.</string>
+    <string name="backup_history_failed">The kept copies could not be read.</string>
+    <string name="backup_history_retry">Try again</string>
+    <string name="backup_history_failed_title">The copies could not be read</string>
+    <string name="backup_history_migration_label">update</string>
+    <string name="backup_history_migration_subtitle">Kept before an app update</string>
+    <string name="backup_history_action_restore">Restore this copy</string>
+    <string name="backup_history_action_share">Save a copy outside the app</string>
+    <string name="backup_history_action_share_subtitle">Sends this file wherever you want, without taking a new copy.</string>
+    <string name="backup_history_action_delete">Delete this copy</string>
+    <string name="backup_history_removed">The copy was removed.</string>
+    <string name="backup_history_remove_refused">This file is not a copy written by this app, so it was not removed.</string>
+    <string name="backup_history_gone">This copy is no longer in the destination.</string>
+    <string name="backup_history_capture">Create a copy now</string>
+    <string name="backup_history_capture_done">The copy was created.</string>
+    <string name="backup_history_import">Import a file</string>
+    <string name="backup_history_import_done">The file was imported and is now a kept copy.</string>
+    <string name="backup_today">Today</string>
+    <string name="backup_yesterday">Yesterday</string>
+    <string name="backup_size_bytes">%1$d B</string>
+    <string name="backup_size_kb">%1$d KB</string>
+    <string name="backup_size_mb">%1$d MB</string>
+    <string name="backup_confirm_reversible_title">You can come back to how it is now</string>
+    <string name="backup_confirm_reversible">A copy of the app as it is now is kept first. You go back to it in %1$s.</string>
+    <string name="backup_confirm_offer_title">Keep a copy first</string>
+    <string name="backup_confirm_offer_subtitle">And when you open the app after %1$s, from now on. You can switch it off in the backup settings.</string>
+    <string name="backup_confirm_offer_reminder">You left this unticked. Tick it and a copy is kept before this one and the next ones, and when you open the app after %1$s.</string>
+    <string name="backup_restore_subtitle_vault">From a backup that came from another device.</string>
+    <string name="backup_no_copy_title">The backup copy could not be made</string>
+    <string name="backup_no_copy_message">Restoring replaces everything in the app with this file's content, and no copy was kept that could bring it back.</string>
+    <string name="backup_no_copy_action">Restore anyway</string>
+    <string name="backup_age_now">just now</string>
+    <string name="backup_age_minutes">%1$d min ago</string>
+    <string name="backup_age_hours">%1$d h ago</string>
+    <string name="backup_age_day">1 day ago</string>
+    <string name="backup_age_days">%1$d days ago</string>
+    <string name="backup_age_month">1 month ago</string>
+    <string name="backup_age_months">%1$d months ago</string>
+    <string name="backup_history_current_label">reference</string>
+    <string name="backup_history_current_subtitle">The last copy identical to the app</string>
+    <string name="backup_history_newest_label">most recent</string>
+    <string name="backup_confirm_age">Restoring takes the app back to how it was %1$s.</string>
+    <string name="backup_confirm_file_age">This file was created %1$s.</string>
+    <string name="backup_copy_facts_origin">Origin</string>
+    <string name="backup_copy_facts_captured">Captured on</string>
+    <string name="backup_copy_facts_accounts">Accounts</string>
+    <string name="backup_copy_facts_cards">Cards</string>
+    <string name="backup_copy_facts_size">Size</string>
+    <string name="backup_copy_facts_unreadable">This copy could not be opened to see what it holds. It may have left the folder, or be damaged.</string>
+    <string name="backup_remove_confirm_title">This copy will be deleted</string>
+    <string name="backup_remove_confirm_message">The copy from %1$s leaves where the backups are kept, and there is no bringing it back. The others stay where they are.</string>
+    <string name="backup_remove_confirm_migration">This is the copy kept before the last app update — the only way back if that update got something wrong. It is replaced by the next update's copy and by nothing else.</string>
+    <string name="backup_remove_confirm_action">Delete</string>
+    <string name="backup_export_replace_title">This replaces a file that is already there</string>
+    <string name="backup_export_replace_message">There is already a file called %1$s in that folder. Saving the backup here writes over it, and what is in it now is lost.</string>
+    <string name="backup_export_replace_action">Replace</string>
+
+    <!-- Action button: the app's single floating action button and the actions screens publish to it -->
+    <string name="floating_action_expand">More actions</string>
+    <string name="floating_action_collapse">Close actions</string>
+    <string name="accounts_add">Add account</string>
+    <string name="accounts_add_transaction">New transaction in this account</string>
+    <string name="credit_cards_add_transaction">New transaction on this card</string>
+    <string name="categories_add_expense">Add expense category</string>
+    <string name="categories_add_income">Add income category</string>
+    <string name="support_create_issue">Open issue</string>
 </resources>

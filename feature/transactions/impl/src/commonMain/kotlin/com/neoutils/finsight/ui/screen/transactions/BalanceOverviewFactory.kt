@@ -181,5 +181,4 @@ private suspend fun IEntryRepository.netBalanceUpTo(month: YearMonth): MoneyByCu
  * a figure is only absent when *every* term of it is zero: one term at zero beside
  * another that is not is still a movement.
  */
-private fun ConsolidatedAmount.orNullIfZero(): ConsolidatedAmount? =
-    takeIf { figure -> figure.terms.any { it.value != 0.0 } }
+private fun ConsolidatedAmount.orNullIfZero(): ConsolidatedAmount? = takeIf { !it.isZero }

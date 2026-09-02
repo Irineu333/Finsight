@@ -15,12 +15,19 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.crashlytics)
 
+
+            implementation(projects.feature.shell.api)
             implementation(projects.feature.transactions.api)
             implementation(projects.feature.categories.api)
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.creditcards.api)
             implementation(projects.feature.recurring.api)
             implementation(projects.feature.settings.api)
+
+            // The refusal a preventive capture raises is the reason for this edge: it is
+            // thrown by `PreventiveBackup`, whose contract lives here. The api, never the
+            // impl, which the dependency rules would refuse anyway.
+            implementation(projects.feature.backup.api)
 
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)

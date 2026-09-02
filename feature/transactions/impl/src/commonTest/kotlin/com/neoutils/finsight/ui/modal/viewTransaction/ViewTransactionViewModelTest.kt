@@ -5,6 +5,12 @@ package com.neoutils.finsight.ui.modal.viewTransaction
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.DisplayAmount.SignPolicy
 import com.neoutils.finsight.ui.model.TransactionFacades
@@ -18,6 +24,8 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -133,5 +141,56 @@ class ViewTransactionViewModelTest {
         }
 
         assertEquals(0, crashlytics.recorded.size)
+    }
+
+    private fun invoice() = Invoice(
+        id = 1,
+        creditCard = CreditCard(id = 1, name = "Card", limit = 1_000.0, closingDay = 1, dueDay = 10, accountId = 5),
+        dimensionId = 7,
+        openingMonth = YearMonth(2026, 1),
+        closingMonth = YearMonth(2026, 2),
+        dueMonth = YearMonth(2026, 2),
+        status = Invoice.Status.OPEN,
+    )
+
+    /** An invoice adjustment as the ledger holds it: the card's leg against equity. */
+    private fun invoiceAdjustment() = Transaction(
+        id = 1L,
+        title = null,
+        date = LocalDate(2026, 1, 1),
+        entries = listOf(
+            Entry(
+                account = Account(id = 5, name = "Card", type = AccountType.LIABILITY, currency = "BRL"),
+                amount = -10_000,
+                dimensionId = 7,
+            ),
+            Entry(
+                account = Account(id = 12, name = "Reconciliation", type = AccountType.EQUITY, currency = "BRL"),
+                amount = 10_000,
+            ),
+        ),
+    )
+
+    @Test
+    fun aCardAdjustmentCarriesItsInvoiceInsideTheLiabilityCard() = runTest(dispatcher) {
+        val repository = FakeTransactionRepository()
+        val invoice = invoice()
+        val vm = ViewTransactionViewModel(
+            transactionId = 1L,
+            transactionRepository = repository,
+            facadeResolver = { TransactionFacades(creditCard = invoice.creditCard, invoice = invoice) },
+            crashlytics = FakeCrashlytics(),
+        )
+
+        vm.uiState.test {
+            assertEquals(ViewTransactionUiState.Loading, awaitItem())
+            repository.emit(invoiceAdjustment())
+            val leg = assertIs<ViewTransactionUiState.Content>(awaitItem()).legs().single()
+
+            // The invoice is the dimension the liability leg carries, so it is stated
+            // where that leg is stated — never as a sibling row of the operation.
+            assertEquals(invoice.dueMonth, leg.invoice?.dueMonth)
+            assertEquals(invoice.status, leg.invoice?.status)
+        }
     }
 }

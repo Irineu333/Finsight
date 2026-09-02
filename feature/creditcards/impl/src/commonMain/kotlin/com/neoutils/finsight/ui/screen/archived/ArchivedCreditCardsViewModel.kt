@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.screen.archived
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.extension.currencyOf
+import com.neoutils.finsight.domain.extension.requireCurrencyOf
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -23,7 +23,7 @@ class ArchivedCreditCardsViewModel(
                 ArchivedCreditCardsUiState.Empty
             } else {
                 ArchivedCreditCardsUiState.Content(
-                    archived.map { it.toArchivedUi(accountRepository.currencyOf(it)) }
+                    archived.map { it.toArchivedUi(accountRepository.requireCurrencyOf(it)) }
                 )
             }
         }

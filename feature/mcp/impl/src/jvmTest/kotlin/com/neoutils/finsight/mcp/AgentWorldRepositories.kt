@@ -27,6 +27,7 @@ import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
+import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
@@ -221,6 +222,8 @@ internal class FakeInvoices(private val invoices: MutableList<Invoice>) : IInvoi
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> =
         flowOf(invoices.filterNot { it.status.isPaid })
 
+    override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
+
     /**
      * The store's two assignments in one place: the identity and the ledger dimension its legs
      * are tagged with. A fixture that handed out neither would let an invoice exist that no
@@ -334,6 +337,8 @@ internal class FakeOccurrences(
     override suspend fun getOccurrenceBy(recurringId: Long, cycleNumber: Int): RecurringOccurrence? =
         occurrences.firstOrNull { it.recurringId == recurringId && it.cycleNumber == cycleNumber }
 
+    override suspend fun settledIn(month: YearMonth): RecurringSettledMoney = RecurringSettledMoney.none
+
     override suspend fun save(occurrence: RecurringOccurrence): Long {
         val existing = getOccurrenceBy(occurrence.recurringId, occurrence.yearMonth)
         val saved = occurrence.copy(id = existing?.id ?: nextId++)
@@ -428,10 +433,28 @@ internal class LedgerCategoryTotals(
 internal class LedgerInvoiceOwed(
     private val entryRepository: IEntryRepository,
 ) : CalculateInvoiceUseCase {
-    override suspend fun invoke(invoices: Collection<Invoice>): Map<Long, Double> {
+    /** The ceiling a correction is judged by: what the rewritten operation contributed comes back. */
+    override suspend fun invoke(
+        invoices: Collection<Invoice>,
+        excluding: Long?,
+    ): Map<Long, Double> {
         val owed = entryRepository.owedByDimensionByCurrency(invoices.mapNotNull { it.dimensionId })
+
+        val contributed = excluding
+            ?.let { operation ->
+                entryRepository.getEntriesByTransaction(operation)
+                    .filter { it.dimensionId != null }
+                    .groupBy { it.dimensionId!! }
+                    .mapValues { (_, entries) -> -entries.sumOf { it.amount } / 100.0 }
+            }
+            .orEmpty()
+
         return invoices.associate { invoice ->
-            invoice.id to (invoice.dimensionId?.let { owed[it] }?.singleOrNull()?.value ?: 0.0)
+            val dimensionId = invoice.dimensionId
+            invoice.id to (
+                (dimensionId?.let { owed[it] }?.singleOrNull()?.value ?: 0.0) -
+                    (dimensionId?.let { contributed[it] } ?: 0.0)
+                )
         }
     }
 }
@@ -541,7 +564,6 @@ internal class FixedRates(
 
     override suspend fun remove(rate: ExchangeRate) = error("the surface never removes a rate")
     override suspend fun countNaming(currency: String): Int = 0
-    override suspend fun removeAllNaming(currency: String) = error("the surface never removes a rate")
 }
 
 internal class CurrenciesInUse(private val inUse: List<String>) : GetAccountCurrenciesUseCase {

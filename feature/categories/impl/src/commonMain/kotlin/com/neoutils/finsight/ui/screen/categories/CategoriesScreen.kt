@@ -19,7 +19,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -40,6 +39,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -96,6 +98,56 @@ private fun CategoriesContent(
     val modalManager = LocalModalManager.current
     val detailController = LocalDetailPaneController.current
 
+    // The case that proves why actions are published by the screen and not catalogued by the
+    // shell: which type the form opens on is the filter's answer, and it changes while the screen
+    // lives. The primary is the type in view; the menu offers the other one.
+    ChromeEffect(
+        // The same states as the actions below. Still reading, the screen says nothing and the
+        // chrome holds — an answer given now is one the reading takes back. Empty, the big CTA
+        // renders the create commands itself, and the button the shell would serve over it is the
+        // universal one, which has nothing to do with categories.
+        config = when (uiState) {
+            is CategoriesUiState.Loading -> null
+
+            is CategoriesUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is CategoriesUiState.Content -> ChromeConfig.Default
+        },
+        actions = when (uiState) {
+            is CategoriesUiState.Loading,
+            is CategoriesUiState.Empty -> emptyList()
+
+            is CategoriesUiState.Content -> {
+                val filter = uiState.filter
+
+                remember(modalManager, filter) {
+                    val primaryType = filter.fabInitialType
+                    val otherType = primaryType.other
+
+                    listOf(
+                        ChromeAction(
+                            icon = Icons.Default.Add,
+                            labelRes = primaryType.addLabel,
+                            // Same command as the empty state's button below, hence the same id.
+                            testTag = "categories_add",
+                            onClick = {
+                                modalManager.show(CategoryFormModal(initialType = primaryType))
+                            },
+                        ),
+                        ChromeAction(
+                            icon = Icons.Default.Add,
+                            labelRes = otherType.addLabel,
+                            testTag = "categories_add_other_type",
+                            onClick = {
+                                modalManager.show(CategoryFormModal(initialType = otherType))
+                            },
+                        ),
+                    )
+                }
+            }
+        }
+    )
+
     Scaffold(
         modifier = Modifier.testTag("screen_categories"),
         topBar = {
@@ -131,22 +183,6 @@ private fun CategoriesContent(
                 },
             )
         },
-        floatingActionButton = {
-            if (uiState is CategoriesUiState.Content) {
-                FloatingActionButton(
-                    onClick = {
-                        modalManager.show(CategoryFormModal(initialType = uiState.filter.fabInitialType))
-                    },
-                    // Same command as the empty state's button below, hence the same id.
-                    modifier = Modifier.testTag("categories_add"),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null
-                    )
-                }
-            }
-        }
     ) { paddingValues ->
         when (uiState) {
             CategoriesUiState.Loading -> {

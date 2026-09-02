@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.Account
 import kotlinx.datetime.LocalDate
 
 sealed interface EditAccountBalanceUiState {
+    /** The account has not been read yet. Nothing the user types reaches this state. */
     data object Loading : EditAccountBalanceUiState
 
     /**

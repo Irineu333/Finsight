@@ -19,11 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.SpendingSubject
-import com.neoutils.finsight.ui.icons.LazyIcon
+import com.neoutils.finsight.ui.icons.VectorLazyIcon
 import com.neoutils.finsight.ui.model.categoryDisplayColor
 import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.ui.component.MoneyLayout
@@ -189,7 +188,7 @@ private fun CategorySpendingItem(
             // The nature's own glyph and colour: no category named this line, so it
             // says what it can — which way the money went.
             SpendingSubject.Uncategorized -> CategoryIconBox(
-                icon = LazyIcon { rememberVectorPainter(uncategorizedIcon(type)) },
+                icon = VectorLazyIcon(uncategorizedIcon(type)),
                 tint = uncategorizedColor(type),
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(8.dp),

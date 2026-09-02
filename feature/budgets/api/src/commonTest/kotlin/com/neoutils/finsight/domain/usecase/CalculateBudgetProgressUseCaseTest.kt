@@ -239,6 +239,7 @@ private class MonthBalances(
     private val balances: Map<Long, Double>,
     private val multi: Map<Long, Map<String, Double>> = emptyMap(),
 ) : IEntryRepository {
+    override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long) =
         if (month == this.month) {
             multi[dimensionId]
@@ -259,7 +260,6 @@ private class MonthBalances(
     override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
     override suspend fun balance(accountId: Long) = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?) = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long) = throw NotImplementedError()
 
     override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
     override suspend fun balanceUpToByCurrency(target: YearMonth, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()
@@ -320,7 +320,6 @@ private fun reducer(
         override suspend fun save(rate: ExchangeRate) = Unit
         override suspend fun remove(rate: ExchangeRate) = Unit
         override suspend fun countNaming(currency: String) = 0
-        override suspend fun removeAllNaming(currency: String) = Unit
     },
     getAccountCurrencies = object : GetAccountCurrenciesUseCase {
         override suspend fun invoke() = AccountCurrencies(inUse = listOf(base), ofDefaultAccount = base)

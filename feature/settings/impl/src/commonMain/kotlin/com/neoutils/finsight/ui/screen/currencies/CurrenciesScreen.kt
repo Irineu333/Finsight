@@ -21,7 +21,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -34,12 +33,15 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.currencies_add
 import com.neoutils.finsight.resources.currencies_archived_label
@@ -80,6 +82,22 @@ fun CurrenciesScreen(
         analytics.logScreenView("currencies")
     }
 
+    // The one action of this screen had no test tag at all while it was a `Scaffold` slot: the
+    // only screen where automation could not reach the create button. Publishing it is where the
+    // id gets declared, so it comes along.
+    ChromeEffect(
+        actions = remember(modalManager) {
+            listOf(
+                ChromeAction(
+                    icon = Icons.Default.Add,
+                    labelRes = Res.string.currencies_add,
+                    testTag = "currencies_add",
+                    onClick = { modalManager.show(CurrencyFormModal()) },
+                )
+            )
+        }
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -98,14 +116,6 @@ fun CurrenciesScreen(
                     }
                 },
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { modalManager.show(CurrencyFormModal()) }) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(Res.string.currencies_add),
-                )
-            }
         },
     ) { padding ->
         when {

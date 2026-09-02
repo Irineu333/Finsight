@@ -4,10 +4,13 @@ package com.neoutils.finsight.ui.modal.exchangeRateForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.database.repository.RateArchive
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateExchangeRate
+import com.neoutils.finsight.domain.analytics.event.EditExchangeRate
 import com.neoutils.finsight.domain.model.ExchangeRate
 import com.neoutils.finsight.domain.repository.IBaseCurrencyRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
-import com.neoutils.finsight.domain.repository.IExchangeRateRepository
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,13 +39,21 @@ import kotlin.time.ExperimentalTime
  * base of BRL with no bridge is inert, not wrong. Barring it would require this form to
  * know how to resolve paths — knowledge that belongs to the archive — in order to
  * prevent a harmless row.
+ *
+ * **Removing is not here.** The form offers it and
+ * [com.neoutils.finsight.ui.modal.deleteExchangeRate.DeleteExchangeRateViewModel] performs
+ * it, behind the confirmation every other deletion of this app is confirmed behind — which
+ * is also where the copy owed first is promised, where its refusal becomes a question, and
+ * where the vault is offered. All three belong beside the risk, and a form opened to
+ * register a rate carries none.
  */
 class ExchangeRateFormViewModel(
     private val existing: ExchangeRate?,
     baseCurrencyRepository: IBaseCurrencyRepository,
-    private val exchangeRateRepository: IExchangeRateRepository,
+    private val exchangeRateRepository: RateArchive,
     private val currencyRepository: ICurrencyRepository,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val base = baseCurrencyRepository.observe().value
@@ -98,7 +109,6 @@ class ExchangeRateFormViewModel(
                 _uiState.update { it.copy(rate = action.rate) }
 
             ExchangeRateFormAction.Submit -> submit()
-            ExchangeRateFormAction.Remove -> remove()
         }
     }
 
@@ -130,14 +140,12 @@ class ExchangeRateFormViewModel(
                     source = ExchangeRate.Source.USER,
                 )
             )
-            modalManager.dismissAll()
-        }
-    }
-
-    private fun remove() {
-        val rate = existing ?: return
-        viewModelScope.launch {
-            exchangeRateRepository.remove(rate)
+            analytics.logEvent(
+                when {
+                    state.isEditing -> EditExchangeRate(state.from, state.to)
+                    else -> CreateExchangeRate(state.from, state.to)
+                }
+            )
             modalManager.dismissAll()
         }
     }

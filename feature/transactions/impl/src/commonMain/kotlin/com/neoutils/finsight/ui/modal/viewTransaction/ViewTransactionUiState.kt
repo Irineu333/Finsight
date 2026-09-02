@@ -10,10 +10,11 @@ import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.usecase.impliedRate
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.extension.displayTitleOrNull
-import com.neoutils.finsight.extension.editObstacle
+import com.neoutils.finsight.extension.operationNameBesideNature
 import com.neoutils.finsight.ui.model.TransactionLegTarget
 import com.neoutils.finsight.ui.model.TransactionLegUi
 import com.neoutils.finsight.ui.model.toTransactionLegs
+import com.neoutils.finsight.util.UiText
 import kotlin.math.abs
 
 sealed interface ViewTransactionUiState {
@@ -63,15 +64,26 @@ sealed interface ViewTransactionUiState {
         /** The transaction's nature (title/colour/icon), derived from the entries. */
         val label: TransactionLabel = transaction.label
 
-        /**
-         * The title the transaction has — its own, or its category's — and `null` when
-         * it has neither, which is the ordinary case of a transfer and of a payment.
-         * The header then says only what the operation *is*.
-         */
-        val displayTitle: String? = displayTitleOrNull(transaction.title, category)
-
         val date = transaction.date
         val isCardTarget = transaction.hasLiabilityLeg
+
+        /**
+         * What the header calls this operation: its title, its category's name, or the
+         * name of its form — the one chain ([operationNameBesideNature]), asked in the
+         * register of a surface that has already announced the nature just above it.
+         *
+         * `null` only where the form has nothing the nature did not already say, which
+         * is an expense or an income carrying neither title nor category. The header
+         * omits the line rather than repeating itself.
+         *
+         * Declared after [isCardTarget] it reads: property initializers run in
+         * declaration order, and above it the flag would still be `false`.
+         */
+        val name: UiText? = operationNameBesideNature(
+            displayTitle = displayTitleOrNull(transaction.title, category),
+            label = label,
+            isCardTarget = isCardTarget,
+        )
 
         /**
          * One card per monetary leg, from the one owner of that mapping — the verb,
@@ -135,14 +147,40 @@ sealed interface ViewTransactionUiState {
         val isChangeable: Boolean = transaction.entries.closedLegBlockingChange() == null
 
         /**
-         * Derived edit gate (design D2): whatever stops the rewrite from expressing this
-         * transaction, plus not being frozen. The three obstacles — more than one monetary
-         * leg, an adjustment, one share of an installment — are read from
-         * `Transaction.editObstacle`, the single owner `UpdateTransactionUseCase` refuses by,
-         * so the screen cannot come to offer what the operation would turn down. The
-         * invoice-status gate (CLOSED/PAID blocks edit *and* delete) is applied one level up.
+         * Derived edit gate: the gates that hold for every operation first, then a
+         * decision **by label**. The invoice-status gate (CLOSED/PAID blocks edit
+         * *and* delete) is applied one level up.
+         *
+         * The label is what decides, and not a leg count that serves two purposes at
+         * once: the count kept the transfer out *and* the card payment, so relaxing
+         * it to admit the first would have admitted the second in silence.
          */
-        val isEditable: Boolean = transaction.editObstacle == null && isChangeable
+        val isEditable: Boolean = isChangeable &&
+            transaction.installmentId == null &&
+            when (label) {
+                // Edited through the transaction form, which states one money leg —
+                // a shape with two is not what that form knows how to write.
+                TransactionLabel.EXPENSE, TransactionLabel.INCOME ->
+                    transaction.monetaryEntries.size == 1
+
+                // Two monetary legs, and the transfer form states both. A transfer
+                // **between currencies** arrives here under the same label: its
+                // conversion legs are not monetary and do not change what it is.
+                TransactionLabel.TRANSFER -> true
+
+                // Two monetary legs as well, and the payment form states both. What
+                // decides is the domain's own predicate over the invoice the operation
+                // names: an invoice that still takes a partial payment takes the
+                // correction of one too. The discharge of a closed invoice is history
+                // liquidated and stays out by the same predicate — this reads it rather
+                // than enumerating statuses, and the invoice-status gate one level up
+                // withdraws both actions there anyway.
+                TransactionLabel.PAYMENT -> invoice?.acceptsPartialPayment == true
+
+                // The adjustment today, and any nature that comes to exist tomorrow:
+                // born outside editing, and it enters only by being named above.
+                else -> false
+            }
 
         val isRemovable: Boolean = isChangeable
     }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The API 24-30 format, which `minSdk = 24` still reaches: those versions never read
+    `dataExtractionRules`, so the same refusal is stated twice, once in each format.
+
+    Every domain is excluded and nothing is included, which leaves Auto Backup with
+    nothing to copy.
+-->
+<full-backup-content>
+    <exclude domain="root" />
+    <exclude domain="file" />
+    <exclude domain="database" />
+    <exclude domain="sharedpref" />
+    <exclude domain="external" />
+    <exclude domain="device_root" />
+    <exclude domain="device_file" />
+    <exclude domain="device_database" />
+    <exclude domain="device_sharedpref" />
+</full-backup-content>

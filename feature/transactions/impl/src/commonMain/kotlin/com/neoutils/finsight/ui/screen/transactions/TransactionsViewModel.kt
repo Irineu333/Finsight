@@ -34,6 +34,7 @@ import kotlin.time.ExperimentalTime
 class TransactionsViewModel(
     private val filterLabel: TransactionLabel?,
     private val filterTarget: TransactionTarget?,
+    filterCategoryId: Long?,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
@@ -64,6 +65,17 @@ class TransactionsViewModel(
         )
     )
 
+    /**
+     * The value of the analytic axis that arrived by navigation, still an identity.
+     *
+     * It is resolved against the category list this screen already observes — so an
+     * archived category resolves like any other — and it stands in for a choice until the
+     * control makes one: picking a category, picking the neutral state, or clearing the
+     * filters all drop it. There is therefore one cut and not two, and it is undone the
+     * same way a cut made on this screen is.
+     */
+    private val routeCategoryId = MutableStateFlow(filterCategoryId)
+
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
         // The list shows the history of archived categories, so the filter must be
@@ -78,8 +90,13 @@ class TransactionsViewModel(
         combine(selectedYearMonth, selectedScope, observeConsolidationChanges()) { month, scope, _ ->
             month to scope
         },
-        filters
-    ) { transactions, categories, installments, (yearMonth, scope), filters ->
+        // The stored filters and the value that arrived by route, folded because this
+        // combine is already at five sources. The route's value is an identity the list
+        // below resolves; the pair keeps both in one slot without a sixth source.
+        combine(filters, routeCategoryId) { filters, routeCategoryId ->
+            filters to routeCategoryId
+        },
+    ) { transactions, categories, installments, (yearMonth, scope), (filters, routeCategoryId) ->
         // Every figure comes from the ledger, per scope — never summed over the loaded
         // list (spec `ledger-reporting`). Reactive because observeAllTransactions()
         // re-runs this block on every ledger write, and on scope or month change.
@@ -104,6 +121,14 @@ class TransactionsViewModel(
         // longer offers must stop narrowing too, or it would go on cutting invisibly.
         val installmentOnly = filters.installmentOnly && scope != TransactionScope.ACCOUNTS
 
+        // The cut by the axis, whether it was chosen here or arrived by navigation — one
+        // value, so the control and the list can never state different cuts. An id that
+        // matches no category resolves to nothing, and the list opens neutral rather than
+        // silently narrowed or empty.
+        val subject = filters.subject ?: routeCategoryId
+            ?.let { id -> categories.firstOrNull { it.id == id } }
+            ?.let(SpendingSubject::Categorized)
+
         // The list still shows a category icon and an installment badge; the ledger only
         // hands out the identities behind them (design D6).
         val lookup = TransactionFacadeLookup.of(categories, installments)
@@ -122,7 +147,7 @@ class TransactionsViewModel(
             .filter { it.date.yearMonth == yearMonth }
 
         val visible = cuttable
-            .filter(filters.subject)
+            .filter(subject)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -132,7 +157,7 @@ class TransactionsViewModel(
             selectedYearMonth = yearMonth,
             currentYearMonth = clock.currentYearMonth(),
             categories = categories,
-            selectedSubject = filters.subject,
+            selectedSubject = subject,
             hasUncategorized = cuttable.any { it.matches(SpendingSubject.Uncategorized) },
             selectedLabel = filters.label,
             selectedTarget = target,
@@ -157,7 +182,7 @@ class TransactionsViewModel(
                     // The effective filters, not the stored ones: a filter the scope has
                     // already neutralised is absent from the row and narrows nothing, so
                     // clearing it would change neither the chips nor the list.
-                    canClearFilters = filters.subject != null ||
+                    canClearFilters = subject != null ||
                         filters.label != null ||
                         target != null ||
                         filters.recurringOnly ||
@@ -182,6 +207,9 @@ class TransactionsViewModel(
             }
 
             is TransactionsAction.SelectSubject -> {
+                // The choice made here replaces whatever arrived by route, the neutral
+                // state included: otherwise "all" would leave the initial cut standing.
+                routeCategoryId.value = null
                 filters.value = filters.value.copy(subject = action.subject)
             }
 
@@ -206,6 +234,7 @@ class TransactionsViewModel(
             // arrived by route go with the rest — on this screen they are chips like any
             // other, and keeping them would make the action inexplicable.
             is TransactionsAction.ClearFilters -> {
+                routeCategoryId.value = null
                 filters.value = TransactionsFilters()
             }
         }

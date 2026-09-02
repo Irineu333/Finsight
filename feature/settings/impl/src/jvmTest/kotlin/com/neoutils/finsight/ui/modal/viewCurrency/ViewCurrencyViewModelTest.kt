@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewCurrency
 
+import com.neoutils.finsight.RecordingAnalytics
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
@@ -17,6 +18,7 @@ import com.neoutils.finsight.domain.repository.IRateSyncStateRepository
 import com.neoutils.finsight.domain.repository.RateSyncState
 import com.neoutils.finsight.domain.usecase.ArchiveCurrencyUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCurrencyUseCase
+import com.neoutils.finsight.feature.backup.api.PreventiveBackup
 import com.neoutils.finsight.ui.model.RetireAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -80,6 +82,7 @@ class ViewCurrencyViewModelTest {
         dao = db.exchangeRateDao(),
         mapper = ExchangeRateMapper(),
         baseCurrencyRepository = base,
+        preventiveBackup = PreventiveBackup.None,
     )
 
     private val delete = DeleteCurrencyUseCase(
@@ -92,9 +95,13 @@ class ViewCurrencyViewModelTest {
         exchangeRateRepository = rates,
         accountDao = db.accountDao(),
         budgetDao = db.budgetDao(),
+        preventiveBackup = PreventiveBackup.None,
     )
 
-    private fun viewModel(code: String) = ViewCurrencyViewModel(
+    private fun viewModel(
+        code: String,
+        analytics: RecordingAnalytics = RecordingAnalytics(),
+    ) = ViewCurrencyViewModel(
         code = code,
         currencyRepository = repository,
         baseCurrencyRepository = base,
@@ -103,6 +110,7 @@ class ViewCurrencyViewModelTest {
             repository = repository,
             baseCurrencyRepository = base,
         ),
+        analytics = analytics,
         crashlytics = StubCrashlytics,
     )
 
@@ -199,7 +207,8 @@ class ViewCurrencyViewModelTest {
         seed("BRL", "USD")
         repository.archive("USD")
 
-        val viewModel = viewModel("USD")
+        val analytics = RecordingAnalytics()
+        val viewModel = viewModel("USD", analytics)
         viewModel.uiState.first { it is ViewCurrencyUiState.Content }
 
         viewModel.onAction(ViewCurrencyAction.Unarchive)
@@ -213,5 +222,10 @@ class ViewCurrencyViewModelTest {
 
         assertFalse((state as ViewCurrencyUiState.Content).isArchived)
         assertEquals(listOf("BRL", "USD"), repository.getOffered().map { it.code })
+        // Awaited rather than read: the write returns on the database's dispatcher and
+        // reports itself there, while the state above flips from Room's invalidation.
+        val reported = analytics.awaitEvents()
+        assertEquals(listOf("unarchive_currency"), reported.map { it.name })
+        assertEquals(mapOf("code" to "USD"), reported.single().params)
     }
 }

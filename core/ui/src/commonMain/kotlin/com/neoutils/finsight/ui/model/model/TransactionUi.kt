@@ -21,7 +21,15 @@ data class TransactionUi(
     val id: Long,
     val label: TransactionLabel,
     val direction: TransactionType,
-    val title: String,
+    /**
+     * What the operation is called by what it carries — its own title, or its category's
+     * name — and `null` when it carries neither.
+     *
+     * Not the text a screen shows: naming an operation that has neither is the surface's
+     * to decide, because a list names it by its form while a header that already
+     * announced the nature omits the line (`displayTitleOrNull`).
+     */
+    val title: String?,
     val amount: DisplayAmount,
     val date: LocalDate,
     val categoryId: Long?,

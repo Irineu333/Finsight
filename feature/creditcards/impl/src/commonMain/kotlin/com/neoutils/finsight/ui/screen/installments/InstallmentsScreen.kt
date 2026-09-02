@@ -40,7 +40,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -81,6 +80,9 @@ import com.neoutils.finsight.extension.format
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.shell.api.ChromeAction
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.model.categoryDisplayColor
@@ -94,6 +96,7 @@ import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.Warning
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.category_spending_uncategorized
+import com.neoutils.finsight.resources.installment_card_installment
 import com.neoutils.finsight.resources.installments_create
 import com.neoutils.finsight.resources.installments_current_installment
 import com.neoutils.finsight.resources.installments_delete
@@ -145,6 +148,37 @@ private fun InstallmentsContent(
     val modalManager = LocalModalManager.current
     val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
+
+    ChromeEffect(
+        // The same states as the actions below. Still reading, the screen says nothing and the
+        // chrome holds — an answer given now is one the reading takes back. The empty state then
+        // renders the create command as its own full-width button, and what the shell would serve
+        // over it is the universal one, which is not this screen's at all.
+        config = when (uiState) {
+            is InstallmentsUiState.Loading -> null
+
+            is InstallmentsUiState.Empty -> ChromeConfig.NoButtonOverContent
+
+            is InstallmentsUiState.Content -> ChromeConfig.Default
+        },
+        actions = when (uiState) {
+            is InstallmentsUiState.Loading,
+            is InstallmentsUiState.Empty -> emptyList()
+
+            is InstallmentsUiState.Content -> remember(modalManager) {
+                listOf(
+                    ChromeAction(
+                        icon = Icons.Default.Add,
+                        labelRes = Res.string.installments_create,
+                        // Same id as the empty state's button below: the flow asks to create an
+                        // installment, not for the affordance the current state renders.
+                        testTag = "installments_add",
+                        onClick = { modalManager.show(AddInstallmentModal()) },
+                    )
+                )
+            }
+        }
+    )
 
     Scaffold(
         modifier = Modifier.testTag("screen_installments"),
@@ -229,23 +263,6 @@ private fun InstallmentsContent(
                     }
                 },
             )
-        },
-        floatingActionButton = {
-            if (uiState is InstallmentsUiState.Content) {
-                FloatingActionButton(
-                    onClick = {
-                        modalManager.show(AddInstallmentModal())
-                    },
-                    // Same id as the empty state's button below: the flow asks to create
-                    // an installment, not for the affordance the current state renders.
-                    modifier = Modifier.testTag("installments_add"),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                    )
-                }
-            }
         },
     ) { paddingValues ->
         when (uiState) {
@@ -362,15 +379,7 @@ private fun InstallmentsContent(
                                 TextDecoration.None
                             },
                             onClick = {
-                                when (transactionUi.direction) {
-                                    TransactionType.ADJUSTMENT -> {
-                                        detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
-                                    }
-
-                                    else -> {
-                                        detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
-                                    }
-                                }
+                                detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                             },
                         )
                     }
@@ -507,7 +516,11 @@ private fun InstallmentSummaryCard(
 
                     Column {
                         Text(
-                            text = ui.title,
+                            // Title, then category, then form — and the form of an
+                            // instalment is that it is one. The card already shows "1/12"
+                            // beside it, so "Instalment" says more there than "Expense".
+                            text = ui.title
+                                ?: stringResource(Res.string.installment_card_installment),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface,

@@ -21,7 +21,9 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
 import com.neoutils.finsight.domain.ledger.LedgerWrite
+import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
 import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
+import com.neoutils.finsight.domain.ledger.TransactionRemovalPrelude
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
@@ -45,6 +47,9 @@ class TransactionRepository(
     private val accountDao: AccountDao,
     private val writeGuard: DimensionWriteGuard,
     private val removalHook: TransactionRemovalHook,
+    // Defaulted, unlike the two ports above: nothing in the ledger goes wrong without
+    // it, so a caller who never asked for the timing simply does not get it.
+    private val removalPrelude: TransactionRemovalPrelude = TransactionRemovalPrelude.None,
     private val transactionMapper: TransactionMapper,
     private val ledgerEntryWriter: LedgerEntryWriter,
 ) : ITransactionRepository {
@@ -180,6 +185,26 @@ class TransactionRepository(
         ids.toSet().readByIdentity(transactionDao::getExistingIds).toSet()
 
     /**
+     * Three reads for the whole batch — the rows, their legs and the chart — instead of
+     * two per row. Hydrating each transaction through [toDomain] would have gone back to
+     * the entry table once per id, which is the cost this read exists to avoid.
+     */
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> {
+        if (ids.isEmpty()) return emptyList()
+
+        val accounts = ledgerAccounts()
+        val entriesByTransactionId = entryDao.getByTransactionIds(ids)
+            .groupBy { it.transactionId }
+
+        return transactionDao.getByIds(ids).mapNotNull { entity ->
+            transactionMapper.toDomain(
+                entity = entity,
+                entries = entriesByTransactionId[entity.id].orEmpty().toDomainEntries(accounts),
+            )
+        }
+    }
+
+    /**
      * The facade veto, asked at the single write boundary next to `Σ = 0` (design
      * D11/D23) so no screen or use case has to remember it. What the rule *is*
      * belongs to whoever owns the dimensions — this only guarantees there is one
@@ -291,7 +316,7 @@ class TransactionRepository(
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) {
         // An edit has two sides, and both are changes to an invoice: the one losing
@@ -305,11 +330,12 @@ class TransactionRepository(
         // here objected.
         ensureClosedAccountsKeepTheirBalance(id)
         // Editing is never the payment that settles a closed invoice; that exception
-        // exists only for creating it (task 5.6: CLOSED/PAID blocks editing too).
-        ensureDimensionsAccept(
-            dimensionIds = setOfNotNull(leg.dimensionId),
-            settlesALiability = false,
-        )
+        // exists only for creating it (task 5.6: CLOSED/PAID blocks editing too) — and
+        // that answer is *derived* from the natures of the accounts being posted to,
+        // the same way creation derives it. A literal here would be an answer nobody
+        // computed, correct only for as long as the shapes that reach this method
+        // happen to make it so.
+        ensureDimensionsAccept(legs)
 
         // Update and ledger rewrite (delete + re-insert legs) share one transaction, so a
         // failure never leaves the transaction with its old legs deleted and no new ones.
@@ -320,12 +346,22 @@ class TransactionRepository(
                     title = title,
                     date = date,
                 )
-                ledgerEntryWriter.rewriteEntries(id, listOf(leg), contra)
+                ledgerEntryWriter.rewriteEntries(id, legs, contra)
             }
         }
     }
 
-    override suspend fun deleteTransactionById(id: Long) {
+    override suspend fun deleteTransactionById(id: Long) =
+        deleteTransactionById(id, RemovalAnnouncement.Announced)
+
+    override suspend fun deleteTransactionById(id: Long, announcement: RemovalAnnouncement) {
+        // Above the writer, not inside it, and that placement is the contract: what
+        // listens here needs the database as it still is *and* no transaction open
+        // around it. Moving this line below `useWriterConnection` compiles and passes
+        // every removal test — it only fails the caller, silently, at the moment a
+        // user destroys something real.
+        if (announcement == RemovalAnnouncement.Announced) removalPrelude.beforeRemoval()
+
         // The removal and whatever a facade has to correct because of it are one
         // transaction: a failure between them would leave that facade describing
         // rows that no longer exist.
@@ -354,7 +390,14 @@ class TransactionRepository(
         removed?.let { removalHook.onRemoved(it) }
     }
 
-    override suspend fun deleteTransactionsByIds(ids: List<Long>) {
+    override suspend fun deleteTransactionsByIds(ids: List<Long>) =
+        deleteTransactionsByIds(ids, RemovalAnnouncement.Announced)
+
+    override suspend fun deleteTransactionsByIds(ids: List<Long>, announcement: RemovalAnnouncement) {
+        // Once for the whole batch, above the writer, for the reason above: the batch
+        // is one removal, and there is no moment inside it that still holds the rows.
+        if (announcement == RemovalAnnouncement.Announced) removalPrelude.beforeRemoval()
+
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 ids.forEach { removeRow(it) }

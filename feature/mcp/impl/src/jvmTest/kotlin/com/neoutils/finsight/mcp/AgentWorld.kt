@@ -30,6 +30,8 @@ import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.GetRecurringCyclesUseCase
+import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.domain.usecase.HarvestExchangeRateUseCase
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.Dispatchers
@@ -413,7 +415,9 @@ internal class AgentWorld(
             consolidateMoney = consolidateMoney,
         ),
         calculateBudgetProgress = CalculateBudgetProgressUseCase(entryRepository, consolidateMoney),
-        getPendingRecurring = GetPendingRecurringUseCase(),
+        getPendingRecurring = GetPendingRecurringUseCase(
+            getRecurringCycles = GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase()),
+        ),
         calculateAvailableLimit = LedgerAvailableLimit(cards, invoices, calculateInvoice),
         calculateInvoice = calculateInvoice,
         calculateReportStats = LedgerReportStats(accounts, cards, entryRepository),

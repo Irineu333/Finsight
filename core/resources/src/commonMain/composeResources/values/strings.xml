@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The BCP-47 tag of this file's language, for whatever has to declare it -->
+    <string name="app_language_tag">pt-BR</string>
+
     <!-- Invoice date labels -->
     <string name="invoice_opens_on">abre em %1$s</string>
     <string name="invoice_closes_on">fecha em %1$s</string>
@@ -16,6 +19,7 @@
     <string name="account_error_has_recurring">Há recorrências que dependem disto. Aponte-as para outro destino ou exclua-as antes de excluir.</string>
     <string name="account_error_currency_immutable">A moeda de uma conta é definida na criação e não pode ser alterada. Para corrigir, apague a conta (se ela não tiver lançamentos) e crie outra.</string>
     <string name="account_error_cannot_archive_default">Não é possível arquivar a conta padrão. Escolha outra conta como padrão antes.</string>
+    <string name="account_error_cannot_delete_default">Não é possível excluir a conta padrão. Escolha outra conta como padrão antes.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
@@ -203,6 +207,7 @@
     <string name="installments_remaining">Restante</string>
     <string name="installments_status_active">Ativo</string>
     <string name="installments_status_completed">Concluído</string>
+    <string name="installment_card_installment">Parcelamento</string>
     <string name="installments_filter_category">Categoria</string>
     <string name="installments_filter_category_all">Todas</string>
     <string name="installments_filter_type">Tipo</string>
@@ -216,10 +221,8 @@
     <string name="credit_cards_empty">Sem cartões de crédito</string>
     <string name="credit_cards_create">Criar cartão</string>
     <string name="credit_cards_edit">Editar</string>
-    <string name="credit_cards_advance_payment">Antecipar Pagamento</string>
     <string name="credit_cards_close_invoice">Fechar Fatura</string>
     <string name="credit_cards_reopen_invoice">Reabrir Fatura</string>
-    <string name="credit_cards_pay_invoice">Pagar Fatura</string>
     <string name="credit_cards_filter_category">Categoria</string>
     <string name="credit_cards_filter_category_all">Todas</string>
     <string name="credit_cards_filter_type">Tipo</string>
@@ -256,6 +259,7 @@
     <string name="retire_error_has_recurring">Há recorrências que dependem desta categoria. Aponte-as para outra categoria ou exclua-as antes de excluir esta.</string>
     <string name="retire_error_has_yielding_accounts">Há contas que rendem e classificam o rendimento nesta categoria. Desligue o rendimento delas antes de excluir.</string>
     <string name="error_modal_dismiss">Entendi</string>
+    <string name="success_modal_dismiss">OK</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
     <!-- Archived accounts -->
@@ -292,14 +296,14 @@
 
     <!-- Budgets Screen -->
     <string name="budgets_title">Orçamentos</string>
-    <string name="budgets_limit">Limite</string>
-    <string name="budgets_spent">Gasto</string>
-    <string name="budgets_remaining">Restante</string>
-    <string name="budgets_exceeded_by">Excedido em</string>
-    <string name="budgets_category_singular">1 categoria</string>
-    <string name="budgets_category_plural">%1$d categorias</string>
     <string name="budgets_empty">Sem orçamentos</string>
     <string name="budgets_create">Criar orçamento</string>
+    <string name="budgets_row_spent">gastos</string>
+    <string name="budgets_row_categories_more">+%1$d</string>
+    <string name="budgets_row_exceeded">Acima do teto</string>
+    <string name="budgets_row_derived_limit">Teto derivado de uma receita recorrente</string>
+    <string name="budgets_period_monthly">Mensal</string>
+    <string name="budgets_period_weekly">Semanal</string>
 
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Editar Cartão</string>
@@ -307,12 +311,10 @@
     <string name="invoice_transactions_advance_payments">Adiantamentos</string>
     <string name="invoice_transactions_adjustments">Ajustes</string>
     <string name="invoice_transactions_total">Total</string>
-    <string name="invoice_transactions_advance_payment">Antecipar Pagamento</string>
     <string name="invoice_transactions_close_invoice">Fechar Fatura</string>
     <string name="invoice_transactions_delete_invoice">Excluir Fatura</string>
     <string name="invoice_transactions_create_invoice">Criar Fatura</string>
     <string name="invoice_transactions_reopen_invoice">Reabrir Fatura</string>
-    <string name="invoice_transactions_pay_invoice">Pagar Fatura</string>
     <string name="invoice_transactions_filter_category">Categoria</string>
     <string name="invoice_transactions_filter_category_all">Todas</string>
     <string name="invoice_transactions_filter_type">Tipo</string>
@@ -414,6 +416,7 @@
     <!-- Delete Modals -->
     <string name="delete_transaction_title">Excluir Transação</string>
     <string name="delete_transaction_message">Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.</string>
+    <string name="delete_transaction_message_reversible">Tem certeza que deseja excluir esta transação?</string>
     <string name="delete_transaction_confirm">Excluir</string>
 
     <string name="delete_account_title">Excluir Conta</string>
@@ -444,6 +447,7 @@
 
     <string name="delete_installment_title">Excluir Parcelamento</string>
     <string name="delete_installment_message">Tem certeza que deseja excluir este parcelamento? Todas as %1$d parcelas serão removidas. Esta ação não pode ser desfeita.</string>
+    <string name="delete_installment_message_reversible">Tem certeza que deseja excluir este parcelamento? Todas as %1$d parcelas serão removidas.</string>
     <string name="delete_installment_confirm">Excluir</string>
 
     <!-- Create Invoice Modal -->
@@ -455,15 +459,11 @@
     <string name="create_invoice_confirm">Criar</string>
 
     <string name="delete_future_invoice_title">Excluir Fatura</string>
-    <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura futura? Esta ação não pode ser desfeita.</string>
+    <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura? Esta ação não pode ser desfeita.</string>
+    <string name="delete_future_invoice_message_reversible">Tem certeza que deseja excluir esta fatura?</string>
+    <string name="delete_future_invoice_message_transactions">Tem certeza que deseja excluir esta fatura? A(s) %1$d transação(ões) lançada(s) nela serão removidas junto. Esta ação não pode ser desfeita.</string>
+    <string name="delete_future_invoice_message_transactions_reversible">Tem certeza que deseja excluir esta fatura? A(s) %1$d transação(ões) lançada(s) nela serão removidas junto.</string>
     <string name="delete_future_invoice_confirm">Excluir</string>
-
-    <!-- Pay Invoice Modal -->
-    <string name="pay_invoice_title">Pagar Fatura</string>
-    <string name="pay_invoice_message">O pagamento será do valor total da fatura.</string>
-    <string name="pay_invoice_amount_label">Valor da Fatura</string>
-    <string name="pay_invoice_date_label">Data do Pagamento</string>
-    <string name="pay_invoice_confirm">Pagar Fatura</string>
 
     <!-- Close Invoice Modal -->
     <string name="close_invoice_title">Fechar Fatura</string>
@@ -479,20 +479,34 @@
     <string name="reopen_invoice_confirm">Reabrir</string>
     <string name="invoice_error_cannot_reopen">Só a última fatura fechada pode ser reaberta.</string>
 
-    <!-- Advance Payment Modal -->
-    <string name="advance_payment_title">Antecipar Pagamento</string>
-    <string name="advance_payment_description">Pague parte da fatura antes do fechamento.</string>
-    <string name="advance_payment_amount_label">Valor</string>
-    <string name="advance_payment_date_label">Data</string>
-    <string name="advance_payment_confirm">Antecipar Pagamento</string>
+    <!-- Invoice Payment Modal -->
+    <!-- The head names the operation and holds still; the verb is derived from the
+         invoice's state and names the command on every surface that offers it, and the
+         sheet's confirm button. -->
+    <string name="invoice_payment_title">Pagamento de Fatura</string>
+    <string name="invoice_payment_message">Escolha a fatura e a conta que paga por ela.</string>
+    <string name="invoice_payment_advance">Antecipar Pagamento</string>
+    <string name="invoice_payment_pay">Pagar Fatura</string>
+    <string name="invoice_payment_amount_label">Valor do Pagamento</string>
+    <string name="invoice_payment_max">Máx</string>
+    <string name="invoice_payment_date_label">Data do Pagamento</string>
+    <string name="invoice_payment_no_debt">Esta fatura não tem nada a pagar.</string>
+    <!-- Correcting a payment already registered: the mode is fixed from the moment the
+         sheet opens, so the head names it and the button says what confirming does —
+         the money already moved, and neither "antecipar" nor "pagar" is true of it. -->
+    <string name="invoice_payment_edit_title">Corrigir pagamento</string>
+    <string name="invoice_payment_edit_confirm">Salvar</string>
 
     <!-- Transfer Between Accounts Modal -->
     <string name="transfer_title">Transferir entre contas</string>
+    <string name="transfer_edit_title">Corrigir transferência</string>
+    <string name="transfer_title_label">Título</string>
     <string name="transfer_source_account_label">Conta de origem</string>
     <string name="transfer_destination_account_label">Conta de destino</string>
     <string name="transfer_amount_label">Valor</string>
     <string name="transfer_date_label">Data</string>
     <string name="transfer_confirm">Transferir</string>
+    <string name="transfer_edit_confirm">Salvar</string>
 
     <!-- Cross-currency amount fields (the grammar the three two-value flows share) -->
     <string name="cross_currency_leaves_label">Sai de %1$s</string>
@@ -541,18 +555,27 @@
     <string name="view_transaction_edit">Editar</string>
 
     <!-- View Adjustment Modal -->
-    <string name="view_adjustment_type_label">Ajuste</string>
-    <string name="view_adjustment_balance_adjust">Ajuste de Saldo</string>
-    <string name="view_adjustment_invoice_adjust">Ajuste de Fatura</string>
-    <string name="view_adjustment_date_label">Data</string>
-    <string name="view_adjustment_delete_label">Excluir Ajuste</string>
 
     <!-- View Category Modal -->
     <string name="view_category_type_income">Receita</string>
     <string name="view_category_type_expense">Despesa</string>
     <string name="view_category_total_received">Total Recebido</string>
     <string name="view_category_total_spent">Total Gasto</string>
-    <string name="view_category_transactions_month">Transações no Mês</string>
+    <string name="view_category_this_month">Neste mês</string>
+    <string name="view_category_partial_month">dia %1$d de %2$d</string>
+    <plurals name="view_category_month_average">
+        <item quantity="one">Média mensal (%1$d mês)</item>
+        <item quantity="other">Média mensal (%1$d meses)</item>
+    </plurals>
+    <plurals name="view_category_window_total">
+        <item quantity="one">Total de %1$d mês</item>
+        <item quantity="other">Total de %1$d meses</item>
+    </plurals>
+    <string name="view_category_above_average">%1$s acima da média</string>
+    <string name="view_category_below_average">%1$s abaixo da média</string>
+    <string name="view_category_at_average">Na média do período</string>
+    <string name="view_category_history_range">de %1$s a %2$s</string>
+    <string name="view_category_see_transactions">Ver lançamentos</string>
     <string name="view_category_edit">Editar</string>
     <string name="view_category_unarchive">Desarquivar</string>
 
@@ -578,6 +601,8 @@
     <string name="balance_card_current_invoice">Fatura Atual</string>
     <string name="balance_card_pending_income">Receitas Pendentes</string>
     <string name="balance_card_pending_expense">Despesas Pendentes</string>
+    <string name="balance_card_settlement_incoming">A entrar</string>
+    <string name="balance_card_settlement_outgoing">A sair</string>
 
     <string name="summary_card_opening_balance">Saldo Inicial</string>
     <string name="summary_card_income">Entradas</string>
@@ -600,6 +625,8 @@
     <string name="transaction_card_payment">Pagamento de Fatura</string>
     <string name="transaction_card_balance_adjustment">Ajuste de Saldo</string>
     <string name="transaction_card_invoice_adjustment">Ajuste de Fatura</string>
+    <string name="transaction_card_expense">Despesa</string>
+    <string name="transaction_card_income">Receita</string>
 
     <string name="target_selector_account">Conta</string>
     <string name="target_selector_credit_card">Cartão de Crédito</string>
@@ -627,15 +654,12 @@
     <string name="credit_card_ui_edit_invoice">Editar fatura</string>
 
     <string name="dashboard_credit_card_close_invoice">Fechar Fatura</string>
-    <string name="dashboard_credit_card_pay_invoice">Pagar Fatura</string>
-    <string name="dashboard_credit_card_advance">Antecipar</string>
 
     <string name="invoice_summary_card_expenses">Gastos</string>
     <string name="invoice_summary_card_advance_payments">Adiantamentos</string>
     <string name="invoice_summary_card_adjustments">Ajustes</string>
     <string name="invoice_summary_card_invoice">Fatura</string>
     <string name="invoice_summary_card_edit_invoice">Editar fatura</string>
-
 
     <string name="category_spending_card_title">Gastos por Categoria</string>
 
@@ -717,12 +741,32 @@
     <string name="recurring_screen_empty">Sem recorrentes</string>
     <string name="recurring_screen_create">Criar recorrente</string>
     <string name="recurring_screen_day">Dia %1$d</string>
-    <string name="recurring_filter_active">Ativas</string>
-    <string name="recurring_filter_archived">Arquivadas</string>
+    <string name="recurring_filter_all">Todas</string>
     <string name="recurring_empty_filter">Nenhuma recorrência aqui.</string>
+    <string name="recurring_view_archived">Arquivadas</string>
+    <string name="recurring_archived_title">Recorrentes arquivadas</string>
+    <string name="recurring_archived_empty">Nenhuma recorrência arquivada</string>
+
+    <!-- Recurring Cycle Sections -->
+    <string name="recurring_section_pending">Pendentes</string>
+    <string name="recurring_section_upcoming">A lançar</string>
+    <string name="recurring_section_posted">Lançadas</string>
+    <string name="recurring_section_skipped">Ignoradas</string>
     <string name="recurring_expense">Despesa</string>
     <string name="recurring_income">Receita</string>
-    <string name="recurring_card_monthly_amount">Valor mensal</string>
+    <string name="recurring_source_unusable">Origem indisponível</string>
+
+    <!-- Recurring Month Summary -->
+    <string name="recurring_summary_settled">Lançado neste mês</string>
+    <string name="recurring_summary_forecast">Ainda não lançado</string>
+    <string name="recurring_summary_fixed_expense">Despesas fixas</string>
+    <string name="recurring_summary_fixed_income">Receitas fixas</string>
+    <string name="recurring_expand">Expandir</string>
+    <string name="recurring_collapse">Recolher</string>
+    <plurals name="recurring_summary_undenominated">
+        <item quantity="one">%1$d recorrência ficou de fora da soma: nenhuma conta a denomina.</item>
+        <item quantity="other">%1$d recorrências ficaram de fora da soma: nenhuma conta as denomina.</item>
+    </plurals>
 
     <!-- Recurring Form Modal -->
     <string name="recurring_form_title_label">Título</string>
@@ -795,6 +839,7 @@
     <string name="component_balance_stats">Balanço em Contas</string>
     <string name="component_overall_balance_stats">Balanço Geral</string>
     <string name="component_pending_balance">Balanço Pendente</string>
+    <string name="component_month_settlement">A liquidar este mês</string>
     <string name="component_credit_card_balance_stats">Balanço do Cartão</string>
     <string name="component_accounts_overview">Contas</string>
     <string name="component_credit_cards">Cartões de Crédito</string>
@@ -829,6 +874,8 @@
     <string name="component_config_hide_single_account">Ocultar conta única</string>
     <string name="component_config_accounts_in_total">Contas somadas no total</string>
     <string name="component_config_hide_when_empty">Ocultar sem dados</string>
+    <string name="component_config_settlement_recurring">Recorrentes do mês</string>
+    <string name="component_config_settlement_invoices">Faturas a pagar</string>
     <string name="component_config_show_empty_state">Exibir empty state</string>
     <string name="component_config_max_categories">Máximo de categorias</string>
     <string name="component_config_days_ahead">Dias à frente</string>
@@ -861,7 +908,6 @@
     <string name="detail_pane_error_title">Não foi possível carregar</string>
     <string name="detail_pane_error">O item não foi encontrado ou não pôde ser carregado.</string>
     <string name="view_transaction_title">Operação</string>
-    <string name="view_adjustment_title">Ajuste</string>
     <string name="view_category_title">Categoria</string>
     <string name="view_budget_title">Orçamento</string>
     <string name="view_recurring_title">Recorrência</string>
@@ -877,6 +923,7 @@
     <string name="money_unresolved_badge">Por que falta informação aqui</string>
     <string name="money_unresolved_title">Sem um valor único para comparar</string>
     <string name="money_unresolved_body">Alguma parte deste período está em uma moeda sem taxa cadastrada, então não existe um valor único para comparar — e é por isso que a barra e a proporção não aparecem. Os valores continuam exatos, cada um na sua moeda; o que falta é a medida comum entre eles. Cadastre a taxa e isto volta a funcionar.</string>
+    <string name="money_unresolved_list_notice">Uma moeda sem taxa neste mês</string>
     <string name="report_export_footnote">≈ marca um valor que passou por uma taxa de câmbio. Quando não havia taxa, a parcela daquela moeda aparece por si, sem conversão.</string>
     <string name="money_approximate_see_rates">Ver taxas</string>
 
@@ -884,10 +931,13 @@
     <string name="settings_screen_title">Configurações</string>
     <string name="settings_group_preferences">Preferências</string>
     <string name="settings_group_currency_data">Moedas e taxas</string>
+    <string name="settings_group_data">Meus dados</string>
     <string name="settings_base_currency_title">Moeda base</string>
     <string name="settings_base_currency_picker_title">Moeda base</string>
     <string name="settings_exchange_rates_title">Taxas de câmbio</string>
     <string name="settings_exchange_rates_subtitle">Cadastre, corrija ou remova as taxas usadas nas conversões</string>
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_subtitle">Mantenha cópias automáticas, exporte seus dados para um arquivo ou restaure a partir de um</string>
 
     <string name="exchange_rates_screen_title">Taxas de câmbio</string>
     <string name="exchange_rates_empty">Nenhuma taxa cadastrada. Uma operação entre moedas cadastra a sua própria taxa, e você pode informar uma a qualquer momento.</string>
@@ -936,8 +986,14 @@
     <string name="currencies_archive_confirm_action">Arquivar</string>
     <string name="currencies_delete_confirm_title">Apagar %1$s?</string>
     <string name="currencies_delete_confirm_message">A moeda deixa de existir e não é possível desfazer.</string>
+    <string name="currencies_delete_confirm_message_reversible">A moeda deixa de existir.</string>
     <string name="currencies_delete_confirm_message_rates">A moeda deixa de existir e %1$d taxa(s) de câmbio que a citam serão removidas junto. Não é possível desfazer.</string>
+    <string name="currencies_delete_confirm_message_rates_reversible">A moeda deixa de existir e %1$d taxa(s) de câmbio que a citam serão removidas junto.</string>
     <string name="currencies_delete_confirm_action">Apagar</string>
+    <string name="delete_exchange_rate_title">Remover a taxa %1$s/%2$s?</string>
+    <string name="delete_exchange_rate_message">A taxa deixa de existir e não é possível desfazer.</string>
+    <string name="delete_exchange_rate_message_reversible">A taxa deixa de existir.</string>
+    <string name="delete_exchange_rate_confirm">Remover</string>
 
     <string name="view_currency_base_label">Moeda base</string>
     <string name="view_currency_accounts">Contas nesta moeda</string>
@@ -1049,4 +1105,161 @@
     <string name="mcp_activity_clear_title">Limpar o registro?</string>
     <string name="mcp_activity_clear_message">As entradas somem e nenhum lançamento é alterado: o registro é o rastro do que foi feito, não a contabilidade. Apagar uma entrada não desfaz a operação que ela descreve.</string>
     <string name="mcp_activity_clear_confirm">Limpar o registro</string>
+
+    <string name="backup_error_not_a_backup">Este arquivo não é um backup válido deste app. Escolha o arquivo que você exportou.</string>
+    <string name="backup_error_file_damaged">Este backup está danificado e não pode ser lido. Use outra cópia, se você tiver.</string>
+    <string name="backup_error_app_out_of_date">Este backup foi feito por uma versão mais nova do app. Atualize o app para restaurá-lo.</string>
+    <string name="backup_error_no_space">Não há espaço livre suficiente. Libere espaço e tente de novo.</string>
+    <string name="backup_error_export_failed">Não foi possível exportar o backup. Tente de novo.</string>
+    <string name="backup_error_restore_failed">Não foi possível restaurar o backup. Seus dados continuam como estavam.</string>
+    <string name="backup_error_verification_failed">Não foi possível verificar o backup. Tente de novo.</string>
+    <string name="backup_export_success">O backup foi salvo onde você escolheu.</string>
+    <string name="backup_restore_success">Os dados deste app agora são os deste arquivo.</string>
+
+    <string name="backup_screen_title">Backup</string>
+    <string name="backup_scope">O backup contém contas, cartões, transações, categorias, orçamentos, recorrências, moedas e cotações. Preferências deste aparelho, como a moeda base e o layout do painel, ficam de fora.</string>
+    <string name="backup_no_copies">Com o cofre desligado, o app não guarda cópias. Recuperar seus dados depende do arquivo que você exportar.</string>
+    <string name="backup_export_title">Exportar backup</string>
+    <string name="backup_export_subtitle">Salva um arquivo com seus dados onde você escolher.</string>
+    <string name="backup_restore_title">Restaurar de um arquivo</string>
+    <string name="backup_restore_subtitle">Escolha um backup exportado deste app.</string>
+    <string name="backup_confirm_title">Restaurar backup</string>
+    <string name="backup_confirm_message">Quer substituir os dados deste app pelos deste arquivo?</string>
+    <string name="backup_confirm_origin_unknown">Origem desconhecida</string>
+    <string name="backup_platform_android">Android</string>
+    <string name="backup_platform_desktop">Computador</string>
+    <string name="backup_platform_ios">iPhone ou iPad</string>
+    <string name="backup_confirm_transactions">Transações</string>
+    <string name="backup_confirm_categories">Categorias</string>
+    <string name="backup_confirm_created">Criado em</string>
+    <string name="backup_confirm_irreversible_title">Não é possível desfazer</string>
+    <string name="backup_confirm_irreversible">Isso substitui tudo o que está no app pelo conteúdo deste arquivo, e nenhuma cópia é guardada antes.</string>
+    <string name="backup_confirm_cancel">Cancelar</string>
+    <string name="backup_confirm_action">Restaurar</string>
+    <string name="backup_group_automatic">Backup automático</string>
+    <string name="backup_group_manual">Exportar e restaurar</string>
+    <string name="backup_vault_title">Guardar cópias automaticamente</string>
+    <string name="backup_vault_on_both">Ao abrir o app depois de %1$s e antes de excluir algo</string>
+    <string name="backup_vault_on_periodic">Ao abrir o app depois de %1$s</string>
+    <string name="backup_vault_on_preventive">Antes de excluir algo</string>
+    <string name="backup_vault_on_update_only">Só antes de uma atualização que reescreva o banco</string>
+    <string name="backup_interval_1">1 dia</string>
+    <string name="backup_interval_3">3 dias</string>
+    <string name="backup_interval_7">7 dias</string>
+    <string name="backup_interval_15">15 dias</string>
+    <string name="backup_last_title">Último backup</string>
+    <string name="backup_last_never">Ainda nenhum</string>
+    <string name="backup_last_never_hint">A primeira cópia é feita na próxima vez que você abrir o app ou antes de você excluir algo.</string>
+    <string name="backup_last_never_hint_periodic">A primeira cópia é feita na próxima vez que você abrir o app.</string>
+    <string name="backup_last_never_hint_preventive">A primeira cópia é feita antes de você excluir algo.</string>
+    <string name="backup_last_never_hint_update_only">A primeira cópia é feita apenas antes de uma atualização que reescreve o banco de dados.</string>
+    <string name="backup_last_overdue">Mais antigo que o intervalo de %1$s. Abra o app com mais frequência para que uma cópia nova seja feita.</string>
+    <string name="backup_destination_app">Dentro do app</string>
+    <string name="backup_destination_folder">Numa pasta que você escolheu</string>
+    <string name="backup_destination_folder_named">Na pasta "%1$s"</string>
+    <string name="backup_coverage_app">As cópias ficam neste aparelho e dentro do app. Desinstalar o app leva todas junto, e recuperar seus dados em outro aparelho continua dependendo do arquivo que você exportar.</string>
+    <string name="backup_coverage_app_desktop">As cópias ficam na pasta do app neste computador e continuam lá se você desinstalar o app. Cobrir a perda do computador depende de você escolher uma pasta sincronizada, ou do arquivo que você exportar.</string>
+    <string name="backup_coverage_folder">As cópias ficam na pasta que você escolheu e continuam lá se você desinstalar o app. Cobrir a perda do aparelho depende de essa pasta ser sincronizada por algum serviço de nuvem.</string>
+    <string name="backup_destination_title">Onde as cópias ficam</string>
+    <string name="backup_folder_unreachable">Não foi possível chegar até a pasta escolhida. As cópias novas estão sendo guardadas dentro do app, provisoriamente, até você decidir.</string>
+    <string name="backup_folder_reconnect">Apontar a pasta de novo</string>
+    <string name="backup_folder_keep_in_app">Guardar dentro do app</string>
+    <string name="backup_carry_title">Levar as cópias junto?</string>
+    <string name="backup_carry_message">%1$s no destino anterior. Levar copia as mais recentes que a retenção comporta, e não remove nenhuma de lá.</string>
+    <string name="backup_carry_action">Levar</string>
+    <string name="backup_carry_leave">Deixar onde estão</string>
+    <string name="backup_carry_done">As cópias foram copiadas para o novo destino, e nenhuma foi removida do anterior.</string>
+    <string name="backup_carry_partial">Nem tudo foi copiado. O que foi já está no novo destino, e nada foi removido do anterior.</string>
+    <string name="backup_copies_none">Nenhuma cópia ainda</string>
+    <string name="backup_copies_one">1 cópia guardada</string>
+    <string name="backup_copies_many">%1$d cópias guardadas</string>
+    <string name="backup_settings_title">Ajustes do cofre</string>
+    <string name="backup_settings_subtitle">O que dispara uma cópia e quantas ficam guardadas</string>
+    <string name="backup_settings_preventive_title">Guardar antes de excluir</string>
+    <string name="backup_settings_preventive_subtitle">Lançamentos, parcelamentos, faturas, moedas e cotações.</string>
+    <string name="backup_settings_periodic_title">Guardar quando você abrir o app</string>
+    <string name="backup_settings_periodic_subtitle">Uma cópia na primeira abertura depois de um prazo que você escolhe.</string>
+    <string name="backup_settings_interval_title">Verificar a cada</string>
+    <string name="backup_settings_interval_hint">A cópia acontece quando você abre o app depois desse prazo — o sistema não deixa o app trabalhar sozinho em segundo plano.</string>
+    <string name="backup_settings_retention_title">Quantas cópias manter</string>
+    <string name="backup_settings_outcome">Cerca de %1$d dias de histórico</string>
+    <string name="backup_settings_outcome_size">%1$d cópias de ~%2$s ocupam por volta de %3$s.</string>
+    <string name="backup_settings_outcome_unknown">O quanto ocupa será sabido depois da primeira cópia.</string>
+    <string name="backup_settings_retention_all">Nenhuma cópia será apagada</string>
+    <string name="backup_settings_retention_all_hint">Nesse ritmo, cerca de %1$s por mês se acumulam — e é você quem apaga o que não quiser mais.</string>
+    <string name="backup_settings_retention_all_by_hand">É você quem apaga o que não quiser mais.</string>
+    <string name="backup_retention_five">5</string>
+    <string name="backup_retention_ten">10</string>
+    <string name="backup_retention_twenty">20</string>
+    <string name="backup_retention_everything">Todas</string>
+    <string name="backup_history_title">Cópias guardadas</string>
+    <string name="backup_history_summary">%1$s · %2$s no total</string>
+    <string name="backup_history_empty_title">Nenhuma cópia ainda</string>
+    <string name="backup_history_empty_message">A primeira é feita na próxima vez que você abrir o app, ou antes da próxima exclusão.</string>
+    <string name="backup_history_empty_off">O cofre está desligado. Ligue-o na tela de backup para o app começar a guardar cópias.</string>
+    <string name="backup_history_failed">Não foi possível ler as cópias guardadas.</string>
+    <string name="backup_history_retry">Tentar de novo</string>
+    <string name="backup_history_failed_title">Não foi possível ler as cópias</string>
+    <string name="backup_history_migration_label">atualização</string>
+    <string name="backup_history_migration_subtitle">Guardada antes de uma atualização do app</string>
+    <string name="backup_history_action_restore">Restaurar esta cópia</string>
+    <string name="backup_history_action_share">Salvar uma cópia fora do app</string>
+    <string name="backup_history_action_share_subtitle">Envia este arquivo para onde você quiser, sem fazer uma cópia nova.</string>
+    <string name="backup_history_action_delete">Excluir esta cópia</string>
+    <string name="backup_history_removed">A cópia foi removida.</string>
+    <string name="backup_history_remove_refused">Este arquivo não é uma cópia escrita por este app, então ele não foi removido.</string>
+    <string name="backup_history_gone">Esta cópia não está mais no destino.</string>
+    <string name="backup_history_capture">Criar uma cópia agora</string>
+    <string name="backup_history_capture_done">A cópia foi criada.</string>
+    <string name="backup_history_import">Importar um arquivo</string>
+    <string name="backup_history_import_done">O arquivo foi importado e agora é uma cópia guardada.</string>
+    <string name="backup_today">Hoje</string>
+    <string name="backup_yesterday">Ontem</string>
+    <string name="backup_size_bytes">%1$d B</string>
+    <string name="backup_size_kb">%1$d KB</string>
+    <string name="backup_size_mb">%1$d MB</string>
+    <string name="backup_confirm_reversible_title">Dá para voltar a como está agora</string>
+    <string name="backup_confirm_reversible">Uma cópia do app como ele está agora é guardada antes. Você volta a ela em %1$s.</string>
+    <string name="backup_confirm_offer_title">Guardar uma cópia antes</string>
+    <string name="backup_confirm_offer_subtitle">E também ao abrir o app depois de %1$s, daqui em diante. Você pode desligar nos ajustes de backup.</string>
+    <string name="backup_confirm_offer_reminder">Você deixou isto desmarcado. Marque e uma cópia é guardada antes desta e das próximas, e ao abrir o app depois de %1$s.</string>
+    <string name="backup_restore_subtitle_vault">De um backup que veio de outro aparelho.</string>
+    <string name="backup_no_copy_title">Não foi possível guardar a cópia</string>
+    <string name="backup_no_copy_message">Restaurar substitui tudo o que está no app pelo conteúdo deste arquivo, e nenhuma cópia foi guardada que pudesse trazer de volta o que está aqui agora.</string>
+    <string name="backup_no_copy_action">Restaurar mesmo assim</string>
+    <string name="backup_age_now">agora mesmo</string>
+    <string name="backup_age_minutes">há %1$d min</string>
+    <string name="backup_age_hours">há %1$d h</string>
+    <string name="backup_age_day">há 1 dia</string>
+    <string name="backup_age_days">há %1$d dias</string>
+    <string name="backup_age_month">há 1 mês</string>
+    <string name="backup_age_months">há %1$d meses</string>
+    <string name="backup_history_current_label">referência</string>
+    <string name="backup_history_current_subtitle">A última cópia igual ao app</string>
+    <string name="backup_history_newest_label">mais recente</string>
+    <string name="backup_confirm_age">Restaurar leva o app de volta a como ele estava %1$s.</string>
+    <string name="backup_confirm_file_age">Este arquivo foi criado %1$s.</string>
+    <string name="backup_copy_facts_origin">Origem</string>
+    <string name="backup_copy_facts_captured">Capturada em</string>
+    <string name="backup_copy_facts_accounts">Contas</string>
+    <string name="backup_copy_facts_cards">Cartões</string>
+    <string name="backup_copy_facts_size">Tamanho</string>
+    <string name="backup_copy_facts_unreadable">Não foi possível abrir esta cópia para ver o que ela guarda. Ela pode ter saído da pasta, ou estar danificada.</string>
+    <string name="backup_remove_confirm_title">Esta cópia vai ser excluída</string>
+    <string name="backup_remove_confirm_message">A cópia de %1$s sai de onde os backups são guardados, e não dá para trazê-la de volta. As outras continuam onde estão.</string>
+    <string name="backup_remove_confirm_migration">Esta é a cópia guardada antes da última atualização do app — a única forma de voltar se a atualização tiver estragado alguma coisa. Ela é substituída pela cópia da próxima atualização, e por mais nada.</string>
+    <string name="backup_remove_confirm_action">Excluir</string>
+    <string name="backup_export_replace_title">Isto substitui um arquivo que já está lá</string>
+    <string name="backup_export_replace_message">Já existe um arquivo chamado %1$s nessa pasta. Salvar o backup aqui escreve por cima dele, e o que estava nele se perde.</string>
+    <string name="backup_export_replace_action">Substituir</string>
+
+    <!-- Action button: the app's single floating action button and the actions screens publish to it -->
+    <string name="floating_action_expand">Mais ações</string>
+    <string name="floating_action_collapse">Fechar ações</string>
+    <string name="accounts_add">Adicionar conta</string>
+    <string name="accounts_add_transaction">Nova transação nesta conta</string>
+    <string name="credit_cards_add_transaction">Nova transação neste cartão</string>
+    <string name="categories_add_expense">Adicionar categoria de despesa</string>
+    <string name="categories_add_income">Adicionar categoria de receita</string>
+    <string name="support_create_issue">Abrir issue</string>
 </resources>

@@ -125,7 +125,14 @@ class ViewModelWritesGoThroughUseCasesTest {
             // with, by decision rather than by omission.
             "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/" +
                 "modal/exchangeRateForm/ExchangeRateFormViewModel.kt" to
-                listOf("exchangeRateRepository.remove", "exchangeRateRepository.save"),
+                listOf("exchangeRateRepository.save"),
+
+            // Removing a rate from that same archive, and listed for the same reason: it
+            // is the other half of the form above, asked on its own sheet because a
+            // deletion is confirmed before it happens.
+            "feature/settings/impl/src/commonMain/kotlin/com/neoutils/finsight/ui/" +
+                "modal/deleteExchangeRate/DeleteExchangeRateViewModel.kt" to
+                listOf("exchangeRateRepository.remove"),
         )
     }
 }

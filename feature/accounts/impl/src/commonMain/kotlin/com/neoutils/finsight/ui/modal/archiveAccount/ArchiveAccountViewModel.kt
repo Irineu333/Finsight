@@ -8,7 +8,7 @@ import com.neoutils.finsight.util.UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.analytics.event.DeleteAccount
+import com.neoutils.finsight.domain.analytics.event.ArchiveAccount
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -41,7 +41,7 @@ class ArchiveAccountViewModel(
 
     fun archiveAccount() = viewModelScope.launch {
         archiveAccountUseCase(account).onRight {
-            analytics.logEvent(DeleteAccount)
+            analytics.logEvent(ArchiveAccount)
             modalManager.dismissAll()
         }.onLeft {
             crashlytics.recordException(it)

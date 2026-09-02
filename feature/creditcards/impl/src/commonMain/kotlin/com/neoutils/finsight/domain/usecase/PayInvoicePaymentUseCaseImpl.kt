@@ -12,12 +12,8 @@ import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.TransactionLeg
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
@@ -26,11 +22,10 @@ import kotlin.time.ExperimentalTime
 class PayInvoicePaymentUseCaseImpl(
     private val clock: Clock,
     private val validateInvoicePayment: ValidateInvoicePaymentUseCase,
-    private val transactionRepository: ITransactionRepository,
+    private val writeInvoicePayment: WriteInvoicePaymentUseCase,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val payInvoiceUseCase: PayInvoiceUseCase,
-    private val harvestExchangeRate: HarvestExchangeRateUseCase,
     private val accountRepository: IAccountRepository,
 ) : PayInvoicePaymentUseCase {
 
@@ -52,6 +47,12 @@ class PayInvoicePaymentUseCaseImpl(
             InvoiceException(InvoiceError.NotFound)
         }
 
+        // The domain owns which invoices are discharged by paying them; enumerating
+        // the status here would be a second copy of that rule.
+        ensure(invoice.acceptsFullSettlement) {
+            InvoiceException(InvoiceError.InvoiceNotClosed)
+        }
+
         // The paying account is resolved here, and not merely handed in, because the
         // currency the rate is harvested against is the one it carries *now*.
         val account = ensureNotNull(
@@ -66,9 +67,10 @@ class PayInvoicePaymentUseCaseImpl(
         // the account came up short by a payment the app reported as refused, and the log recorded
         // it as such. Reading the obstacle here is what makes a refusal mean nothing happened.
         //
-        // It is the same derivation `PayInvoiceUseCase` consults, not a copy: the status this used
-        // to check by hand was narrower than the domain's own answer, and rejected a retroactive
-        // invoice the ledger is willing to settle.
+        // It is the same derivation `PayInvoiceUseCase` consults, not a copy, so what refuses the
+        // payment here and what refuses the discharge below cannot drift into disagreeing. What it
+        // adds to the guard above is the *date*: which invoices are discharged by paying them is
+        // `acceptsFullSettlement`'s, and when one may be paid is this.
         validateInvoicePayment(invoice = invoice, date = date, today = clock.today())
             .mapLeft(::InvoiceException)
             .bind()
@@ -88,45 +90,14 @@ class PayInvoicePaymentUseCaseImpl(
         }
 
         catch {
-            transactionRepository.createTransaction(
-                TransactionIntent(
-                    title = null,
-                    date = date,
-                    legs = listOf(
-                        // The money leaves the account undimensioned; only the card's
-                        // leg carries the invoice's sub-ledger, or the two would
-                        // cancel it out.
-                        TransactionLeg(
-                            type = TransactionType.EXPENSE,
-                            amount = leaving,
-                            accountId = account.id,
-                        ),
-                        TransactionLeg(
-                            type = TransactionType.INCOME,
-                            amount = currentBillAmount,
-                            accountId = invoice.creditCard.accountId,
-                            dimensionId = invoice.dimensionId,
-                        ),
-                    ),
-                )
+            writeInvoicePayment(
+                invoice = invoice,
+                account = account,
+                leaving = leaving,
+                settling = currentBillAmount,
+                date = date,
             )
         }.bind()
-
-        // The rate the payment applied, learned from its own two ends. It is written to
-        // the archive and never to the transaction, and it survives the transaction
-        // being deleted (design D11, D27).
-        catch {
-            val cardCurrency = accountRepository.getAccountById(invoice.creditCard.accountId)?.currency
-            if (cardCurrency != null) {
-                harvestExchangeRate(
-                    sourceAmount = leaving,
-                    sourceCurrency = account.currency,
-                    targetAmount = currentBillAmount,
-                    targetCurrency = cardCurrency,
-                    date = date,
-                )
-            }
-        }
 
         payInvoiceUseCase(
             invoiceId = invoiceId,

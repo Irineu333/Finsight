@@ -213,7 +213,10 @@ private class RecordingTransactionDeleter : ITransactionRepository {
         id: Long,
         title: String?,
         date: LocalDate,
-        leg: TransactionLeg,
+        legs: List<TransactionLeg>,
         contra: ContraLeg?,
     ) = throw NotImplementedError()
+
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        throw NotImplementedError()
 }

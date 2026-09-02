@@ -48,7 +48,7 @@ class FakeTransactionRepository(
         val id: Long,
         val title: String?,
         val date: LocalDate,
-        val leg: TransactionLeg,
+        val legs: List<TransactionLeg>,
         val contra: ContraLeg?,
     )
 
@@ -70,6 +70,10 @@ class FakeTransactionRepository(
         startDate: LocalDate,
         endDate: LocalDate,
     ): List<Transaction> = throw NotImplementedError()
+
+    override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
+        throw NotImplementedError()
+
     override suspend fun getTransactionById(id: Long): Transaction? = stored[id]
     override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
         ids.filterTo(mutableSetOf()) { it in stored }
@@ -79,8 +83,8 @@ class FakeTransactionRepository(
     }
 
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) {
-        rewritten += Rewrite(id, title, date, leg, contra)
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) {
+        rewritten += Rewrite(id, title, date, legs, contra)
         // The rewrite is total in the real repository, so what a later read sees here is the
         // edited row and not the one the test seeded.
         stored[id]?.let { stored[id] = it.copy(title = title, date = date) }

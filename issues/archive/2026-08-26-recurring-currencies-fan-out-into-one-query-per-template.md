@@ -2,6 +2,7 @@
 area: recurring
 severity: low
 type: performance
+verdict: fixed
 ---
 
 # A moeda de cada recorrência é uma consulta, e a lista inteira é percorrida a cada emissão

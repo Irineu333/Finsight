@@ -3,6 +3,7 @@ area: recurring
 severity: low
 type: data
 version: 1.10.0
+verdict: fixed
 ---
 
 # Dois KDoc do redesenho de recorrentes afirmam o contrário do que o código faz

@@ -87,7 +87,10 @@ internal class CreateRecurringTool(
         "amount" to amount("How much each cycle is, in the currency of the account or card — 45.90, not 4590."),
         "day_of_month" to number("The day the cycle falls on, 1 to 31. A day past the month's end is clamped to it."),
         "title" to text("What it is. Required unless a category is given."),
-        "category_id" to number("The category each cycle is classified under, from list_categories."),
+        "category_id" to number(
+            "The category each cycle is classified under, from list_categories. " +
+                NO_CATEGORY_ON_CREATION,
+        ),
         "account_id" to number("The account the cycle posts through, from list_accounts."),
         "card_id" to number("The card the cycle is charged to, from list_cards. Expenses only."),
         required = listOf("type", "amount", "day_of_month"),
@@ -261,14 +264,22 @@ internal class UpdateRecurringTool(
         // sheet, which re-offers both when the direction flips, and wrong here: most of what this
         // rewrite carries the call never named, so the same drop answers "Edited." for a card the
         // template no longer posts to and a classification it no longer has.
+        //
+        // Both halves of the refusal may be carried: `card` falls back to the one the template is
+        // charged to and `type` to the direction it already has, so a single wording written for
+        // the declared case would tell the caller to take out a `card_id` nobody gave, over a
+        // `type` nobody gave either. Said as a consequence when it is one, and naming neither.
         if (type.isIncome && card != null) {
-            return@writing refusedWith(
-                AgentRefusal(
-                    reason = "A card takes expenses only: with `type` income, give `account_id` " +
-                        "and not `card_id`.",
-                ),
-                summary = summary,
-            )
+            val reason = if (namedCard != null) {
+                "A card takes expenses only, and this edit leaves the template an income: give " +
+                    "`account_id` and not `card_id`."
+            } else {
+                "The template is charged to \"${card.name}\" and this edit leaves it an income, " +
+                    "which a card cannot hold: a card takes expenses only. Give the `account_id` " +
+                    "of the account the cycle should post through."
+            }
+
+            return@writing refusedWith(AgentRefusal(reason = reason), summary = summary)
         }
 
         // Absent leaves the classification as it is, which is what every other field does here; a

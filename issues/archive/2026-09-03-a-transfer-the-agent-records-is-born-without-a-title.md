@@ -2,6 +2,7 @@
 area: mcp
 severity: low
 type: ux
+verdict: fixed
 ---
 
 # Toda transferência registrada pelo agente nasce sem título, e o parâmetro não existe no schema
@@ -58,3 +59,34 @@ ViewModel e não pertence à ferramenta: uma string vazia vinda do protocolo é 
 `update_recurring` já toma para apagar um título.
 
 Não vinculante — quem corrige decide.
+
+## Desfecho
+
+**Causa real** — a descrita: `TransferBetweenAccountsUseCase.invoke()` declara
+`title: String? = null` desde `c48076142`, documentado como *"why the money moved, as the user
+stated it"* (`feature/accounts/api/.../TransferBetweenAccountsUseCase.kt:28-37`), e `TransferTool`
+era o único chamador que não o mencionava — nem no `inputSchema`, nem na chamada. Nada recusava e
+nada avisava; o parâmetro simplesmente não atravessava a superfície.
+
+**Mudança** — `AccountOperationTools.kt`, duas linhas de efeito: um `"title" to text(…)` no
+`inputSchema` de `transfer` (opcional, como na tela) e `title = arguments.string("title")` na
+chamada ao use case.
+
+Nenhuma normalização foi escrita na ferramenta, e isso é a decisão e não um esquecimento:
+`JsonObject?.string` já responde `null` a uma string em branco
+(`ToolSupport.kt:105-106`, `takeIf { it.isNotBlank() }`), que é o mesmo lugar de onde
+`update_recurring` tira o "" que apaga um título (`WriteSupport.kt:197`, `stringOr`). A diferença
+entre as duas é só a pergunta que cada uma faz: um `update` precisa distinguir *não falei* de
+*este não tem*, e por isso lê `names`; uma criação não tem título anterior para tirar, então
+ausente e vazio querem dizer a mesma coisa. O `trim().takeIf` do ViewModel segue sendo do
+ViewModel.
+
+**Prova** — teste novo em `OperationsFamilyOverTheProtocolTest`, `a transfer is titled by what the
+call stated, and by nothing when it stated nothing`: duas transferências pelo protocolo, uma com
+`"title":"Reserva da viagem"` e outra com `"title":"   "`, e o que se assere é a linha no ledger
+real — a primeira com o título, a segunda com `null`. Vermelho antes da correção
+(`expected:<Reserva da viagem> but was:<null>`), verde depois; as outras 19 do arquivo seguem
+verdes. Rodado com
+`./gradlew :feature:mcp:impl:jvmTest --tests "com.neoutils.finsight.mcp.OperationsFamilyOverTheProtocolTest"`.
+
+**Commit** — `Fix(Mcp): close the eleven defects the surface sweep had open`

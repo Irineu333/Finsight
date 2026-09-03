@@ -11,6 +11,7 @@ import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.mcp.McpToolResult
 import com.neoutils.finsight.mcp.surface.AgentRefusal
+import com.neoutils.finsight.mcp.surface.AgentTransaction
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.JsonObject
@@ -152,6 +153,25 @@ internal suspend fun removing(
 internal fun reference(kind: AgentActivity.Reference.Kind, id: Long) =
     AgentActivity.Reference(kind = kind, id = id)
 
+/**
+ * What a posting write says it did — and, when the posting it wrote has no leg to be read through,
+ * that the answer names none.
+ *
+ * `Transaction.toAgentTransaction` keeps `null` for a transaction it cannot present, so a listing
+ * drops the item instead of failing on it. A write has nothing to drop: the ledger already holds
+ * the posting by the time the mapping runs, and asserting the `null` away would raise on the far
+ * side of it — where [AgentActivityJournal][com.neoutils.finsight.mcp.AgentActivityJournal] turns
+ * any throw into `"The operation could not be completed."` under `REFUSED`. An applied write
+ * reported as a refusal is the one answer an agent is invited to repeat, and repeating it writes
+ * the posting a second time.
+ */
+internal fun noteFor(posting: AgentTransaction?, done: String): String = when (posting) {
+    null -> "$done The posting is in the ledger; this answer does not name it, because it has no " +
+        "leg to be read through."
+
+    else -> done
+}
+
 // ----------------------------------------------------------------------------------
 // Reading the arguments a write takes
 // ----------------------------------------------------------------------------------
@@ -209,6 +229,19 @@ internal fun JsonObject?.stringOr(name: String, carried: String?): String? =
  * identity matching nothing.
  */
 internal const val NO_CATEGORY = 0L
+
+/**
+ * The other half of [NO_CATEGORY], said where the caller reads it: the creations take no `0`.
+ *
+ * A `const` is not a place an agent ever looks, and the two halves of the surface answer `0`
+ * differently — the three carrying tools read it as *none*, the creations resolve it as an identity
+ * and refuse it as a category that does not exist. An agent that learns the convention on an edit
+ * carries it to a creation and gets an answer about the category rather than about the tool, from
+ * which the condition cannot be deduced. So the condition travels with the argument it governs.
+ */
+internal const val NO_CATEGORY_ON_CREATION =
+    "Leave it out for no category: a creation carries nothing over, so absence already says " +
+        "unclassified and `0` is an identity that matches nothing."
 
 /**
  * A yes-or-no the caller may leave out entirely.

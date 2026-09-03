@@ -68,7 +68,10 @@ internal class ListInvoicesTool(
         "card_id" to number("Only this card's invoices. Omit for every card's."),
         "status" to choice("Only invoices in this state.", STATUSES.keys.toList()),
         "limit" to number("How many invoices to return. Defaults to $DEFAULT_LIMIT, at most $MAX_LIMIT."),
-        "offset" to number("How many to skip — the page after the last is `offset + returned`."),
+        "offset" to number(
+            "How many to skip. The cut is `limit` wide, so the page after this one starts at " +
+                "`offset + limit`, and `has_more` says whether there is one.",
+        ),
         "include_archived_cards" to yesOrNo(
             "Include invoices of cards the user has archived. Defaults to true, because their " +
                 "history is still the user's.",
@@ -184,7 +187,10 @@ internal class GetInvoiceTool(
             ListingOrder.wireNames,
         ),
         "limit" to number("How many postings to return. Defaults to $DEFAULT_LIMIT, at most $MAX_LIMIT."),
-        "offset" to number("How many to skip — the page after the last is `offset + returned`."),
+        "offset" to number(
+            "How many to skip. The cut is `limit` wide, so the page after this one starts at " +
+                "`offset + limit`, and `has_more` says whether there is one.",
+        ),
         required = listOf("id"),
     )
 
@@ -216,6 +222,21 @@ internal class GetInvoiceTool(
             installments = installmentRepository.getAllInstallments(),
         )
 
+        // A row the mapper cannot read is dropped rather than failed on — that is its contract — so
+        // the page is mapped before it is counted. `returned` states what the answer carries, and
+        // taking it from the cut instead would describe a list nobody received.
+        val statement = page.items.mapNotNull {
+            it.toAgentTransaction(
+                // The card is the invoice's only point of view, and every posting on it has a leg
+                // there.
+                perspective = TransactionPerspective(
+                    accountId = invoice.creditCard.accountId,
+                    invoiceId = invoice.id,
+                ),
+                lookup = lookup,
+            )
+        }
+
         answer(
             AgentInvoiceDetailAnswer(
                 invoice = invoice.toAgentInvoice(owed),
@@ -230,21 +251,11 @@ internal class GetInvoiceTool(
                 advancePayments = invoice.figure(flows?.advancePayment),
                 adjustment = invoice.figure(flows?.adjustment),
                 matching = page.matching,
-                returned = page.returned,
+                returned = statement.size,
                 offset = page.offset,
                 hasMore = page.hasMore,
                 orderedBy = order.wireName,
-                statement = page.items.mapNotNull {
-                    it.toAgentTransaction(
-                        // The card is the invoice's only point of view, and every posting on it has
-                        // a leg there.
-                        perspective = TransactionPerspective(
-                            accountId = invoice.creditCard.accountId,
-                            invoiceId = invoice.id,
-                        ),
-                        lookup = lookup,
-                    )
-                },
+                statement = statement,
                 perimeter = AgentPerimeter(
                     covers = "Every posting carrying this invoice, read from " +
                         "`${invoice.creditCard.name}`, between ${invoice.openingDate} and " +

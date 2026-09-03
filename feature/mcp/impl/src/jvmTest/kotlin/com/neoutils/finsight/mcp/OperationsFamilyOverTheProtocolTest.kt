@@ -191,6 +191,54 @@ class OperationsFamilyOverTheProtocolTest {
         }
     }
 
+    /**
+     * **A transfer is named by what the call said, and by nothing when it said nothing.**
+     *
+     * The title is the domain's own parameter — *why the money moved, as the user stated it* — and
+     * a tool that cannot carry it drops the one thing the sentence the agent was given actually
+     * added. Nothing refuses such a call and the money moves correctly; what the person finds later
+     * is a posting with no indication of what it was for, and the way back into the app is closed
+     * to the agent, because `update_transaction` refuses transfers.
+     *
+     * The blank half is the decision the surface already takes everywhere: what arrives empty said
+     * nothing. A posting being created has no name to take back, so `""` is a transfer with nothing
+     * stated rather than one named with spaces.
+     */
+    @Test
+    fun `a transfer is titled by what the call stated, and by nothing when it stated nothing`() = runTest {
+        withOperationsWorld { world, client ->
+            val titled = client.callTool(
+                "transfer",
+                """
+                {"from_account_id":${world.checkingId},"to_account_id":${world.savingsId},
+                 "amount":150.00,"date":"2026-03-10","title":"$TRANSFER_TITLE"}
+                """.trimIndent().replace("\n", ""),
+            )
+            assertTrue(!titled.isToolError(), "the transfer was refused: ${titled.toolText()}")
+
+            val blank = client.callTool(
+                "transfer",
+                """
+                {"from_account_id":${world.checkingId},"to_account_id":${world.savingsId},
+                 "amount":150.00,"date":"2026-03-11","title":"   "}
+                """.trimIndent().replace("\n", ""),
+            )
+            assertTrue(!blank.isToolError(), "the transfer was refused: ${blank.toolText()}")
+
+            val posted = world.transactionRepository.getAllTransactions()
+
+            assertEquals(
+                TRANSFER_TITLE,
+                posted.single { it.date == LocalDate(2026, 3, 10) }.title,
+                "the transfer was recorded without the reason the call gave for it",
+            )
+            assertNull(
+                posted.single { it.date == LocalDate(2026, 3, 11) }.title,
+                "a blank title is a transfer with nothing stated, not one named with spaces",
+            )
+        }
+    }
+
     // ------------------------------------------------------------------------------
     // 11.5 — what an omitted title and an omitted category mean to a tool with no form
     // ------------------------------------------------------------------------------
@@ -881,6 +929,9 @@ class OperationsFamilyOverTheProtocolTest {
         /** The two ends of the crossing, in their own currencies. Neither of them is the rate. */
         const val SOURCE = 550.00
         const val DESTINATION = 100.00
+
+        /** Why the money moved, as the person said it — the sentence the call has to carry. */
+        const val TRANSFER_TITLE = "Reserva da viagem"
 
         /** What the generic pair operates on — the surface's decision, restated for the assertion. */
         val ARCHIVABLE_KINDS = setOf("account", "card", "category", "recurring")

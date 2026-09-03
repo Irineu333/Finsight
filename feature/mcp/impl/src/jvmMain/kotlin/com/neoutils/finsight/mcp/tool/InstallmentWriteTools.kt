@@ -68,7 +68,8 @@ internal class CreateInstallmentTool(
         "title" to text("What was bought. Required unless a category is given."),
         "category_id" to number(
             "The category to classify it under, from list_categories. An expense category — a " +
-                "split is always an expense, and an income one is refused.",
+                "split is always an expense, and an income one is refused. " +
+                NO_CATEGORY_ON_CREATION,
         ),
         "invoice_month" to text(
             "Which invoice the first instalment lands on, as `2026-04`. Defaults to the card's " +
@@ -128,10 +129,12 @@ internal class CreateInstallmentTool(
                     installments = listOfNotNull(plan),
                 )
 
+                val postings = written.mapNotNull { it.toAgentTransaction(lookup = lookup) }
+
                 applied(
                     payload = AgentTransactionWriteAnswer(
-                        transaction = written.first().toAgentTransaction(lookup = lookup)!!,
-                        transactions = written.mapNotNull { it.toAgentTransaction(lookup = lookup) },
+                        transaction = postings.firstOrNull(),
+                        transactions = postings,
                         installment = plan?.let {
                             AgentInstallment(
                                 id = it.id,
@@ -144,7 +147,10 @@ internal class CreateInstallmentTool(
                                 },
                             )
                         },
-                        note = "Recorded as ${written.size} instalments, one per invoice they land on.",
+                        note = noteFor(
+                            postings.firstOrNull(),
+                            "Recorded as ${written.size} instalments, one per invoice they land on.",
+                        ),
                     ),
                     summary = summary,
                     reference = reference(

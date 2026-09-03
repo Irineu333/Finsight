@@ -53,4 +53,23 @@ class EditPortModalTest {
         assertFalse(canApplyPort(draft = "70000", current = CURRENT, isFailed = false))
         assertFalse(canApplyPort(draft = "0", current = CURRENT, isFailed = true), "a failure does not make a non-port a port")
     }
+
+    /**
+     * The sheet offers what the app can take, and the privileged range is not that. A number the
+     * user can confirm and the process cannot bind ends in a refusal the platform reports as the
+     * port being held, which sends them to close a program that is not running.
+     */
+    @Test
+    fun `a privileged port is never applied`() {
+        assertFalse(canApplyPort(draft = "80", current = CURRENT, isFailed = false))
+        assertFalse(canApplyPort(draft = "1023", current = CURRENT, isFailed = false))
+        assertFalse(
+            canApplyPort(draft = "80", current = CURRENT, isFailed = true),
+            "a failure does not make a port the process cannot bind worth retrying",
+        )
+        assertTrue(
+            canApplyPort(draft = "1024", current = CURRENT, isFailed = false),
+            "the first port the app can take was refused along with the ones it cannot",
+        )
+    }
 }

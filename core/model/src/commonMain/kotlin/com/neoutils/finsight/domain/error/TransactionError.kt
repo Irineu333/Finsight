@@ -18,9 +18,11 @@ enum class TransactionError(val message: String) {
     NOT_FOUND(message = "Transaction not found"),
 
     /**
-     * The three reasons the rewrite shape cannot express a transaction, which is what
-     * makes editing it impossible rather than merely unavailable. `Transaction.editObstacle`
-     * is where they are decided, once, and both the screen and the surface read it.
+     * The three reasons the **transaction form** cannot express a transaction — a shape,
+     * not a permission. `Transaction.editObstacle` is where they are decided, once, and
+     * `UpdateTransactionUseCase` is what reads them. What the app lets a person edit is
+     * wider: a transfer and a card payment have forms of their own, which state the two
+     * monetary legs this one cannot.
      */
     MULTIPLE_MONETARY_LEGS(
         message = "The transaction has more than one monetary leg, so it cannot be edited",

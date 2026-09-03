@@ -188,6 +188,9 @@ class McpViewModelTest {
         // reaching the action from anywhere else cannot bind what the sheet would not collect.
         viewModel.onAction(McpAction.ChangePort(70000))
         viewModel.onAction(McpAction.ChangePort(0))
+        // A privileged port is a port number and still outside the range: the process runs as the
+        // user and the bind would be refused, in the shape a port already held arrives in.
+        viewModel.onAction(McpAction.ChangePort(80))
 
         assertTrue(controller.calls.isEmpty(), "a port outside the range reached the server")
     }

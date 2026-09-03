@@ -148,6 +148,10 @@ internal class TransferTool(
                 "currencies differ. Leave it out otherwise: the same figure arrives.",
         ),
         "date" to text("The day it happened, as `2026-03-14`. Defaults to today, never in the future."),
+        "title" to text(
+            "Why the money moved, as the user said it. It names the posting and classifies " +
+                "nothing — a transfer has no category. Left out, the posting has no name.",
+        ),
         required = listOf("from_account_id", "to_account_id", "amount"),
     )
 
@@ -164,22 +168,31 @@ internal class TransferTool(
             amount = amount,
             date = date,
             destinationAmount = destinationAmount,
+            // A blank title is a transfer with nothing stated, which is what absence already means
+            // here: there is no title to take back from a posting being created. Reading it that
+            // way is `string`'s doing, and it is the one place that decision is made.
+            title = arguments.string("title"),
         ).reported(
             summary = "$amount from ${source.name} to ${destination.name}",
             payload = { transaction ->
+                // Read from the source, which is the end the caller stated: the direction is the
+                // money leaving it, in its own currency.
+                val posting = transaction.toAgentTransaction(
+                    perspective = TransactionPerspective(source.id),
+                )
                 AgentTransactionWriteAnswer(
-                    // Read from the source, which is the end the caller stated: the direction is
-                    // the money leaving it, in its own currency.
-                    transaction = transaction.toAgentTransaction(
-                        perspective = TransactionPerspective(source.id),
-                    )!!,
-                    note = if (destinationAmount == null) {
-                        "Moved. Neither end is spending or income, so no month's totals changed."
-                    } else {
-                        "Moved across currencies: $amount left ${source.name} and " +
-                            "$destinationAmount arrived in ${destination.name}. The rate between " +
-                            "them was derived from those two figures and recorded for $date."
-                    },
+                    transaction = posting,
+                    note = noteFor(
+                        posting = posting,
+                        done = if (destinationAmount == null) {
+                            "Moved. Neither end is spending or income, so no month's totals changed."
+                        } else {
+                            "Moved across currencies: $amount left ${source.name} and " +
+                                "$destinationAmount arrived in ${destination.name}. The rate " +
+                                "between them was derived from those two figures and recorded " +
+                                "for $date."
+                        },
+                    ),
                 )
             },
             reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, it.id) },

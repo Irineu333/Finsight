@@ -1062,7 +1062,7 @@
     <string name="mcp_port_label">Porta</string>
     <string name="mcp_port_helper">O cliente é configurado contra esta porta; trocá-la exige reconfigurá-lo.</string>
     <string name="mcp_port_apply">Aplicar a porta</string>
-    <string name="mcp_port_error_invalid">Informe um número de porta entre 1 e 65535.</string>
+    <string name="mcp_port_error_invalid">Informe um número de porta entre 1024 e 65535.</string>
     <string name="mcp_port_error_in_use">A porta %1$d já está em uso por outro programa. Escolha outra.</string>
     <string name="mcp_port_error_unavailable">Não foi possível escutar na porta %1$d. Escolha outra.</string>
 

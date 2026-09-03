@@ -2,6 +2,7 @@ package com.neoutils.finsight.mcp
 
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.domain.model.Budget
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.TransactionType
@@ -12,6 +13,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -53,6 +55,71 @@ class BudgetsAndRecurringTest {
                 assertEquals(200.00, budget.at("remaining").amount())
                 assertEquals(0.6, budget.number("progress"))
                 assertEquals("fixed", budget.text("limit_type"))
+            }
+        }
+    }
+
+    /**
+     * The two figures the bar is drawn from are truncated on purpose, so on their own they say the
+     * same thing about a budget that stopped exactly at its ceiling and one that went past it. The
+     * overrun is a fact of its own, and the payload has to carry it or the agent reports the safer
+     * of the two readings to whoever got the other one.
+     */
+    @Test
+    fun `a budget past its limit is told apart from one that stopped exactly at it`() = runTest {
+        world().use { world ->
+            val mercado = world.categories.single { it.name == "Mercado" }
+            world.budgets += budget(id = 1, title = "No limite", limit = 300.00, category = mercado)
+            world.budgets += budget(id = 2, title = "Estourado", limit = 200.00, category = mercado)
+
+            world.overTheProtocol { client ->
+                val budgets = client.callTool("get_budget_progress", MARCH)
+                    .payload()["budgets"]!!.jsonArray
+                    .map { it.jsonObject }
+                    .associateBy { it.text("title") }
+
+                val atTheLimit = budgets.getValue("No limite")
+                val over = budgets.getValue("Estourado")
+
+                // What the two have in common, and why nothing else in the payload separates them.
+                assertEquals(0.00, atTheLimit.at("remaining").amount())
+                assertEquals(0.00, over.at("remaining").amount())
+                assertEquals(1.0, atTheLimit.number("progress"))
+                assertEquals(1.0, over.number("progress"))
+
+                assertEquals(false, atTheLimit.flag("is_exceeded"), "spending its ceiling is not passing it")
+                assertNull(atTheLimit["exceeded_by"], "nothing was exceeded, so there is no figure for it")
+
+                assertEquals(true, over.flag("is_exceeded"), "a budget past its limit reads as one at it")
+                assertEquals(100.00, over.at("exceeded_by").amount(), "R$ 300 spent against R$ 200")
+                assertEquals("BRL", over.at("exceeded_by").currency())
+            }
+        }
+    }
+
+    /**
+     * With part of the spending in a currency no rate reaches, `spent` is a **floor**, and a floor
+     * settles nothing against a limit. The domain refuses to call that exceeded, and refusing to
+     * call it *not* exceeded is the same refusal — a `false` here would be the payload asserting
+     * what nothing established, in the one direction a budget must never err in.
+     */
+    @Test
+    fun `spending no rate reaches leaves the overrun unstated, rather than denied`() = runTest {
+        unpricedWorld().use { world ->
+            world.budgets += budget(
+                id = 1,
+                title = "Mercado",
+                limit = 200.00,
+                category = world.categories.single { it.name == "Mercado" },
+            )
+
+            world.overTheProtocol { client ->
+                val budget = client.callTool("get_budget_progress", MARCH)
+                    .payload()["budgets"]!!.jsonArray.single().jsonObject
+
+                assertNull(budget["progress"], "a bar that cannot be drawn is not a bar at one")
+                assertNull(budget["is_exceeded"], "a floor that rules nothing out ruled out an overrun")
+                assertNull(budget["exceeded_by"])
             }
         }
     }
@@ -177,6 +244,34 @@ class BudgetsAndRecurringTest {
         world.posting("2026-03-07", 1L posts -30_000, (100L posts 30_000).taggedWith(1))
         return world
     }
+
+    /** The same month, spent in dollars, with nothing in the archive to price them in reais. */
+    private suspend fun unpricedWorld(): AgentWorld {
+        val world = AgentWorld(
+            today = LocalDate(2026, 3, 15),
+            rates = emptyMap(),
+            currenciesInUse = listOf("BRL", "USD"),
+        )
+        world.account(1, "Wise", currency = "USD")
+        world.ledgerAccount(100, AccountEntity.Type.EXPENSE, "Expenses", currency = "USD")
+        world.category(id = 1, dimensionId = 1, name = "Mercado")
+        world.posting(
+            "2026-03-07",
+            (1L posts -30_000) inCurrency "USD",
+            ((100L posts 30_000) inCurrency "USD").taggedWith(1),
+        )
+        return world
+    }
+
+    private fun budget(id: Long, title: String, limit: Double, category: Category) = Budget(
+        id = id,
+        title = title,
+        categories = listOf(category),
+        iconKey = "cart",
+        amount = limit,
+        currency = "BRL",
+        createdAt = 0,
+    )
 
     private companion object {
         const val MARCH = """{"month":"2026-03"}"""

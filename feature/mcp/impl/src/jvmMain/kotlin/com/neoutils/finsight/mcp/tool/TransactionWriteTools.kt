@@ -46,8 +46,10 @@ import kotlin.time.Clock
  * combination the domain does not model — instalments on an account, instalments beside a recurring
  * mark — which the sheet never has to refuse, because its selectors never offered it. Turning away
  * an ill-formed request is not deciding what a well-formed one becomes. The same goes for editing:
- * what the rewrite can express is `Transaction.editObstacle`'s answer, and it is the same answer
- * that decides whether the screen offers the action at all.
+ * what the rewrite can express is `Transaction.editObstacle`'s answer, and this surface carries the
+ * transaction form alone. That is narrower than what the app lets a person edit — the screen decides
+ * by label and opens the transfer and the payment forms, which state two monetary legs each — so the
+ * perimeter here is the form's reach and not a permission the domain withholds.
  */
 
 /** The two directions a posting can be written in from a form. */
@@ -120,7 +122,9 @@ internal class CreateTransactionTool(
         ),
         "date" to text("The day it happened, as `2026-03-14`. Defaults to today, and is never in the future."),
         "title" to text("What it was. Required unless a category is given."),
-        "category_id" to number("The category to classify it under, from list_categories."),
+        "category_id" to number(
+            "The category to classify it under, from list_categories. $NO_CATEGORY_ON_CREATION",
+        ),
         "account_id" to number("The account the money moved in, from list_accounts."),
         "card_id" to number("The card it was charged to, from list_cards. Expenses only."),
         "invoice_month" to text(
@@ -257,10 +261,11 @@ internal class CreateTransactionTool(
         val lookup = lookupFor(transactions, categoryRepository, installmentRepository)
         val plan = transactions.firstNotNullOfOrNull { it.installmentId }
             ?.let { installmentRepository.getInstallmentById(it) }
+        val posting = transactions.first().toAgentTransaction(lookup = lookup)
 
         applied(
             payload = AgentTransactionWriteAnswer(
-                transaction = transactions.first().toAgentTransaction(lookup = lookup)!!,
+                transaction = posting,
                 // Only when there is more than one: a single posting is already the field
                 // above it, and repeating it would read as two things having been written.
                 transactions = transactions
@@ -279,17 +284,21 @@ internal class CreateTransactionTool(
                         },
                     )
                 },
-                note = when (this) {
-                    is TransactionRegistration.Installments ->
-                        "Recorded as ${transactions.size} instalments, one per invoice they land on."
+                note = noteFor(
+                    posting,
+                    when (this) {
+                        is TransactionRegistration.Installments ->
+                            "Recorded as ${transactions.size} instalments, one per invoice they " +
+                                "land on."
 
-                    is TransactionRegistration.Single ->
-                        "Recorded." + if (transaction.recurringId != null) {
-                            " A monthly template was opened with it as its first cycle."
-                        } else {
-                            ""
-                        }
-                },
+                        is TransactionRegistration.Single ->
+                            "Recorded." + if (transaction.recurringId != null) {
+                                " A monthly template was opened with it as its first cycle."
+                            } else {
+                                ""
+                            }
+                    },
+                ),
             ),
             summary = summary,
             reference = reference(
@@ -339,8 +348,9 @@ internal class CreateTransactionTool(
  * The rewrite is total: `UpdateTransactionUseCase` deletes the old legs and rebuilds from the edited
  * form, which describes an expense or an income and nothing else. A transfer, a card payment, an
  * adjustment and one share of an instalment plan are refused *there*, in the words of the domain,
- * and nothing of that rule is restated here — it is the same derivation that stops the app's own
- * screen from offering the edit.
+ * and nothing of that rule is restated here — it is what this form can express, and this surface
+ * has no tool for the two forms that express the rest, which is where the app corrects a transfer
+ * and a partial card payment.
  *
  * Every field is carried rather than patched: what the call does not name is taken from the posting
  * as the ledger holds it now, so changing only the amount cannot blank the title by omission.
@@ -474,14 +484,23 @@ internal class UpdateTransactionTool(
         // rewrite carries the call never named — so the same drop answers "Edited. Everything the
         // call did not name kept the value it had." for a classification the posting no longer
         // has, and, for an income on a card, a refusal naming the `account_id` nobody gave.
+        //
+        // Both halves of this one may be carried: `card` falls back to the card the posting sits
+        // on and `type` to the direction it already has, so a single wording written for the
+        // declared case would tell the caller to take out a `card_id` nobody gave. Said as a
+        // consequence when it is one — the shape the carried category's refusal below already has —
+        // and neither branch names `type`, which is carried as often as it is stated.
         if (type.isIncome && card != null) {
-            return@writing refusedWith(
-                AgentRefusal(
-                    reason = "A card takes expenses only: with `type` income, give `account_id` " +
-                        "and not `card_id`.",
-                ),
-                summary = summary,
-            )
+            val reason = if (namedCard != null) {
+                "A card takes expenses only, and this edit leaves the posting an income: give " +
+                    "`account_id` and not `card_id`."
+            } else {
+                "The posting sits on \"${card.name}\" and this edit leaves it an income, which a " +
+                    "card cannot hold: a card takes expenses only. Give the `account_id` of the " +
+                    "account the money came into."
+            }
+
+            return@writing refusedWith(AgentRefusal(reason = reason), summary = summary)
         }
 
         // The one argument here the form does not drop. It carries `invoiceDueMonth` through
@@ -569,10 +588,14 @@ internal class UpdateTransactionTool(
             ifLeft = { refusedBy(it, summary) },
             ifRight = { updated ->
                 val lookup = lookupFor(listOf(updated), categoryRepository, installmentRepository)
+                val posting = updated.toAgentTransaction(lookup = lookup)
                 applied(
                     payload = AgentTransactionWriteAnswer(
-                        transaction = updated.toAgentTransaction(lookup = lookup)!!,
-                        note = "Edited. Everything the call did not name kept the value it had.",
+                        transaction = posting,
+                        note = noteFor(
+                            posting,
+                            "Edited. Everything the call did not name kept the value it had.",
+                        ),
                     ),
                     summary = summary,
                     reference = reference(AgentActivity.Reference.Kind.TRANSACTION, updated.id),

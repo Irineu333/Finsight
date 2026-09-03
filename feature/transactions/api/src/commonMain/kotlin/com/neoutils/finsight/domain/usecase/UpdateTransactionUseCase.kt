@@ -11,8 +11,10 @@ import com.neoutils.finsight.domain.model.form.TransactionForm
  * `ITransactionRepository.updateTransaction` deletes every entry the transaction had and rebuilds it
  * from one leg plus its contra — so it can express an expense or an income and nothing else. A
  * transfer or a card payment has two monetary legs, and rebuilding from one of them would drop the
- * other without failing. `Transaction.editObstacle` is where that is decided, once, and it is the
- * same derivation the screen reads to decide whether to offer the action.
+ * other without failing. `Transaction.editObstacle` is where that is decided, once — and what it
+ * decides is what *this* form can express, not whether the user may edit at all: a transfer is
+ * corrected through the transfer form and a partial card payment through the payment one, so the
+ * view's own gate reads the label and is wider than this.
  *
  * The contra leg is carried through from the built intent and never defaulted: the rewrite has
  * already deleted the old entries, so a caller that omitted it would turn a one-sided intent into an

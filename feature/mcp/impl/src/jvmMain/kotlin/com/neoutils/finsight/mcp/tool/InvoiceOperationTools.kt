@@ -92,10 +92,11 @@ internal class PayInvoiceTool(
     override val description: String =
         "Pay a card bill in full: it posts the payment out of the account and marks the invoice " +
             "paid, as one act. " +
-            "PERIMETER: only a closed or retroactive invoice that still owes something can be " +
-            "paid, and it is paid in full. Paying part of a cycle that is still open is " +
-            "advance_invoice_payment; ending a cycle is close_invoice, which settles nothing " +
-            "unless the invoice already owed zero. " +
+            "PERIMETER: only a closed invoice that still owes something can be paid, and it is " +
+            "paid in full — a cycle without a final figure has no whole to settle. Paying part " +
+            "of one that is still taking spending is advance_invoice_payment; a retroactive " +
+            "invoice is settled that way, paid down until it owes nothing and then marked paid " +
+            "by close_invoice, which settles nothing unless the invoice already owes zero. " +
             "When the paying account is denominated differently from the card, give paid_amount " +
             "— what leaves the account. What the invoice owes is not negotiable and stays in the " +
             "card's currency, and the rate is derived from the two ends rather than given."

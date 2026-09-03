@@ -49,7 +49,7 @@ Duas consequências operacionais:
 |---|---|
 | Ferramentas | **56**, em 4 famílias |
 | Por eixo | ler **20** · registrar e editar **15** · apagar **8** · operar **13** |
-| Use cases que passaram a estar na `api` de uma feature | **42** — **34** promovidos de `impl` e **8** criados |
+| Use cases que passaram a estar na `api` de uma feature | **43** — **34** promovidos de `impl` e **9** criados |
 | Ferramentas visíveis com permissão só-leitura | **20** |
 
 > As contagens por eixo não são mantidas à mão em lugar nenhum: `McpToolName` declara o eixo de
@@ -151,7 +151,7 @@ respostas é derivável de uma lista sem erro.
 | `get_category_spending` | `month?` | ✔ `CalculateCategorySpendingUseCase` | ordena, resolve nomes. **Traz:** valor e participação (%) por categoria, e o sem-categoria como linha própria |
 | `get_category_income` | `month?` | ✔ `CalculateCategoryIncomeUseCase` | idem |
 | `get_spending_breakdown` | `month?`, `nature?` | ✔ `CalculateCategorySpendingUseCase` + ✔ `CalculateCategoryIncomeUseCase` — o ranking e a participação são deles, não da ferramenta | lê `IEntryRepository.totalsByDimensionInMonthByCurrency` só para a decomposição por moeda, que a figura do domínio já não carrega. **Traz:** os dois lados de uma vez e o **líquido** entre eles; com `nature`, um lado só e `net` nulo |
-| `get_budget_progress` | `month?` | ✔ `CalculateBudgetProgressUseCase(budgets, recurringList, transactions, month)` | **compõe**: carrega as três listas antes de chamar. **Traz:** limite, gasto, restante e % por orçamento |
+| `get_budget_progress` | `month?` | ✔ `CalculateBudgetProgressUseCase(budgets, recurringList, transactions, month)` | **compõe**: carrega as três listas antes de chamar. **Traz:** limite, gasto, restante e % por orçamento, mais `is_exceeded` e `exceeded_by` — `remaining` e `progress` descrevem a barra e param no teto, então sem esse par um orçamento que parou exatamente no limite e um que passou muito dele chegam idênticos. Os dois ficam **ausentes**, nunca `false`, enquanto alguma parte do gasto não tiver taxa que a alcance: um piso não decide nada contra um teto, e um `false` ali negaria um estouro que nada descartou |
 | `get_pending_recurring` | `as_of?` | ✔ `GetPendingRecurringUseCase` | resolve conta/cartão/categoria. **Traz:** pendentes + total previsto |
 | `get_card_overview` | `card_id?`, `include_archived?` | ⬆ `CalculateAvailableLimitUseCase` na forma plural + ⬆ `CalculateInvoiceUseCase` | resolve id → cartão. **Traz:** limite, usado, disponível, fatura aberta e o devido, mais o que segura o limite **repartido pelo ciclo que o segura** — `open_total`, `closed_total`, `future_total` e a soma exata dos três em `committed_total`. A repartição existe porque um total só não distingue o que **vence** do que está apenas **comprometido**: uma parcela segura limite desde a compra, e lida como dívida de hoje ela superestima. Responde por **cartões**; `list_invoices` responde por faturas |
 | `get_report_stats` | `from`, `to`, `account_ids?`, `card_id?` | ⬆ `CalculateReportStatsUseCase` sobre `IEntryRepository.scopeStatsByCurrency` | o perímetro é um conjunto de contas **ou** um cartão — não há parâmetro `scope`, ele é derivado de qual dos dois veio. **Traz:** receita, despesa, saldo e saldo inicial do período |
@@ -344,9 +344,10 @@ carrega **o consolidado, o detalhe por moeda e a data da taxa** — e `Consolida
 
 ## O que nasceu
 
-**Oito** use cases — sete previstos e um que a exploração não viu. Cada um saiu de um ViewModel,
-e o ViewModel passou a consumi-lo no mesmo passo; senão nasceriam duas verdades sobre a mesma
-operação.
+**Nove** use cases — sete previstos e dois que a exploração não viu. Quase todos saíram de um
+ViewModel, e o ViewModel passou a consumi-lo no mesmo passo; senão nasceriam duas verdades sobre a
+mesma operação. Os dois que não vieram de um ViewModel nasceram do mesmo motivo pela outra porta:
+uma regra sem dono, ou com um dono numa forma que o repositório não usa.
 
 | Use case | Saiu de | Por quê |
 |---|---|---|
@@ -358,6 +359,7 @@ operação.
 | `DeleteBudgetUseCase` | `DeleteBudgetViewModel` | idem |
 | `UpdateInstallmentUseCase` | — | só existia `IInstallmentRepository.updateInstallment` |
 | **`UpdateTransactionUseCase`** | `EditTransactionViewModel` | **não estava previsto.** O ViewModel escrevia direto em `transactionRepository.updateTransaction`, e sem dono `update_transaction` só teria caminhos proibidos: reimplementar a edição ou escrever no repositório. A regra é a forma da reescrita — apagar todas as pernas e reconstruir a partir de **uma** mais o `contra` —, então o que ela não exprime é recusado: mais de uma perna monetária, um ajuste, uma parcela. `Transaction.editObstacle` (`core/model`) é o dono único |
+| **`ValidateInvoicePaymentUseCase`** | a função de extensão `Invoice.paymentObstacleOn` | **também não estava previsto.** A regra que decide se uma fatura pode ser quitada numa data acabara de ganhar dono, e o dono era uma função de extensão — criada e substituída no mesmo ciclo. O repositório já tinha uma forma para "decidir se isto é permitido", `Validate*UseCase`, e uma segunda forma para a mesma coisa manda o próximo leitor procurar em dois lugares. Não segura colaborador, então é classe concreta na `api`. **As duas escritas do pagamento consultam a mesma regra:** `PayInvoicePaymentUseCaseImpl` antes de lançar qualquer coisa, e `PayInvoiceUseCaseImpl` como a sua própria guarda — a recusa chega antes de o dinheiro sair, e a resposta dada antes do lançamento não pode divergir da dada depois |
 
 Compare `CategoryFormViewModel.submit()` com `CreateAccountUseCase.invoke()`: os dois fazem a
 mesma sequência — validar, `trim`, `createdAt`, inserir. Um a faz na UI, o outro no domínio.
@@ -372,6 +374,10 @@ Varrido contra as features do app, não amostrado. O que faltar aqui é omissão
 A lista vive no código, em `McpSurface.exclusions`, e cada linha declara **por que grau** está
 fora: `WITHHELD` é o que um requisito proíbe oferecer, `OUT_OF_SCOPE` é o que simplesmente não
 foi alcançado. São fatos diferentes, e confundi-los faria uma proibição parecer uma pendência.
+
+A **última linha da tabela não é uma exclusão** — é a declaração de que não há capacidade a
+excluir, e por isso a coluna de grau diz *não é retenção* em vez de nomear um dos dois. Quem
+reconciliar a tabela com o código contando linhas precisa deixá-la de fora da conta.
 
 | Fica de fora | Grau | Por quê |
 |---|---|---|
@@ -389,6 +395,8 @@ foi alcançado. São fatos diferentes, e confundi-los faria uma proibição pare
 | **Dirigir a UI** e **ler estado de tela** | `OUT_OF_SCOPE` | Expor `UiState` congelaria a UI como contrato |
 | **Android e iOS** | `OUT_OF_SCOPE` | Servidor local precisa de um processo que possua um socket, e isso é o desktop |
 | **Idempotência de escrita** | `OUT_OF_SCOPE` | Repetir uma chamada perdida duplica o lançamento. Reconhecido, não resolvido — por isso o registro de atividade põe as duas lado a lado em vez de esconder uma |
+| **Capturar e configurar backups** — exportação manual, cofre automático, retenção (`feature/backup`) | `OUT_OF_SCOPE` | Inofensivo por si, já que só copia o acervo para fora, e simplesmente não alcançado |
+| **Restaurar o banco a partir de um backup** | `OUT_OF_SCOPE` | Não alcançado, embora carregue a mesma forma de estrago que escrever taxa ou trocar a moeda base: uma chamada substitui de uma vez tudo que está no razão, irreversivelmente fora do app. Reconhecido, e não proibido por requisito escrito como aqueles dois — decisão de quem for dono da superfície |
 | **Arquivar orçamento e parcelamento** | não é retenção | O app inteiro não arquiva nenhum dos dois — não existe `ArchiveBudgetUseCase` nem `isArchived` em `Budget` —, então não há capacidade a declarar. `archive_entity` recusa `type: "budget"` nomeando os quatro que aceita |
 
 `McpSurfaceIsClosedTest` sustenta as duas metades: compara as ferramentas registradas com

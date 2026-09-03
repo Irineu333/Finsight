@@ -2,6 +2,7 @@
 area: mcp
 severity: low
 type: ux
+verdict: fixed
 ---
 
 # Uma recusa manda não dar um `card_id` que a chamada não deu
@@ -57,3 +58,49 @@ que tem. Nada é gravado errado; o custo é a recusa ensinar metade de uma regra
 
 Redigir as duas recusas como a da categoria carregada já é redigida: dizer o que o lançamento (ou o
 template) traz, e que a direção pedida não pode mantê-lo. Não vinculante.
+
+## Desfecho
+
+**Causa real** — a descrita, e as duas âncoras conferem:
+`TransactionWriteTools.kt:461-462` (`namedCard?.let { … } ?: storedCard.takeIf { namedAccount ==
+null }`) com a guarda em `:477-485`, e `RecurringWriteTools.kt:249-250` com a guarda em `:264-272`.
+A forma certa vizinha também: `TransactionWriteTools.kt:538-550` e `RecurringWriteTools.kt:299-311`,
+a recusa da categoria carregada, com o comentário que diz que ali o errado *"is not an argument but
+a consequence the caller did not ask for"*.
+
+A variante do `type` é maior do que o registro conta: `update_recurring` carrega o `type`
+(`RecurringWriteTools.kt:256-258`), mas `update_transaction` **também**
+(`TransactionWriteTools.kt:467-469`, `?: stored.storedType()`). Os dois eixos são carregados nas
+duas ferramentas, e a redação antiga afirmava os dois como argumentos.
+
+**Mudança** — a mesma em cada ferramenta: a guarda passa a escolher entre duas frases, pela origem
+do cartão, e nenhuma das duas nomeia `type`.
+
+- cartão dado: *"A card takes expenses only, and this edit leaves the posting an income: give
+  `account_id` and not `card_id`."* — a metade acionável intacta, e o `card_id` só aparece onde ele
+  existe.
+- cartão carregado: *"The posting sits on \"Cartão\" and this edit leaves it an income, which a
+  card cannot hold: a card takes expenses only. Give the `account_id` of the account the money came
+  into."* — o que o lançamento traz, por que a direção pedida não o mantém, e o que dar; nada a
+  remover.
+
+`update_recurring` recebe as mesmas duas, com *template* no lugar de *posting* e *"charged to"* no
+lugar de *"sits on"*.
+
+*"this edit leaves … an income"* é verdadeiro quando o `type` foi dado e quando foi carregado, que
+é como a frase deixa de mentir sobre o segundo eixo sem precisar ramificar de novo.
+
+**Prova** — teste novo, `ARefusalNamesOnlyWhatTheCallGaveTest`, dois casos pelo protocolo: um
+lançamento criado num cartão e depois `update_transaction {"id":X,"type":"income"}`, e um template
+criado num cartão e depois `update_recurring {"id":X,"type":"income"}` — exatamente o cenário do
+registro. Assere que a razão **não** contém `card_id`, que contém `account_id`, e que nomeia o
+cartão ("Cartão").
+
+Vermelho antes da correção, nos dois: *"the refusal asks for a `card_id` back, and the call gave
+none: A card takes expenses only: with `type` income, give `account_id` and not `card_id`."* Verde
+depois. O teste que já existia sobre o caso declarado
+(`RegistrationFamilyOverTheProtocolTest`, `moving an income onto a card is refused for the card, not
+for a missing account`) segue verde: aquele dá `card_id`, e naquele ramo a frase continua nomeando-o.
+Suíte do módulo: 280 testes, 0 falhas (`./gradlew :feature:mcp:impl:jvmTest`).
+
+**Commit** — `Fix(Mcp): close the eleven defects the surface sweep had open`

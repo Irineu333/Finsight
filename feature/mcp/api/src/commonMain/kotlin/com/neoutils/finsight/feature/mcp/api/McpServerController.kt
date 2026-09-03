@@ -130,7 +130,13 @@ interface McpServerController {
          * The ports a socket can be asked to take. It belongs to the contract and not to whichever
          * screen collects the number, so what [setPort] accepts and what a field offers cannot
          * disagree — and a second surface asking for a port has the range already answered.
+         *
+         * It starts at 1024 and not at 1 because what lies below is the privileged range: the app
+         * runs as the user, and the bind is refused before the server exists. Offering it would put
+         * the refusal after the choice, where the platform reports a bind that failed and nothing
+         * separates it from the port being held — the user would be told to close a program that is
+         * not there.
          */
-        val VALID_PORTS: IntRange = 1..65535
+        val VALID_PORTS: IntRange = 1024..65535
     }
 }

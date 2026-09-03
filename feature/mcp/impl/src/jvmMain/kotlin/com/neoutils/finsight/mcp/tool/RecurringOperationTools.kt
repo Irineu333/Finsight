@@ -214,15 +214,19 @@ internal class ConfirmRecurringTool(
         ).reported(
             summary = "${recurring.label} for ${date.yearMonth}",
             payload = { transaction ->
+                val posting = transaction.toAgentTransaction(
+                    lookup = TransactionFacadeLookup.of(
+                        categories = listOfNotNull(category),
+                        installments = emptyList(),
+                    ),
+                )
                 AgentTransactionWriteAnswer(
-                    transaction = transaction.toAgentTransaction(
-                        lookup = TransactionFacadeLookup.of(
-                            categories = listOfNotNull(category),
-                            installments = emptyList(),
-                        ),
-                    )!!,
-                    note = "Confirmed for ${date.yearMonth}. The template is unchanged, and the " +
-                        "month stops being offered as pending.",
+                    transaction = posting,
+                    note = noteFor(
+                        posting = posting,
+                        done = "Confirmed for ${date.yearMonth}. The template is unchanged, and " +
+                            "the month stops being offered as pending.",
+                    ),
                 )
             },
             reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, it.id) },

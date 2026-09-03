@@ -110,7 +110,10 @@ internal class ListTransactionsTool(
             ListingOrder.wireNames,
         ),
         "limit" to number("How many postings to return. Defaults to $DEFAULT_LIMIT, at most $MAX_LIMIT."),
-        "offset" to number("How many to skip — the page after the last is `offset + returned`."),
+        "offset" to number(
+            "How many to skip. The cut is `limit` wide, so the page after this one starts at " +
+                "`offset + limit`, and `has_more` says whether there is one.",
+        ),
     )
 
     override suspend fun call(arguments: JsonObject?) = reading {
@@ -178,23 +181,30 @@ internal class ListTransactionsTool(
             installments = installmentRepository.getAllInstallments(),
         )
 
+        // A row the mapper cannot read is dropped rather than failed on — that is its contract — so
+        // the page is mapped before it is counted. `returned` states what the answer carries, and
+        // taking it from the cut instead would describe a list nobody received.
+        val transactions = page.items.mapNotNull {
+            it.toAgentTransaction(
+                perspective = perspective?.let(::TransactionPerspective),
+                lookup = lookup,
+                baseCurrency = baseCurrency(),
+            )
+        }
+
         answer(
             AgentTransactionListAnswer(
                 period = AgentPeriod.of(month, today),
                 matching = page.matching,
-                returned = page.returned,
+                returned = transactions.size,
+                // Both the cut's, and deliberately: `has_more` is about what the filter still holds
+                // beyond this page, which a row dropped inside it does not change.
                 offset = page.offset,
                 hasMore = page.hasMore,
                 orderedBy = order.wireName,
                 readFrom = account?.name ?: card?.name,
                 totals = totals(month, perspective, category),
-                transactions = page.items.mapNotNull {
-                    it.toAgentTransaction(
-                        perspective = perspective?.let(::TransactionPerspective),
-                        lookup = lookup,
-                        baseCurrency = baseCurrency(),
-                    )
-                },
+                transactions = transactions,
                 perimeter = perimeter(month, account, card, category, label),
             ),
         )

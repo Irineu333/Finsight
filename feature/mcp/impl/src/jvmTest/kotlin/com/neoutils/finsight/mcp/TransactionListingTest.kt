@@ -11,7 +11,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * **The three things a listing has to get right, and each of them fails silently.**
+ * **The four things a listing has to get right, and each of them fails silently.**
  *
  * *The total is not the page's.* A month with more postings than a page holds is the only fixture
  * that can tell the two apart, so that is the fixture: sixty-five postings, fifty returned, and a
@@ -28,6 +28,11 @@ import kotlin.test.assertTrue
  * accounts is a **transfer**; with one it is an outflow of that account and an inflow of the other.
  * Reporting the direction of an arbitrarily chosen leg as a property of the posting is how transfers
  * end up in the expense list and the month reads as double what was spent.
+ *
+ * *The counters describe the answer.* A row the mapper cannot read is dropped — that is the contract
+ * it declares — and a count taken before the drop describes a list nobody received. Nothing in the
+ * payload would contradict it: the number and the array simply disagree, and only one of them is
+ * ever read.
  */
 class TransactionListingTest {
 
@@ -304,6 +309,67 @@ class TransactionListingTest {
     }
 
     // ----------------------------------------------------------------------------------
+    // The counters describe the answer, not the cut it was taken from
+    // ----------------------------------------------------------------------------------
+
+    /**
+     * **`returned` is the count of what came back, and a row the mapper drops is not in it.**
+     *
+     * The mapper declares `null` as a legitimate answer — "a caller drops the item instead of
+     * failing on a read" — so the page and the answer are two lists, and only one of them is what
+     * the agent got. Counting the first and sending the second is a disagreement nothing in the
+     * payload denounces: both numbers look consistent, and the arithmetic an agent pages by is
+     * defined over the count rather than over the array.
+     */
+    @Test
+    fun `a row the mapper cannot read is dropped, and the count is of what came back`() = runTest {
+        marchWithARowNobodyCanRead().use { world ->
+            world.overTheProtocol { client ->
+                val payload = client.callTool("list_transactions", MARCH).payload()
+
+                assertEquals(
+                    WITH_THE_UNREADABLE_ROW,
+                    payload.number("matching")?.toInt(),
+                    "the filter reaches the row too — it is the answer it cannot carry",
+                )
+                assertEquals(
+                    READABLE,
+                    payload.items("transactions").size,
+                    "the fixture no longer holds a row the mapper drops, so this proves nothing",
+                )
+                assertEquals(
+                    payload.items("transactions").size,
+                    payload.number("returned")?.toInt(),
+                    "`returned` was taken from the page before the drop, so the agent is told it " +
+                        "received a posting the answer does not carry",
+                )
+            }
+        }
+    }
+
+    // ----------------------------------------------------------------------------------
+
+    /**
+     * March as the questions family knows it, plus a posting **no surface can read**: a correction
+     * between two nominal legs, with nothing on an account money sits in.
+     *
+     * `Transaction.primaryEntry` is `null` for it, so `legUnder(null)` is too and the mapper drops
+     * it. No write path in the app produces such a row today — which is exactly why it is seeded
+     * leg by leg, as the ledger's own suites do: the count and the list can only be told apart by a
+     * page that loses something between the cut and the answer.
+     */
+    private suspend fun marchWithARowNobodyCanRead(): AgentWorld {
+        val world = AgentWorld()
+        world.seedMarch()
+        world.posting(
+            "2026-03-09",
+            (MarchWorld.NOMINAL_EXPENSE posts RECLASSIFIED_CENTS)
+                .taggedWith(MarchWorld.DIMENSION_GROCERIES),
+            MarchWorld.NOMINAL_EXPENSE posts -RECLASSIFIED_CENTS,
+            title = "Reclassificação",
+        )
+        return world
+    }
 
     /**
      * March as the questions family knows it, plus sixty small grocery runs **all on the same day**
@@ -342,6 +408,11 @@ class TransactionListingTest {
         /** The five of `seedMarch`, plus the sixty. */
         const val POSTINGS = 65
         const val LAST_RECORDED = POSTINGS
+
+        /** The five of `seedMarch`, and the sixth the mapper cannot read. */
+        const val WITH_THE_UNREADABLE_ROW = 6
+        const val READABLE = 5
+        const val RECLASSIFIED_CENTS = 1_000L
 
         /** What `list_transactions` returns when nobody asks for a size. */
         const val PAGE = 50

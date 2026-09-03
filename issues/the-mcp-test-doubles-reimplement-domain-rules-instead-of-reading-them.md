@@ -11,9 +11,10 @@ type: test
 Um dublê de teste substitui **encanamento**, nunca **regra**. O que ele não pode alcançar é a
 implementação do use case; o predicado do domínio, esse ele lê como qualquer outro consumidor.
 
-Hoje é falso em pelo menos três dos vinte dublês de `AgentWorldOperations.kt`, e as três correções
-de 03/09 tornaram a divergência observável: nenhuma das guardas novas chegou ao mundo de teste, de
-modo que as três recusas passam verdes na suíte do agente enquanto o app as recusa.
+Hoje é falso em pelo menos quatro dos vinte dublês de `AgentWorldOperations.kt`. As três correções
+de 03/09 tornaram a divergência observável — nenhuma das guardas novas chegou ao mundo de teste, de
+modo que as três recusas passam verdes na suíte do agente enquanto o app as recusa —, e a quarta
+ocorrência apareceu na varredura que elas motivaram.
 
 ## Mecânica
 
@@ -59,9 +60,17 @@ com a pergunta "que condição ele enumera que o `core/model` já sabe responder
 `WorldUnarchiveCreditCard`, `WorldArchiveCategory`, `WorldUnarchiveCategory`,
 `WorldArchiveRecurring`, `WorldUnarchiveRecurring`.
 
-Três foram conferidos; dezessete não. *Hipótese, não verificada: `WorldPayInvoice` é o candidato
-seguinte, por já ter passado a consultar `ValidateInvoicePaymentUseCase` — o que sugere que a porta
-existe e nem todos a usam.*
+Quatro foram conferidos; dezesseis não.
+
+A quarta ocorrência é de outra natureza e merece linha própria, porque **diverge no sentido
+permissivo**: `WorldPayInvoicePayment` consulta `ValidateInvoicePaymentUseCase` — que lê
+`Invoice.isPayable`, e esse inclui `RETROACTIVE` — mas não tem o
+`ensure(invoice.acceptsFullSettlement)` que `PayInvoicePaymentUseCaseImpl` aplica, e
+`acceptsFullSettlement` é `status == CLOSED` apenas. O dublê aceita quitar integralmente uma fatura
+retroativa; a produção recusa com `InvoiceNotClosed`. As outras três deixam passar o que o app
+recusa por falta de guarda; esta deixa passar o que o app recusa por ter **a guarda errada** — usa
+o predicado que responde outra pergunta. Um teste de protocolo escrito sobre ela afirmaria o
+contrário do app, e passaria verde.
 
 ## Consequência
 

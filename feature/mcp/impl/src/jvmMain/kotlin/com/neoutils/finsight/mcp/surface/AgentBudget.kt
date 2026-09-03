@@ -13,6 +13,10 @@ import kotlinx.serialization.Serializable
  * [progress] is the fraction of the limit already spent, and it is `null` rather than zero when no
  * rate could bring the spending onto the limit's currency: a bar that cannot be drawn is not a bar
  * at zero.
+ *
+ * [remaining] and [progress] describe that bar, so both stop at the ceiling — what went past it is
+ * a fact of its own, and [isExceeded] with [exceededBy] is where it is stated. Without them a
+ * budget that stopped exactly at its limit and one that ran well past it arrive identical.
  */
 @Serializable
 internal data class AgentBudget(
@@ -24,6 +28,16 @@ internal data class AgentBudget(
     val spent: AgentFigure? = null,
     val remaining: AgentFigure? = null,
     val progress: Double? = null,
+    /**
+     * Whether the spending is known to have passed the limit — `null`, never `false`, when no rate
+     * reaches part of it. A floor settles nothing against a ceiling, and a `false` there would deny
+     * an overrun nothing ruled out, which is the direction a budget must never err in.
+     */
+    @SerialName("is_exceeded")
+    val isExceeded: Boolean? = null,
+    /** By how much, and only when [isExceeded] is true — there is no overrun to state otherwise. */
+    @SerialName("exceeded_by")
+    val exceededBy: AgentFigure? = null,
     /** `fixed`, or `percentage` of a recurring income. */
     @SerialName("limit_type")
     val limitType: String,

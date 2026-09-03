@@ -2,6 +2,7 @@
 area: mcp
 severity: low
 type: ux
+verdict: fixed
 ---
 
 # O agente recusa uma edição que a tela oferece, e quatro pontos afirmam que os dois concordam
@@ -67,3 +68,50 @@ Duas saídas, e são decisões diferentes:
 
 A primeira fecha o invariante como está escrito. A segunda é uma ampliação de escopo da superfície e
 precisa passar pelo que o `openspec` já declara sobre o que ela deixa de fora. Não vinculante.
+
+## Desfecho
+
+**Causa real** — a descrita, e as sete âncoras conferem no disco. As quatro afirmações:
+`TransactionWriteTools.kt:49-50` (*"it is the same answer that decides whether the screen offers the
+action at all"*), `:342-343` (*"the same derivation that stops the app's own screen from offering
+the edit"*), `UpdateTransactionUseCase.kt:14-15` (*"the same derivation the screen reads to decide
+whether to offer the action"*) e `TransactionError.kt:20-24` (*"both the screen and the surface read
+it"* e *"makes editing it impossible rather than merely unavailable"*). O que as contradiz:
+`ViewTransactionUiState.kt:158-183`, onde `isEditable` decide por `label` e admite `TRANSFER` e
+`PAYMENT` sem citar `editObstacle`; `EditForm.kt:29-32`, que roteia os dois para
+`accountsEntry.editTransferModal` e `creditCardsEntry.editInvoicePaymentModal`; e
+`UpdateTransactionUseCaseImpl.kt:35`, que segue recusando por `editObstacle`.
+
+O dono da regra já estava certo e ninguém o tinha lido: a KDoc de `Transaction.editObstacle`
+(`core/model` — `TransactionEditability.kt:25-30`) diz, com todas as letras, *"This is not the
+question 'may the user edit this at all'"*, e nomeia `UpdateTransferUseCase` e
+`UpdateAdvanceInvoicePaymentUseCase` como as duas saídas. As quatro afirmações eram cópias
+desatualizadas de um texto que já tinha sido corrigido na origem.
+
+**Mudança** — a saída estreita, as quatro afirmações reescritas para o que continua verdade, sem
+ferramenta nova:
+
+- `TransactionWriteTools.kt` (KDoc do arquivo) — `editObstacle` é o alcance do **formulário de
+  transação**, e a tela é mais larga porque decide por label e abre os outros dois formulários; o
+  perímetro daqui é o do formulário, não uma permissão que o domínio nega.
+- `UpdateTransactionTool` (KDoc) — a regra é o que este formulário expressa, e esta superfície não
+  tem ferramenta para os dois formulários que expressam o resto.
+- `UpdateTransactionUseCase` (`feature/transactions/api`) — o que `editObstacle` decide é o que
+  *este* formulário expressa, não se o usuário pode editar; a guarda da própria tela lê o label e é
+  mais larga.
+- `TransactionError.MULTIPLE_MONETARY_LEGS` — *"a shape, not a permission"*, e o "impossível" cai:
+  quem lê são `editObstacle` e `UpdateTransactionUseCase`, e o que o app deixa editar é mais amplo.
+
+A ampliação da superfície (as duas ferramentas que faltam) continua fora: é decisão de escopo, e o
+`openspec` é quem a arbitra.
+
+**Prova** — não há teste, e forçar um seria teatro: nada mudou de comportamento — as quatro
+mudanças são KDoc, e a recusa de `UpdateTransactionUseCase` é a mesma antes e depois. A verificação
+foi a leitura das sete âncoras contra o código no disco, citada acima linha a linha, mais a
+constatação de que `TransactionEditability.kt` já dizia o que as quatro passam a dizer.
+
+Como salvaguarda de compilação, o módulo foi rodado depois da mudança: 280 testes, 0 falhas
+(`./gradlew :feature:mcp:impl:jvmTest`), incluindo `ScreenAndAgentAgreeTest`, que segue verde
+porque nada do que ele compara mudou.
+
+**Commit** — `Fix(Mcp): close the eleven defects the surface sweep had open`

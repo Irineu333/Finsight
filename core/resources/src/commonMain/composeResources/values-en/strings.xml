@@ -1061,7 +1061,7 @@
     <string name="mcp_port_label">Port</string>
     <string name="mcp_port_helper">The client is configured against this port; moving it means reconfiguring the client.</string>
     <string name="mcp_port_apply">Apply the port</string>
-    <string name="mcp_port_error_invalid">Enter a port number between 1 and 65535.</string>
+    <string name="mcp_port_error_invalid">Enter a port number between 1024 and 65535.</string>
     <string name="mcp_port_error_in_use">Port %1$d is already held by another program. Pick another one.</string>
     <string name="mcp_port_error_unavailable">Port %1$d could not be listened on. Pick another one.</string>
 

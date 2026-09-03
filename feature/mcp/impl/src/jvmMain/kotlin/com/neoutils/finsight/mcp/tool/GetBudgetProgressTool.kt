@@ -49,9 +49,11 @@ internal class GetBudgetProgressTool(
             "PERIMETER: only the expense categories a budget watches count towards it, and only " +
             "postings dated inside the month. A budget's limit is denominated in the currency it " +
             "was created with and never re-expressed. " +
-            "`progress` is absent — never zero — when part of the spending sits in a currency no " +
-            "stored rate can express in the limit's currency; `spent` then says which currencies " +
-            "those are."
+            "`remaining` and `progress` stop at the limit, so `is_exceeded` and `exceeded_by` are " +
+            "what tell a budget past its limit from one exactly at it. " +
+            "`progress` and `is_exceeded` are absent — never zero, never false — when part of the " +
+            "spending sits in a currency no stored rate can express in the limit's currency; " +
+            "`spent` then says which currencies those are."
 
     override val inputSchema = schema(
         "month" to text("The month, as `2026-03`. Defaults to the month the app is in."),
@@ -98,6 +100,12 @@ internal class GetBudgetProgressTool(
         // decimal that round-trips to that float invents no precision and rounds nothing away; it
         // is the number the float stands for, written out.
         progress = progress?.toString()?.toDouble(),
+        // The fact and the figure the screens choose "exceeded by" over "remaining" by, published
+        // from the same two properties. Both stay unstated while the spending is a floor: the
+        // domain answers `false` for "not known to be exceeded", and passing that on as a `false`
+        // would turn a refusal to say into a denial.
+        isExceeded = isExceeded.takeIf { isResolved },
+        exceededBy = exceededAmount?.takeIf { isExceeded }?.agentFigure(),
         limitType = budget.limitType.name.lowercase(),
         percentage = budget.percentage,
     )

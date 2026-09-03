@@ -20,7 +20,17 @@ import kotlinx.serialization.Serializable
 /** What `create_transaction` and `update_transaction` answer: the posting as the ledger holds it. */
 @Serializable
 internal data class AgentTransactionWriteAnswer(
-    val transaction: AgentTransaction,
+    /**
+     * The posting as the ledger holds it, and `null` when it has no leg to be read through — the
+     * answer [toAgentTransaction][com.neoutils.finsight.mcp.surface.toAgentTransaction] keeps for a
+     * transaction it cannot present.
+     *
+     * Absent rather than asserted, because the mapping runs **after** the write: a `null` forced
+     * into a posting would raise where the journal turns any throw into a refusal, and a write that
+     * went through, reported as one that did not, is the single failure of this surface an agent is
+     * rewarded for repeating. [note] carries the outcome either way.
+     */
+    val transaction: AgentTransaction? = null,
     /**
      * Every posting the act wrote, when it wrote more than one — an installment plan is N of them,
      * decided by the use case that owns the dispatch and never by the tool.

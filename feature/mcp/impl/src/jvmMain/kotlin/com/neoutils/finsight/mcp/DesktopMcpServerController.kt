@@ -368,9 +368,14 @@ internal class DesktopMcpServerController(
     }
 
     /**
-     * A port already held is the one failure the user can act on, and [BindException] is the
-     * platform's own typed answer to that question — read from the chain, because the engine
-     * reports the bind through the job that failed.
+     * A port already held is the one failure the user can act on, and [BindException] is what the
+     * platform raises for it — read from the chain, because the engine reports the bind through the
+     * job that failed.
+     *
+     * The type is not that failure's alone: the JVM raises the same one when the address is refused
+     * by privilege. What keeps the reading sound is the other side of the contract —
+     * [McpServerController.VALID_PORTS] offers no privileged port, so the bind a permission would
+     * refuse is out of reach before there is anything to classify.
      */
     private fun Throwable.classify(): McpServerFailure {
         var cause: Throwable? = this

@@ -351,6 +351,8 @@ internal class UpdateTransactionTool(
     override val description: String =
         "Change an expense or an income that was already recorded — its amount, title, date, " +
             "category, or where it posts. What is not given keeps the value it already has. " +
+            "An empty title erases the posting's own, leaving it named by its category alone; a " +
+            "posting left with neither a title nor a category is refused. " +
             "Give at most one of account_id or card_id; a card takes expenses only, so an income " +
             "sits in an account. A category classifies one direction only, and an edit whose " +
             "direction the category cannot classify — the one given here, or the one the posting " +
@@ -370,7 +372,10 @@ internal class UpdateTransactionTool(
         "type" to choice("Whether money went out or came in.", TRANSACTION_TYPES.keys.toList()),
         "amount" to amount("The new amount, in the currency it posts in — 45.90, not 4590."),
         "date" to text("The new day, as `2026-03-14`."),
-        "title" to text("The new title."),
+        "title" to text(
+            "The new title. Keeps the one the posting has when not given; pass an empty string " +
+                "to erase it and leave the posting named by its category.",
+        ),
         "category_id" to number(
             "The category to classify it under, from list_categories. Keeps the one it has when " +
                 "not given; pass 0 to leave it unclassified.",
@@ -504,7 +509,7 @@ internal class UpdateTransactionTool(
         val form = TransactionForm.from(
             type = type,
             amount = (amount ?: stored.amount).asFormAmount(),
-            title = arguments.string("title") ?: stored.title,
+            title = arguments.stringOr("title", stored.title),
             date = (arguments.date("date") ?: stored.date).asFormDate(),
             category = declaredCategory ?: carriedCategory,
             target = if (card != null) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT,

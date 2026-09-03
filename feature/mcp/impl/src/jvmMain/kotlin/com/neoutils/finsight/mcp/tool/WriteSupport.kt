@@ -182,6 +182,22 @@ internal fun JsonObject?.requiredString(name: String): String =
 internal fun JsonObject?.names(name: String): Boolean = argument(name) != null
 
 /**
+ * A sentence a write carries over from what it edits, where **empty is an erasure and absent is
+ * not**.
+ *
+ * [names] asked at the one place the answer decides what gets written. A title is something a user
+ * takes back, so a call carrying `""` has said *this has none* while a call carrying nothing has
+ * said nothing at all — and `string(name) ?: carried` cannot tell them apart, because [string]
+ * answers `null` to both. Under that reading the erasure becomes a no-op the answer still reports
+ * as applied, which is the one outcome a write must never produce.
+ *
+ * What a name may then be taken away *to* is not settled here: an operation with neither a title
+ * nor a category is refused by the domain that owns that rule, reached like any other write.
+ */
+internal fun JsonObject?.stringOr(name: String, carried: String?): String? =
+    if (names(name)) string(name) else carried
+
+/**
  * The identity no category has, and therefore how a call says *none* where absence already means
  * something else.
  *

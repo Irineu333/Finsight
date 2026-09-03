@@ -2,6 +2,7 @@
 area: mcp
 severity: medium
 type: data
+verdict: fixed
 ---
 
 # Um título vazio é lido como silêncio, e a edição responde que foi aplicada
@@ -59,3 +60,44 @@ voltar a ser nomeado só pela categoria, e a tool vizinha documenta o oposto par
 
 Ler o título com `names("title")` nas duas edições, como o `category_id` ao lado já é lido e como o
 `confirm_recurring` já lê o seu. Não vinculante.
+
+## Desfecho
+
+**Causa real** — a descrita, e a sugestão estava certa nas duas pontas. O que a correção acrescentou
+foi descartar a dúvida sobre `update_transaction` precisar de tratamento diferente: **a regra
+"título ou categoria" existe dos dois lados**, com donos distintos — `RecurringForm.kt:53`
+(`ensure(title.isNotBlank() || category != null)` → `RecurringError.TITLE_OR_CATEGORY_REQUIRED`) e
+`ValidateTransactionFormUseCaseImpl.kt:38` (`ensure(!form.title.isNullOrEmpty() || form.category
+!= null)` → `BuildTransactionError.TitleOrCategoryRequired`). Logo o `DEVERIA` se resolve pela mesma
+saída nas duas tools — *apagar* — e a recusa, quando o apagamento deixaria a operação sem nome,
+já vinha do domínio sem nada a repetir na superfície. Nenhuma regra nova foi escrita.
+
+O `?:` era o único ponto de perda: `ToolSupport.kt:105` (`content.takeIf { it.isNotBlank() }`) faz
+`""`, `"   "` e *chave ausente* chegarem os três como `null`, e o `?:` reescrevia o título anterior
+por cima. Como a coalescência é mais curta e mais natural que a leitura correta, o conserto de duas
+linhas deixaria a armadilha de pé para o próximo campo — por isso a distinção virou um nome.
+
+**Mudança** — `JsonObject?.stringOr(name, carried)` em `mcp/tool/WriteSupport.kt`, ao lado do
+`names()` que ela aplica: `if (names(name)) string(name) else carried`. Passam a usá-la as três
+tools que carregam um título do que editam — `update_recurring` (`RecurringWriteTools.kt`),
+`update_transaction` (`TransactionWriteTools.kt`) e `confirm_recurring`
+(`RecurringOperationTools.kt`, que já acertava à mão e agora diz o mesmo pelo mesmo nome). A leitura
+de `category_id` nas duas edições não foi tocada. As descrições e o schema `title` das duas edições
+passam a declarar o apagamento, que antes só `confirm_recurring` documentava: uma afordância que a
+superfície não enuncia é uma que o agente não tem.
+
+**Prova** — `EmptyStringsOverTheProtocolTest` (novo, em `feature/mcp/impl/src/jvmTest`), irmão de
+`ExplicitNullsOverTheProtocolTest` e pelo mesmo motivo: a distinção entre vazio e ausente só existe
+depois que os argumentos saem do fio. Seis testes, quatro vermelhos antes da mudança — o vazio e o
+branco em `update_recurring`, o vazio em `update_transaction`, e a recusa que não vinha. O quarto
+falhava exibindo exatamente a Consequência registrada: `"title":"Netflix"` intacto ao lado de
+`"note":"Edited. Cycles already confirmed are untouched."`. Os dois testes de recusa cobrem a outra
+metade (apagar o último nome é recusado, e o título fica de pé), e o sexto guarda a direção oposta —
+um título que a chamada não nomeia continua mantido. `confirm_recurring` não foi duplicado aqui:
+`OperationsFamilyOverTheProtocolTest.kt:262` já o cobria.
+
+Rodados `:feature:mcp:impl:jvmTest` (263 testes) e `jvmTest` (suíte inteira), ambos verdes — numa
+worktree isolada em HEAD contendo só esta mudança, porque a árvore compartilhada tinha o trabalho
+em voo de outra correção (`invoice_month`) e dois vermelhos que não eram destes arquivos.
+
+**Commit** — nenhum: a mudança ficou no working tree para revisão, a pedido.

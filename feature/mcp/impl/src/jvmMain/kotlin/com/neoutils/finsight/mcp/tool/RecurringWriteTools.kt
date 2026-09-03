@@ -190,6 +190,8 @@ internal class UpdateRecurringTool(
     override val description: String =
         "Change a monthly template — its amount, title, day, category, or where it posts. " +
             "What is not given keeps the value it already has. " +
+            "An empty title erases the template's own, leaving it named by its category alone; a " +
+            "template left with neither a title nor a category is refused. " +
             "Give at most one of account_id or card_id; naming both is refused rather than " +
             "settled for you. " +
             "An income always goes to an account, so type income is refused while a card is in " +
@@ -208,7 +210,10 @@ internal class UpdateRecurringTool(
         "type" to choice("Whether the cycle takes money out or brings it in.", RECURRING_TYPES.keys.toList()),
         "amount" to amount("The new amount of each cycle — 45.90, not 4590."),
         "day_of_month" to number("The day the cycle falls on, 1 to 31."),
-        "title" to text("The new title."),
+        "title" to text(
+            "The new title. Keeps the one the template has when not given; pass an empty string " +
+                "to erase it and leave the template named by its category.",
+        ),
         "category_id" to number(
             "The category each cycle is classified under, from list_categories. Keeps the one " +
                 "the template has when not given; pass 0 to leave it unclassified.",
@@ -311,7 +316,7 @@ internal class UpdateRecurringTool(
             id = id,
             type = type,
             amount = amount.asFormAmount(),
-            title = arguments.string("title") ?: stored.title,
+            title = arguments.stringOr("title", stored.title),
             dayOfMonth = (arguments.long("day_of_month") ?: stored.dayOfMonth.toLong()).toString(),
             category = category,
             account = account,

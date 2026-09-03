@@ -133,7 +133,7 @@ internal class ConfirmRecurringTool(
 
         // Pre-filled from the template, exactly as the app's own sheet arrives, and then passed
         // explicitly — see this class's KDoc for why `null` may not simply be forwarded.
-        val title = if (arguments.names("title")) arguments.string("title") else recurring.title
+        val title = arguments.stringOr("title", recurring.title)
 
         val declaredCategory = if (arguments.names("category_id")) {
             arguments.requiredLong("category_id")

@@ -1,6 +1,12 @@
-# 007 — o log completo do agente faz três queries por linha, e repete a passada inteira a cada emissão
+---
+area: mcp
+severity: medium
+type: performance
+verdict: fixed
+---
 
-**Área:** mcp (UI) · **Tipo:** performance · **Criticidade:** média · **Status:** corrigida em 2026-08-18
+# O log completo do agente faz três queries por linha, e repete a passada inteira a cada emissão
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -65,7 +71,7 @@ transformaria isso numa query só, que é tudo de que se precisa aqui — o mape
 quais ids ainda existem.
 
 Aproveitar para pôr um `.flowOn` na transformação, tirando o trabalho por linha do coletor.
-## Correção aplicada
+## Desfecho
 
 A pergunta passou a ser feita uma vez para a página. `toUi` deixou de ser de `AgentActivity` e passou
 a ser de `List<AgentActivity>`: reúne os ids referenciados, pergunta uma vez quais ainda existem, e

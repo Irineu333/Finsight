@@ -1,16 +1,22 @@
-# 025 — `confirm_recurring` grava no razão um lançamento na direção errada
+---
+area: recurring
+severity: high
+type: data
+verdict: fixed
+---
 
-**Área:** recurring / mcp / ledger · **Tipo:** dados · **Criticidade:** ALTA · **Status:** aberto
+# `confirm_recurring` grava no razão um lançamento na direção errada
+
 **Verificado em:** 2026-08-19, `feature/local-mcp-server`, por uma revisão adversarial em quatro
 lentes do commit `e58abf948`
 
 ## O que está errado
 
 A regra "uma categoria classifica uma direção só" foi fechada nas cinco tools que montam um
-formulário — [004](004-transaction-form-drops-arguments-silently.md),
-[016](016-update-transaction-drops-the-category-silently.md),
-[020](020-create-installment-drops-the-category-silently.md),
-[021](021-update-recurring-stores-an-incoherent-template.md). `confirm_recurring` não monta
+formulário — [004](2026-08-18-transaction-form-drops-arguments-silently.md),
+[016](2026-08-18-update-transaction-drops-the-category-silently.md),
+[020](2026-08-19-create-installment-drops-the-category-silently.md),
+[021](2026-08-19-update-recurring-stores-an-incoherent-template.md). `confirm_recurring` não monta
 formulário nenhum, e é a **única escrita da superfície que chega ao razão sem um** — foi o recorte
 que a escondeu de quatro rodadas de correção.
 
@@ -51,7 +57,7 @@ Nenhum dado legado é necessário: funciona numa instalação limpa, hoje.
 É o critério da faixa, literalmente: grava no razão algo diferente do que foi pedido e responde que
 deu certo. O saldo da conta cai, o mês reporta uma receita que não houve, a categoria de receita
 acumula um valor que saiu do bolso, e nada na resposta permite notar. É a primeira ALTA desde a
-[001](001-create-transaction-accepts-negative-amount.md).
+[001](2026-08-18-create-transaction-accepts-negative-amount.md).
 
 ## O que torna o achado mais grave do que parece
 
@@ -60,7 +66,7 @@ acumula um valor que saiu do bolso, e nada na resposta permite notar. É a prime
 > *"The one write of the app that reaches the ledger without a form to hold the rule, so the rule is
 > held here"*
 
-A regra de valor positivo está lá, pela [001](001-create-transaction-accepts-negative-amount.md).
+A regra de valor positivo está lá, pela [001](2026-08-18-create-transaction-accepts-negative-amount.md).
 A de direção não. O comentário descreve a responsabilidade correta e o código a cumpre pela metade.
 
 ## Correção sugerida
@@ -85,7 +91,7 @@ está entre as filtradas — a KDoc explica isso como continuidade para uma cate
 ramo não distingue os dois casos. `OfferedCategoriesTest.kt:57-73` cobre a arquivada-mas-coerente e
 não cobre a incoerente.
 
-## Correção aplicada
+## Desfecho
 
 Corrigida em 2026-08-19, nas duas camadas que a issue prescreve, com os testes escritos antes e
 verificados vermelhos: o de domínio não compilava (faltava o erro), e os dois sobre o protocolo
@@ -111,7 +117,7 @@ Uma coisa só, e ela mudou o tamanho da correção na tool. A "Correção sugeri
 ("a recusa que nomeia os argumentos"), no singular. São duas, e a segunda é a que importa: quando a
 categoria incoerente é a do próprio template e a chamada não falou de categoria, **nenhum argumento
 da chamada está errado**. Uma recusa que nomeie `category_id` ali manda o agente corrigir algo que
-ele não escreveu. É a mesma assimetria que a [021](021-update-recurring-stores-an-incoherent-template.md)
+ele não escreveu. É a mesma assimetria que a [021](2026-08-19-update-recurring-stores-an-incoherent-template.md)
 já tinha encontrado em `update_recurring`, e a issue não a transportou para cá.
 
 O resto procede exatamente como descrito, incluindo a evidência linha a linha e o aviso de que uma
@@ -124,12 +130,12 @@ asserção sobre o resultado passaria: `Σ = 0` fecha com as pernas invertidas.
   lista quando ela não está entre as filtradas — sem distinguir a categoria arquivada da incoerente.
   Num template legado o usuário verá a categoria errada oferecida e tomará a recusa ao confirmar. O
   razão está seguro; a tela não foi mexida porque templates incoerentes já gravados são o assunto da
-  [026](../026-incoherent-templates-already-stored-have-no-migration.md), que continua aberta.
+  [026](../incoherent-recurring-templates-have-no-migration-and-three-surfaces-disagree.md), que continua aberta.
 - **A mensagem nova não chega ao usuário**, e nenhuma das outras sete chega tampouco:
   `feature/recurring` não consome `RecurringError.toUiText()` em lugar nenhum, e a sheet mostra
   `retire_action_error_generic` para qualquer `onLeft`. A chave foi acrescentada porque a convenção
   de Error Types a exige, não porque uma tela a renderize. Registrado como
-  [029](../029-recurring-errors-never-reach-the-user.md).
+  [029](../a-refusal-with-its-own-message-still-arrives-as-the-generic-one.md).
 - **`LaunchYieldUseCase.kt:72-75`** escreve `ContraLeg(AccountType.INCOME, category.dimensionId)` à
   mão em vez de consumir `Category.Type.accountType`. Não pode divergir hoje —
   `EnsureYieldCategoryUseCase.kt:46` cria a categoria como `INCOME` e o tipo é imutável depois da

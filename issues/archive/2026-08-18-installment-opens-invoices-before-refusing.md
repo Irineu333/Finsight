@@ -1,11 +1,17 @@
-# 017 — `create_installment` abre até doze faturas e só então recusa o valor
+---
+area: creditcards
+severity: medium
+type: data
+verdict: fixed
+---
 
-**Área:** creditcards / mcp · **Tipo:** dados · **Criticidade:** média · **Status:** aberto
+# `create_installment` abre até doze faturas e só então recusa o valor
+
 **Verificado em:** 2026-08-18, por uma revisão adversarial dos dez commits desta sessão
 
 ## O que está errado
 
-É a mesma pergunta de ordem que a [001](001-create-transaction-accepts-negative-amount.md)
+É a mesma pergunta de ordem que a [001](2026-08-18-create-transaction-accepts-negative-amount.md)
 respondeu para o `confirm_recurring`, não respondida para o `create_installment`.
 
 `AddInstallmentUseCaseImpl` resolve as faturas **antes** de validar o formulário:
@@ -42,7 +48,7 @@ O commit `ba310879e` argumenta explicitamente essa ordem para o `confirm_recurri
 `create_installment` como uma das cinco portas que fecha. A ordem foi considerada num dos dois
 lugares que precisavam dela.
 
-## Correção aplicada
+## Desfecho
 
 A validação passou a vir antes de qualquer fatura, e sem uma segunda cópia da regra:
 `AddInstallmentUseCaseImpl` agora chama `buildTransactionUseCase(form)` no topo do `invoke` e passa

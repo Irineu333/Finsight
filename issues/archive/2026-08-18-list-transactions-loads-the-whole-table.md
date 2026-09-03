@@ -1,6 +1,12 @@
-# 008 — `list_transactions` carrega a tabela inteira (e uma query de entries por linha) a cada página
+---
+area: mcp
+severity: medium
+type: performance
+verdict: fixed
+---
 
-**Área:** mcp · **Tipo:** performance · **Criticidade:** média · **Status:** corrigida em 2026-08-18
+# `list_transactions` carrega a tabela inteira (e uma query de entries por linha) a cada página
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -59,7 +65,7 @@ mas passam a rodar sobre um mês em vez de sobre todo o histórico.
 
 Relacionado, no mesmo repositório: o item 23 de `docs/auditoria-bugs-2026-07.md` registra o espelho
 disto no lado observável.
-## Correção aplicada
+## Desfecho
 
 O mês desceu para o banco e as entries passaram a ser lidas em lote:
 
@@ -85,7 +91,7 @@ A varredura não. `transactions` não tem índice em `date`, então `getBetween`
 `SCAN transactions` e ordena por uma B-tree temporária: o SQLite continua lendo a tabela inteira, só
 não devolve mais do que o mês. Não é regressão — o `getAll()` anterior varria **e** materializava
 tudo, mais N queries —, mas o que passou a ser constante é a parte que dominava o custo, não o custo.
-A lacuna que resta está registrada na [019](../019-transactions-has-no-index-on-date.md).
+A lacuna que resta está registrada na [019](../transactions-date-has-no-index-though-it-orders-the-main-list.md).
 
 ## As três redes, e a ordem em que foram feitas
 

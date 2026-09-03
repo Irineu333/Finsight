@@ -25,6 +25,14 @@ despercebida e a chave fica.
 Nada força a relação: nenhum teste, nenhuma task de build e nenhum lint comparam as chaves
 declaradas com as referenciadas.
 
+O `import` morto é a outra metade do mesmo descuido, e existe também sem a chave ser órfã:
+`feature/mcp/impl/.../ui/screen/mcp/McpUiState.kt` importa `Res` e `mcp_port_error_invalid` sem
+referenciar nenhum dos dois — a chave continua viva, e seu único consumidor é `EditPortModal`. Um
+import de chave de recurso é uma afirmação sobre quem é dono de um texto: deixado ali, ele diz ao
+próximo leitor que este arquivo ainda decide o que "porta inválida" fala, que é justamente a
+pergunta que leva alguém a abrir o `McpUiState` — onde `addressError` delega a redação ao domínio,
+por `toPortFieldUiText()`.
+
 ## Evidência
 
 A varredura, com `/build/` excluído dos dois lados (os acessores gerados referenciam **toda**
@@ -64,11 +72,12 @@ desenhado até o domínio ter mais de um período":
 Nada quebra e nenhum usuário vê diferença — o custo é de manutenção e de confiança. Quem
 traduz mantém 24 linhas que não aparecem em lugar nenhum. Quem procura por onde uma tela diz
 "Fatura" acha `invoice_summary_card_invoice` e conclui que existe um card apagado há dois
-meses. E `AccountCard.kt` carrega um `import` que só existe para não ser usado.
+meses. E `AccountCard.kt` e `McpUiState.kt` carregam `import`s que só existem para não serem
+usados — o segundo apontando para uma chave que outro arquivo é quem exibe.
 
 ## Sugestão
 
-Remover as 12 dos dois arquivos, mais o `import` morto, e manter as duas que o KDoc
+Remover as 12 dos dois arquivos, mais os `import`s mortos, e manter as duas que o KDoc
 justifica. O que fecha o invariante de vez é um teste no espírito dos que já existem em
 `app/shared/src/jvmTest` — que leem as fontes de produção como texto — comparando as chaves
 declaradas com as referenciadas e listando as exceções deliberadas por nome: assim a próxima

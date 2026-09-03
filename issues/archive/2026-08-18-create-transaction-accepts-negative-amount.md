@@ -1,6 +1,12 @@
-# 001 — valor negativo aceito na superfície de escrita, e registrado na direção oposta
+---
+area: mcp
+severity: high
+type: data
+verdict: fixed
+---
 
-**Área:** mcp · **Tipo:** dados · **Criticidade:** alta · **Status:** corrigida em 2026-08-18
+# Valor negativo aceito na superfície de escrita, e registrado na direção oposta
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 **Reconferido em:** 2026-08-18, @ `32310927a` — o achado é maior do que o registrado: são **cinco**
 tools que alcançam o ledger, não uma, e a mais curta delas não passa por validador algum. O nome do
@@ -128,7 +134,7 @@ reconferência de 2026-08-18 e **não constam da revisão original**. Os três �
 número nenhum do ledger — por isso ficam aqui em vez de virarem issues próprias —, mas são a mesma
 omissão: um valor com sinal aceito porque nenhuma tela jamais o ofereceu.
 
-## Correção aplicada
+## Desfecho
 
 A guarda ficou no domínio, como esta issue pedia, e não uma por tool. `AmountZero` e `AMOUNT_ZERO`
 foram **ampliados** em vez de ganharem um irmão — zero e negativo são uma regra só, e dois erros para

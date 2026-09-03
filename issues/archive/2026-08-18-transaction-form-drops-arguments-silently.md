@@ -1,6 +1,12 @@
-# 004 — `TransactionForm.from` descarta categoria incompatível e `installments` fora do cartão, e a tool responde "Recorded."
+---
+area: mcp
+severity: medium
+type: data
+verdict: fixed
+---
 
-**Área:** mcp / model · **Tipo:** correção · **Criticidade:** média · **Status:** corrigida em 2026-08-18
+# `TransactionForm.from` descarta categoria incompatível e `installments` fora do cartão, e a tool responde "Recorded."
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -53,7 +59,7 @@ Recusar na tool, antes de montar o formulário — a tool é a única camada que
 
 Não mexer em `TransactionForm.from`: sua normalização está correta para as telas, que é a razão de
 ela ser escrita assim.
-## Correção aplicada
+## Desfecho
 
 Recusa na tool, antes de o formulário ser montado, como esta issue pedia. `TransactionForm.from`
 não foi tocado: normalizar descartando está certo para as telas, e é por isso que ele é escrito
@@ -88,4 +94,4 @@ arquivo de produção revertido, os três falham e mais nenhum.
 
 `installments` não se aplica: `update_transaction` não tem esse parâmetro.
 
-Registrado como [016](016-update-transaction-drops-the-category-silently.md).
+Registrado como [016](2026-08-18-update-transaction-drops-the-category-silently.md).

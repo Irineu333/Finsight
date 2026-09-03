@@ -1,6 +1,12 @@
-# 009 — o último dia do mês é lido como encerrado, um dia antes da hora
+---
+area: mcp
+severity: medium
+type: data
+verdict: fixed
+---
 
-**Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** corrigida em 2026-08-18
+# O último dia do mês é lido como encerrado, um dia antes da hora
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 **Reconferido em:** 2026-08-18, @ `32310927a` — as KDocs do tipo **discordam entre si**, e a correção
 tem de mover as duas (ver *Duas KDocs, não uma*).
@@ -76,7 +82,7 @@ reached on the app's own clock"* — ou equivalente que inclua o próprio dia. S
 qual das duas KDocs mente, em vez de acabar com a divergência.
 
 Vale um teste fixando a fronteira: o primeiro e o último dia do mês, e o dia seguinte.
-## Correção aplicada
+## Desfecho
 
 `isInProgress = to >= today` nas duas factories, e `measuredThrough` não se moveu — `minOf(to, today)`
 já devolvia o próprio dia.

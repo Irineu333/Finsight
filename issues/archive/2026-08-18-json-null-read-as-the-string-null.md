@@ -1,6 +1,12 @@
-# 003 — um `null` JSON explícito é lido como a string de quatro caracteres `"null"`
+---
+area: mcp
+severity: medium
+type: data
+verdict: fixed
+---
 
-**Área:** mcp · **Tipo:** correção · **Criticidade:** média · **Status:** corrigida em 2026-08-18
+# Um `null` JSON explícito é lido como a string de quatro caracteres `"null"`
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -63,7 +69,7 @@ e construir `string()`, `long()`, `flag()` e `names()` sobre ele. Essa é a deci
 explícito significa que o chamador não disse nada"* — e ela pertence ao lado do comentário em
 `ToolSupport.kt:28-29`, que já afirma que esta camada existe para não haver oito respostas
 ligeiramente diferentes sobre o que um argumento ausente significa.
-## Correção aplicada
+## Desfecho
 
 Um leitor só, `argument()`, no ponto onde o wire é lido — `string`, `long`, `longs`, `flag`, `names`,
 `flagOrNull` e `money` passaram a ser construídos sobre ele. *"O chamador não disse nada"* é uma

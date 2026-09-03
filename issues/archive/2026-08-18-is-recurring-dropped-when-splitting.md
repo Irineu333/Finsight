@@ -1,6 +1,12 @@
-# 002 — `is_recurring` é descartado quando `installments > 1`, e a resposta não diz isso
+---
+area: mcp
+severity: medium
+type: data
+verdict: fixed
+---
 
-**Área:** mcp / transactions · **Tipo:** dados · **Criticidade:** média · **Status:** corrigida em 2026-08-18
+# `is_recurring` é descartado quando `installments > 1`, e a resposta não diz isso
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -66,7 +72,7 @@ o descarte silencioso custa uma afirmação errada ao usuário.
 Alternativamente (ou além disso), tornar o descarte visível no `note` da resposta — mas a recusa é a
 escolha melhor: o agente pediu algo que o domínio não modela, e deve aprender isso em vez de inferir.
 
-## Correção aplicada
+## Desfecho
 
 A recusa, que era a opção que esta issue preferia. `CreateTransactionTool.call` recusa o par nomeando
 os dois argumentos, ao lado da recusa que já existia para `account_id` + `card_id`. A descrição da

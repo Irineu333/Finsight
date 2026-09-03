@@ -1,6 +1,12 @@
-# 010 — a porta configurada não pode ser reaplicada, o que bloqueia a saída documentada de `PORT_IN_USE`
+---
+area: mcp
+severity: medium
+type: ux
+verdict: fixed
+---
 
-**Área:** mcp (UI) · **Tipo:** UX / correção · **Criticidade:** média · **Status:** corrigida em 2026-08-18
+# A porta configurada não pode ser reaplicada, o que bloqueia a saída documentada de `PORT_IN_USE`
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -55,7 +61,7 @@ val canConfirm = isPort && (port != current || isFailed)
 passando a falha para o modal (ele já recebe `current: Int`). O propósito declarado da guarda — *"the
 sheet never closes having done nothing"* (`EditPortModal.kt:47-51`) — continua satisfeito: com um
 bind falho, reaplicar a mesma porta faz alguma coisa.
-## Correção aplicada
+## Desfecho
 
 `canConfirm` deixou de ser uma expressão dentro do composable e virou `canApplyPort(draft, current,
 isFailed)`, uma função pura ao lado do modal — que é o que a torna afirmável por um teste. O modal

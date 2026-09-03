@@ -1,6 +1,12 @@
-# 005 — o snippet de conexão mostra o token em texto claro, logo abaixo da linha que o mascara
+---
+area: mcp
+severity: medium
+type: security
+verdict: fixed
+---
 
-**Área:** mcp (UI) · **Tipo:** segurança · **Criticidade:** média · **Status:** corrigida em 2026-08-18
+# O snippet de conexão mostra o token em texto claro, logo abaixo da linha que o mascara
+
 **Verificado em:** 2026-08-17, `feature/local-mcp-server` @ `cc6ca4ccf`
 
 ## O que está errado
@@ -61,7 +67,7 @@ valores distintos disponíveis exatamente para esse padrão, como `CopyableRow` 
 
 O `SelectionContainer` (`McpScreen.kt:375`) existe para o usuário conseguir extrair o token do bloco
 isoladamente; com a máscara aplicada, isso continua possível depois de revelar.
-## Correção aplicada
+## Desfecho
 
 A decisão subiu do `McpScreen` para o `McpUiState`, que é onde o resto do estado da tela já decide e
 onde já existe teste. São duas propriedades, o mesmo par `value`/`copied` que o `CopyableRow` já usa:

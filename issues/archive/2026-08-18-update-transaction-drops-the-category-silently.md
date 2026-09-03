@@ -1,12 +1,18 @@
-# 016 — `update_transaction` descarta a categoria em silêncio, e recusa uma receita em cartão pelo argumento errado
+---
+area: mcp
+severity: medium
+type: data
+verdict: fixed
+---
 
-**Área:** mcp / model · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
+# `update_transaction` descarta a categoria em silêncio, e recusa uma receita em cartão pelo argumento errado
+
 **Verificado em:** 2026-08-18, `feature/local-mcp-server`, durante a correção da
-[004](004-transaction-form-drops-arguments-silently.md)
+[004](2026-08-18-transaction-form-drops-arguments-silently.md)
 
 ## O que está errado
 
-É o espelho da [004](004-transaction-form-drops-arguments-silently.md) no caminho da edição.
+É o espelho da [004](2026-08-18-transaction-form-drops-arguments-silently.md) no caminho da edição.
 A 004 fechou `create_transaction`; `update_transaction` monta o mesmo `TransactionForm.from` e não
 ganhou recusa nenhuma, então continua descartando o que o chamador declarou e respondendo que
 guardou.
@@ -74,7 +80,7 @@ As mesmas duas recusas que a 004 instalou na criação, com uma diferença que i
 
 Não mexer em `TransactionForm.from`, pela mesma razão da 004.
 
-## Correção aplicada
+## Desfecho
 
 As três recusas que esta issue pediu, em `UpdateTransactionTool.call`, antes de o formulário ser
 montado — e na mesma ordem do `CreateTransactionTool`, o cartão antes da categoria:

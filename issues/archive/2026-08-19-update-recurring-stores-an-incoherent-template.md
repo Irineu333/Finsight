@@ -1,13 +1,19 @@
-# 021 — `update_recurring` grava um template incoerente, e `create_recurring` recusa pelo argumento errado
+---
+area: recurring
+severity: medium
+type: data
+verdict: fixed
+---
 
-**Área:** recurring / mcp · **Tipo:** dados · **Criticidade:** média · **Status:** aberto
+# `update_recurring` grava um template incoerente, e `create_recurring` recusa pelo argumento errado
+
 **Verificado em:** 2026-08-19, `feature/local-mcp-server`, por uma revisão adversarial das correções
-da [016](016-update-transaction-drops-the-category-silently.md) e da
-[017](017-installment-opens-invoices-before-refusing.md)
+da [016](2026-08-18-update-transaction-drops-the-category-silently.md) e da
+[017](2026-08-18-installment-opens-invoices-before-refusing.md)
 
 ## O que está errado
 
-A [016](016-update-transaction-drops-the-category-silently.md) fechou a edição de um
+A [016](2026-08-18-update-transaction-drops-the-category-silently.md) fechou a edição de um
 lançamento. A edição de um **template** tem os dois mesmos defeitos, e o primeiro é pior do que o
 descarte que a 016 descreve: aqui nem o descarte acontece.
 
@@ -53,9 +59,9 @@ Duas coisas independentes:
 
 `update_recurring` também não tem como limpar uma categoria: é a outra edição da superfície em que
 ausência significa *mantenha o que está lá*, e `category_id: 0` responde `"No category with id 0
-exists."` Ver [022](../022-category-id-zero-means-two-things.md).
+exists."` Ver [022](../only-the-code-knows-that-a-creation-does-not-take-category-id-zero.md).
 
-## Correção aplicada
+## Desfecho
 
 Em três camadas, porque o defeito tinha três.
 
@@ -75,7 +81,7 @@ mesma direção. Nenhum dependia do filtro para o que exibe. O que `from` ainda 
 que é um fato de tela — `target` — que `toRecurring` não tem como enxergar.
 
 **As recusas, nas duas tools.** `create_recurring` e `update_recurring` ganharam o que a
-[016](016-update-transaction-drops-the-category-silently.md) instalou na edição de um
+[016](2026-08-18-update-transaction-drops-the-category-silently.md) instalou na edição de um
 lançamento, na mesma ordem — o cartão antes da categoria — e com a mesma distinção entre a categoria
 **declarada** (argumento errado) e a **carregada** (consequência que o chamador não pediu). O
 `arguments.long("category_id") ?: stored.category` do `update_recurring` apagava justamente essa

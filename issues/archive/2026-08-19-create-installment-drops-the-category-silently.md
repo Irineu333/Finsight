@@ -1,14 +1,20 @@
-# 020 — `create_installment` descarta a categoria em silêncio, e responde "Recorded"
+---
+area: creditcards
+severity: medium
+type: data
+verdict: fixed
+---
 
-**Área:** creditcards / mcp · **Tipo:** correção · **Criticidade:** média · **Status:** aberto
+# `create_installment` descarta a categoria em silêncio, e responde "Recorded"
+
 **Verificado em:** 2026-08-19, `feature/local-mcp-server`, por uma revisão adversarial das correções
-da [016](016-update-transaction-drops-the-category-silently.md) e da
-[017](017-installment-opens-invoices-before-refusing.md)
+da [016](2026-08-18-update-transaction-drops-the-category-silently.md) e da
+[017](2026-08-18-installment-opens-invoices-before-refusing.md)
 
 ## O que está errado
 
-É a mesma regra da [004](004-transaction-form-drops-arguments-silently.md) e da
-[016](016-update-transaction-drops-the-category-silently.md), na terceira das três tools que
+É a mesma regra da [004](2026-08-18-transaction-form-drops-arguments-silently.md) e da
+[016](2026-08-18-update-transaction-drops-the-category-silently.md), na terceira das três tools que
 montam um `TransactionForm`. A 004 fechou a criação, a 016 fechou a edição, e `create_installment`
 ficou aberta — apesar de ter sido a tool mexida pela 017, no mesmo dia.
 
@@ -38,10 +44,10 @@ payload. Medido pela revisão, sobre o servidor real.
 A recusa que o `CreateTransactionTool` já faz (`TransactionWriteTools.kt:203-213`), nomeando a
 categoria e a direção. Não mexer em `TransactionForm.from`, pela razão da 004.
 
-## Correção aplicada
+## Desfecho
 
-A recusa que a [004](004-transaction-form-drops-arguments-silently.md) instalou na criação e
-a [016](016-update-transaction-drops-the-category-silently.md) na edição, agora em
+A recusa que a [004](2026-08-18-transaction-form-drops-arguments-silently.md) instalou na criação e
+a [016](2026-08-18-update-transaction-drops-the-category-silently.md) na edição, agora em
 `CreateInstallmentTool.call`, antes do formulário. Com uma diferença que a tool impõe: aqui a direção
 não é parâmetro — um parcelamento é sempre despesa —, então a guarda compara contra a constante e a
 razão diz *"a split is always an expense"* em vez de nomear um `type` que a chamada não deu.

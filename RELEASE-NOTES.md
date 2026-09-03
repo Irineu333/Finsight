@@ -363,11 +363,12 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
   sobre um navegador de verdade, o teste de loopback usa esta máquina como substituta de uma
   segunda, e **nada do que se desenha na tela** é verificado — o projeto não tem infraestrutura de
   teste de Compose, então o estado e o ViewModel da seção têm teste e a renderização deles não.
-- O backlog ganhou **49 entradas** no ciclo — as do backup e da varredura de cromagem, as da revisão
-  adversarial do ramo do servidor, e as que só a simulação contra o app rodando encontrou —, das
-  quais **21** foram corrigidas e arquivadas dentro do próprio ciclo. Saiu de 65 abertos e 9
-  arquivados, no commit que subiu 1.10.0, para **93 abertos e 30 arquivados**. Nenhum bug anterior
-  ao ciclo foi fechado nele: as 21 arquivadas nasceram e morreram aqui.
+- O backlog ganhou **51 entradas** no ciclo — as do backup e da varredura de cromagem, as da revisão
+  adversarial do ramo do servidor, as que só a simulação contra o app rodando encontrou, e as duas
+  que esta própria passagem pelas notas levantou —, das quais **21** foram corrigidas e arquivadas
+  dentro do próprio ciclo. Saiu de 65 abertos e 9 arquivados, no commit que subiu 1.10.0, para
+  **95 abertos e 30 arquivados**. Nenhum bug anterior ao ciclo foi fechado nele: as 21 arquivadas
+  nasceram e morreram aqui.
 
 ### Correções
 

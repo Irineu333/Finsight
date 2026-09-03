@@ -1,6 +1,7 @@
 package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.account_error_adjustment_date_in_future
 import com.neoutils.finsight.resources.account_error_already_exist
 import com.neoutils.finsight.resources.account_error_cannot_archive_default
 import com.neoutils.finsight.resources.account_error_cannot_delete_default
@@ -51,6 +52,19 @@ enum class AccountError(val message: String) {
      * any design, because the meaning of every entry already written depends on it.
      */
     CURRENCY_IS_IMMUTABLE(message = "An account's currency cannot be changed"),
+
+    /**
+     * A balance is `Σ entries` up to a date, so an adjustment dated ahead of today
+     * corrects a reading nobody can take yet: the difference it posts is measured
+     * against that future balance, while every screen goes on showing the old figure —
+     * the correction lands in a month the user never opens and reads as having done
+     * nothing.
+     *
+     * The refusal lives here and not on the form. The date picker stops at today, but
+     * that is a convenience of one screen; every other way in — the agent surface among
+     * them — reaches the operation without it.
+     */
+    ADJUSTMENT_DATE_IN_FUTURE(message = "An adjustment cannot be dated in the future"),
 }
 
 fun AccountError.toUiText() = when (this) {
@@ -63,4 +77,6 @@ fun AccountError.toUiText() = when (this) {
     AccountError.HAS_BALANCE -> UiText.Res(Res.string.account_error_has_balance)
     AccountError.HAS_RECURRING -> UiText.Res(Res.string.account_error_has_recurring)
     AccountError.CURRENCY_IS_IMMUTABLE -> UiText.Res(Res.string.account_error_currency_immutable)
+    AccountError.ADJUSTMENT_DATE_IN_FUTURE ->
+        UiText.Res(Res.string.account_error_adjustment_date_in_future)
 }

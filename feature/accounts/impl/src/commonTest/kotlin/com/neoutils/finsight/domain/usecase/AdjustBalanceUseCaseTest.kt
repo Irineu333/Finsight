@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
@@ -17,11 +19,18 @@ import com.neoutils.finsight.extension.naturalBalanceOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.plus
 import kotlin.math.roundToLong
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.domain.error.AccountError
+import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
@@ -37,6 +46,7 @@ import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 class AdjustBalanceUseCaseTest {
 
     private val date = LocalDate(2026, 1, 10)
+    private val today = LocalDate(2026, 3, 1)
     private val account = Account(id = 1, name = "Checking", type = AccountType.ASSET, currency = "BRL")
 
     @Test
@@ -46,6 +56,7 @@ class AdjustBalanceUseCaseTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         // First adjustment: balance 0 -> 100, creates the adjustment transaction.
@@ -73,6 +84,7 @@ class AdjustBalanceUseCaseTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         val transferId = ledger.seedCrossCurrencyTransfer(date)
@@ -96,6 +108,7 @@ class AdjustBalanceUseCaseTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
         val later = LocalDate(2026, 2, 10)
 
@@ -116,6 +129,7 @@ class AdjustBalanceUseCaseTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
@@ -146,6 +160,7 @@ class AdjustBalanceUseCaseTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = repository,
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
@@ -169,6 +184,7 @@ class AdjustBalanceUseCaseTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         useCase(targetBalance = 200.0, adjustmentDate = date, account = account).getOrNull()
@@ -179,6 +195,51 @@ class AdjustBalanceUseCaseTest {
 
         assertEquals(mapOf(date to 200.0), ledger.adjustmentsByDate())
         assertEquals(250.0, ledger.accountBalance())
+    }
+
+    /**
+     * The balance an adjustment corrects is `Σ entries` up to its date, so a date the
+     * clock has not reached yet corrects a reading nobody can take — the difference
+     * lands in a month the user never opens, and the account goes on showing the old
+     * figure. The rule belongs here and not to the form's date picker: every other way
+     * in reaches this operation without one.
+     */
+    @Test
+    fun `an adjustment dated after today is refused and nothing is written`() = runTest {
+        val ledger = LedgerStore(account)
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
+        )
+
+        val error = assertIs<AccountException>(
+            useCase(
+                targetBalance = 100.0,
+                adjustmentDate = today.plus(1, DateTimeUnit.DAY),
+                account = account,
+            ).leftOrNull()
+        )
+
+        assertEquals(AccountError.ADJUSTMENT_DATE_IN_FUTURE, error.error)
+        assertTrue(ledger.entriesByTransaction.isEmpty(), "nothing may be written")
+    }
+
+    /** And today itself is not the future: the boundary is inclusive. */
+    @Test
+    fun `an adjustment dated today is written`() = runTest {
+        val ledger = LedgerStore(account)
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
+        )
+
+        useCase(targetBalance = 100.0, adjustmentDate = today, account = account).getOrNull()
+
+        assertEquals(mapOf(today to 100.0), ledger.adjustmentsByDate())
     }
 
     /**

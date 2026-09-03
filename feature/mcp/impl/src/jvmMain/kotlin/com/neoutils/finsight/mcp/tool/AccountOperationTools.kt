@@ -64,7 +64,11 @@ internal class AdjustBalanceTool(
         "target_balance" to amount(
             "What the balance should be after the correction, in the account's own currency.",
         ),
-        "date" to text("The day the correction belongs to, as `2026-03-14`. Defaults to today."),
+        "date" to text(
+            "The day the correction belongs to, as `2026-03-14`. Defaults to today, never in " +
+                "the future: a balance is the sum of the entries up to a date, so correcting one " +
+                "ahead of today corrects a reading nobody can take yet.",
+        ),
         required = listOf("account_id", "target_balance"),
     )
 

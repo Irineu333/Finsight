@@ -50,6 +50,13 @@ class CloseInvoiceUseCaseImpl(
             InvoiceException(InvoiceError.CannotCloseOutsideClosingMonth)
         }
 
+        // The status half of the predicate is settled above, so what it can still refuse
+        // here is the date: closing before the scheduled day would produce an invoice
+        // ValidateInvoicePaymentUseCase then refuses to pay.
+        ensure(invoice.isClosableOn(closedAt)) {
+            InvoiceException(InvoiceError.CannotCloseBeforeClosingDate)
+        }
+
         val invoiceAmount = calculateInvoiceUseCase(invoice)
 
         ensure(invoiceAmount >= 0) {

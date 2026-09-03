@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
@@ -16,8 +18,8 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
+import com.neoutils.finsight.domain.repository.RecurringSettledMoney
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -30,22 +32,26 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
 
 /**
- * **A cycle is worth more than nothing, and this is the only write that has nowhere else
- * to say so.**
+ * **A cycle is confirmed on a day that has already come, and this is the only write that
+ * has nowhere else to say so.**
  *
- * Every other path to the ledger goes through a form that owns the rule. A confirmation
- * does not: the optional `amount` says what this cycle was actually worth, and it reaches
- * the posting leg directly. `type` is what says the direction, so a negative amount is the
- * cycle posted on the other side — an expense of minus forty raises the balance.
+ * Every other path to the ledger goes through a form that owns the rule: a transaction is
+ * refused with `BuildTransactionError.DateFuture` and a transfer with
+ * `TransferError.FutureDate`. A confirmation builds no form — the `date` reaches the
+ * posting and the occurrence directly — so the same posting was inadmissible through one
+ * door and admissible through this one, and the rest of the app reads dated rows assuming
+ * none of them is ahead of today.
  *
- * The refusal comes **before the invoice is resolved**, which is the part that could not
- * simply be moved: resolving one creates it as a deliberate side effect outside the unit
- * of work (design D7), so a later refusal would leave an invoice behind for a cycle that
- * never posted.
+ * The date picker of the confirmation offers nothing after today (`confirmableDates`), so
+ * this is unreachable by the designed path. It is the net behind it, in the same shape as
+ * the amount and the currency refusals beside it — and every caller that does not go
+ * through the picker (a tool, a test, a use case written tomorrow) reaches the domain
+ * directly.
  */
-class ConfirmRecurringAmountTest {
+class ConfirmRecurringDateTest {
 
     private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, currency = "BRL")
     private val cardAccount =
@@ -61,82 +67,46 @@ class ConfirmRecurringAmountTest {
         dayOfMonth = 5, category = null, account = account, creditCard = null, createdAt = 0L,
     )
 
-    private val date = LocalDate(2026, 3, 5)
+    private val today = LocalDate(2026, 3, 5)
+    private val tomorrow = LocalDate(2026, 3, 6)
 
     private fun useCase(
-        occurrences: RecordingCycles,
-        invoices: CountingInvoices,
-        template: Recurring = this.template,
+        occurrences: RecordingDatedCycles,
+        invoices: UnreachedInvoices = UnreachedInvoices(),
     ) = ConfirmRecurringUseCaseImpl(
         recurringRepository = FakeRecurringRepository(stored = listOf(template)),
         recurringOccurrenceRepository = occurrences,
         getOrCreateInvoiceForMonthUseCase = invoices,
         accountRepository = FakeAccountRepository(listOf(account, cardAccount)),
-        clock = StoppedClock(date.atStartOfDayIn(TimeZone.currentSystemDefault())),
+        // Today is stated, never read off the system: the day the confirmation is
+        // compared against is the same decision the rest of the app takes once.
+        clock = StoppedClock(today.atStartOfDayIn(TimeZone.currentSystemDefault())),
     )
 
     @Test
-    fun `a negative cycle amount is refused and nothing is written`() = runTest {
-        val occurrences = RecordingCycles()
+    fun `a cycle dated after today is refused and nothing is written`() = runTest {
+        val occurrences = RecordingDatedCycles()
 
-        val result = useCase(occurrences, CountingInvoices())(
-            recurring = template,
-            date = date,
-            amount = -40.0,
-        )
+        val result = useCase(occurrences)(recurring = template, date = tomorrow)
 
         val error = assertIs<Either.Left<Throwable>>(result).value
         assertIs<RecurringException>(error)
-        assertEquals(RecurringError.AMOUNT_NOT_POSITIVE, error.error)
-        assertNull(occurrences.recorded)
-    }
-
-    @Test
-    fun `zero is refused by the same rule`() = runTest {
-        val occurrences = RecordingCycles()
-
-        val result = useCase(occurrences, CountingInvoices())(
-            recurring = template,
-            date = date,
-            amount = 0.0,
-        )
-
-        val error = assertIs<Either.Left<Throwable>>(result).value
-        assertIs<RecurringException>(error)
-        assertEquals(RecurringError.AMOUNT_NOT_POSITIVE, error.error)
-        assertNull(occurrences.recorded)
+        assertEquals(RecurringError.DATE_IN_FUTURE, error.error)
+        assertNull(occurrences.recorded, "a cycle dated ahead of today reached the ledger")
     }
 
     /**
-     * The template's own amount is what an omitted override asks for, so a template that
-     * was let through before the rule existed is refused here too — the cycle is where it
-     * would have reached the ledger.
+     * The refusal sits where the amount rule sits, and for the same reason: an invoice
+     * opened for a cycle that is then refused outlives the refusal (design D7).
      */
     @Test
-    fun `a template holding a negative amount is refused when its cycle is confirmed`() = runTest {
-        val occurrences = RecordingCycles()
-        val negative = template.copy(amount = -100.0)
-
-        val result = useCase(occurrences, CountingInvoices(), template = negative)(
-            recurring = negative,
-            date = date,
-        )
-
-        val error = assertIs<Either.Left<Throwable>>(result).value
-        assertIs<RecurringException>(error)
-        assertEquals(RecurringError.AMOUNT_NOT_POSITIVE, error.error)
-        assertNull(occurrences.recorded)
-    }
-
-    @Test
     fun `a cycle aimed at a card is refused before an invoice is opened for it`() = runTest {
-        val occurrences = RecordingCycles()
-        val invoices = CountingInvoices()
+        val occurrences = RecordingDatedCycles()
+        val invoices = UnreachedInvoices()
 
         val result = useCase(occurrences, invoices)(
             recurring = template,
-            date = date,
-            amount = -40.0,
+            date = tomorrow,
             target = TransactionTarget.CREDIT_CARD,
             creditCard = card,
         )
@@ -146,22 +116,19 @@ class ConfirmRecurringAmountTest {
         assertNull(occurrences.recorded)
     }
 
+    /** Today itself is not the future, and the day the picker lands on still posts. */
     @Test
-    fun `a positive cycle amount still goes through`() = runTest {
-        val occurrences = RecordingCycles()
+    fun `a cycle dated today still goes through`() = runTest {
+        val occurrences = RecordingDatedCycles()
 
-        val result = useCase(occurrences, CountingInvoices())(
-            recurring = template,
-            date = date,
-            amount = 40.0,
-        )
+        val result = useCase(occurrences)(recurring = template, date = today)
 
-        assertTrue(result.isRight())
-        assertEquals(40.0, occurrences.recorded?.legs?.single()?.amount)
+        assertTrue(result.isRight(), "the day the confirmation is offered was refused")
+        assertEquals(today, occurrences.recorded?.date)
     }
 }
 
-private class RecordingCycles : IRecurringOccurrenceRepository {
+private class RecordingDatedCycles : IRecurringOccurrenceRepository {
     var recorded: TransactionIntent? = null
 
     override suspend fun confirmCycle(
@@ -180,8 +147,8 @@ private class RecordingCycles : IRecurringOccurrenceRepository {
     override suspend fun save(occurrence: RecurringOccurrence): Long = throw NotImplementedError()
 }
 
-/** Counts what a refusal is supposed to have prevented: opening an invoice for the cycle. */
-private class CountingInvoices : GetOrCreateInvoiceForMonthUseCase {
+/** Counts what the refusal is supposed to have prevented: opening an invoice for the cycle. */
+private class UnreachedInvoices : GetOrCreateInvoiceForMonthUseCase {
     var calls = 0
 
     override suspend fun invoke(

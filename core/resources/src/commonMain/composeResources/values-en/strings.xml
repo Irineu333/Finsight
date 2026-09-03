@@ -19,6 +19,7 @@
     <string name="account_error_currency_immutable">An account's currency is set when it is created and cannot be changed. To correct it, delete the account (if it has no entries) and create another.</string>
     <string name="account_error_cannot_archive_default">The default account cannot be archived. Choose another account as the default first.</string>
     <string name="account_error_cannot_delete_default">The default account cannot be deleted. Choose another account as the default first.</string>
+    <string name="account_error_adjustment_date_in_future">A balance adjustment cannot be dated in the future. Choose today or an earlier date.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
@@ -477,6 +478,7 @@
     <string name="reopen_invoice_cancel">Cancel</string>
     <string name="reopen_invoice_confirm">Reopen</string>
     <string name="invoice_error_cannot_reopen">Only the latest closed invoice can be reopened.</string>
+    <string name="invoice_error_cannot_close_before_closing_date">An invoice can only be closed from its closing date onwards.</string>
 
     <!-- Invoice Payment Modal -->
     <!-- The head names the operation and holds still; the verb is derived from the
@@ -1020,6 +1022,7 @@
     <string name="currency_error_not_found">This currency no longer exists.</string>
     <string name="recurring_error_currency_mismatch">This recurring is in another currency. Pick an account or card in the same one.</string>
     <string name="recurring_error_category_direction_mismatch">This category classifies the opposite direction from the recurring. Pick one that classifies the same direction, or leave the cycle unclassified.</string>
+    <string name="recurring_error_date_in_future">This cycle cannot be confirmed on a future date.</string>
     <string name="build_transaction_error_amount_required">Enter an amount.</string>
     <string name="build_transaction_error_amount_not_positive">The amount must be greater than zero.</string>
     <string name="build_transaction_error_date_required">Enter a date.</string>

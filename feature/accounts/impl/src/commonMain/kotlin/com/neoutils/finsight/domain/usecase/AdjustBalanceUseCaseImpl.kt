@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
@@ -18,13 +20,20 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.naturalBalanceOf
+import com.neoutils.finsight.extension.today
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class AdjustBalanceUseCaseImpl(
     private val accountRepository: IAccountRepository,
     private val transactionRepository: ITransactionRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
+    // What "today" is, is a decision taken once for the whole app and not a reading this
+    // use case takes off the system — the same clock the form bounds its date picker by,
+    // and the one its sibling [ValidateTransferUseCase] refuses a future transfer with.
+    private val clock: Clock,
 ) : AdjustBalanceUseCase {
 
     @OptIn(WithheldAnnouncement::class)
@@ -38,6 +47,12 @@ class AdjustBalanceUseCaseImpl(
         // failure at the write boundary.
         ensureNotNull(catch { accountRepository.getAccountById(accountId) }.bind()) {
             AccountException(AccountError.NOT_FOUND)
+        }
+
+        // Before the balance is read, because a balance read on a date that is not
+        // allowed is work done for an answer nobody may act on.
+        ensure(adjustmentDate <= clock.today()) {
+            AccountException(AccountError.ADJUSTMENT_DATE_IN_FUTURE)
         }
 
         val currentBalance = catch {

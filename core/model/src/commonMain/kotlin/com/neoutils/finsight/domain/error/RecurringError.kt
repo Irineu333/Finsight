@@ -6,6 +6,7 @@ import com.neoutils.finsight.resources.recurring_error_amount_not_positive
 import com.neoutils.finsight.resources.recurring_error_amount_required
 import com.neoutils.finsight.resources.recurring_error_category_direction_mismatch
 import com.neoutils.finsight.resources.recurring_error_currency_mismatch
+import com.neoutils.finsight.resources.recurring_error_date_in_future
 import com.neoutils.finsight.resources.recurring_error_invalid_day
 import com.neoutils.finsight.resources.recurring_error_not_found
 import com.neoutils.finsight.resources.recurring_error_title_or_category_required
@@ -61,6 +62,21 @@ enum class RecurringError(val message: String) {
     CATEGORY_DIRECTION_MISMATCH(
         message = "The category classifies the opposite direction from the recurring.",
     ),
+
+    /**
+     * The cycle was confirmed on a day that has not come yet.
+     *
+     * A confirmation posts what every other path posts through a form, and the form is
+     * where this rule lives for them: `BuildTransactionError.DateFuture` for a transaction,
+     * `TransferError.FutureDate` for a transfer. The same posting may not be inadmissible
+     * through one door and admissible through this one — and what reads the ledger back
+     * assumes no ordinary row is ahead of today, which is why the dashboard's recent list
+     * drops one that is.
+     *
+     * The date picker of the confirmation offers nothing after today
+     * (`confirmableDates`). This is the net behind it, never the designed path.
+     */
+    DATE_IN_FUTURE(message = "The cycle cannot be confirmed on a future date."),
 }
 
 fun RecurringError.toUiText() = when (this) {
@@ -73,4 +89,5 @@ fun RecurringError.toUiText() = when (this) {
     RecurringError.CURRENCY_MISMATCH -> UiText.Res(Res.string.recurring_error_currency_mismatch)
     RecurringError.CATEGORY_DIRECTION_MISMATCH ->
         UiText.Res(Res.string.recurring_error_category_direction_mismatch)
+    RecurringError.DATE_IN_FUTURE -> UiText.Res(Res.string.recurring_error_date_in_future)
 }

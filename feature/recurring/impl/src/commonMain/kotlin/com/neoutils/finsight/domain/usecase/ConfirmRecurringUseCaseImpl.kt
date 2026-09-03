@@ -23,6 +23,7 @@ import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.isAccept
+import com.neoutils.finsight.extension.today
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
@@ -80,14 +81,18 @@ class ConfirmRecurringUseCaseImpl(
         val cycleTarget = target ?: recurring.ownTarget
 
         // The one write of the app that reaches the ledger without a form to hold the rules,
-        // so they are held here. Both sit before the invoice is resolved because that
+        // so they are held here. All three sit before the invoice is resolved because that
         // resolution creates one as a deliberate side effect outside the unit of work, and a
         // refusal after it would leave an invoice behind for a cycle that never posted.
+        //
+        // A cycle is confirmed on a day that has already come, which is what the transaction
+        // and transfer forms refuse for every other posting.
         //
         // A category classifies one direction only, and the nature of the contra leg is taken
         // from the category: a disagreement here still balances, and posts the cycle on the
         // opposite nominal. No category is not a disagreement — there is no direction to
         // contradict.
+        if (date > clock.today()) throw RecurringException(RecurringError.DATE_IN_FUTURE)
         if (cycleAmount <= 0.0) throw RecurringException(RecurringError.AMOUNT_NOT_POSITIVE)
         if (category != null && !category.type.isAccept(recurring.type)) {
             throw RecurringException(RecurringError.CATEGORY_DIRECTION_MISMATCH)

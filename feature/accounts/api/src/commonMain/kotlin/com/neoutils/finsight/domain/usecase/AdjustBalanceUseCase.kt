@@ -16,6 +16,9 @@ import kotlinx.datetime.LocalDate
  *
  * Adjusting to the balance the account already has is refused with
  * `AccountNotAdjustedException`: there is nothing to record.
+ *
+ * An adjustment dated after today is refused with `AccountError.ADJUSTMENT_DATE_IN_FUTURE`:
+ * it would correct a balance nobody can observe yet.
  */
 interface AdjustBalanceUseCase {
 

@@ -22,7 +22,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -69,7 +71,7 @@ class ConfirmRecurringCurrencyTest {
                 throw NotImplementedError("no test here reaches a card invoice")
         },
         accountRepository = FakeAccountRepository(listOf(reais, dollars, dollarCardAccount)),
-        clock = StoppedClock(),
+        clock = StoppedClock(date.atStartOfDayIn(TimeZone.currentSystemDefault())),
     )
 
     @Test

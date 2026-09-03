@@ -87,13 +87,15 @@ internal class ConfirmRecurringTool(
             "0. A category classifies one direction only, and a cycle whose direction the " +
             "category cannot classify — the one given here, or the one the template already " +
             "carries — is refused rather than posted the other way round. Redirecting the cycle " +
-            "to an account or card in another currency is refused rather than converted."
+            "to an account or card in another currency is refused rather than converted. A cycle " +
+            "is confirmed on a day that has already come, so a date in the future is refused, " +
+            "exactly as it is for create_transaction."
 
     override val inputSchema = schema(
         "id" to number("The template whose cycle this is, from list_recurring."),
         "date" to text(
             "The day the cycle is posted on, as `2026-03-14`, which also decides the month it " +
-                "is filed under. Defaults to today.",
+                "is filed under. Defaults to today, never in the future.",
         ),
         "amount" to amount("What this cycle was actually worth, when it differs from the template's."),
         "title" to text(

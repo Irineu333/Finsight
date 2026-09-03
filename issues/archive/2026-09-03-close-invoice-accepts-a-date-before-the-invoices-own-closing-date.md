@@ -2,6 +2,7 @@
 area: creditcards
 severity: medium
 type: data
+verdict: fixed
 ---
 
 # Fechar fatura aceita uma data anterior ao próprio dia de fechamento
@@ -70,3 +71,37 @@ Trocar a validação de mês em `CloseInvoiceUseCaseImpl` por
 `ensure(closedAt >= invoice.closingDate)` com erro próprio, ex.
 `CannotCloseBeforeClosingDate`) — lendo o predicado unificado em vez de reenumerar em
 torno dele, completando a unificação que já chegou às telas. Não vinculante.
+
+## Desfecho
+
+**Causa real** — a descrita, e confirmada no disco: `CloseInvoiceUseCaseImpl` ia de
+`ensure(invoice.isClosable)` direto para `ensure(closedAt.yearMonth == invoice.closingMonth)`,
+sem nenhuma comparação entre `closedAt` e `invoice.closingDate`. O predicado unificado
+`Invoice.isClosableOn` (`core/model/.../domain/model/Invoice.kt:85`) tinha só dois consumidores,
+ambos de UI — a regra com corte de data nunca chegou ao caminho de escrita, que é onde o estado
+é criado. Fechar antes do dia programado produzia uma fatura que
+`ValidateInvoicePaymentUseCase` (`.../ValidateInvoicePaymentUseCase.kt:45`) depois se recusa a
+pagar.
+
+**Mudança** — o caso de uso passou a ler o mesmo predicado do domínio, depois das guardas de
+status e de mês: `ensure(invoice.isClosableOn(closedAt)) { InvoiceException(CannotCloseBeforeClosingDate) }`
+(`feature/creditcards/impl/.../usecase/CloseInvoiceUseCaseImpl.kt:53-58`). Como a metade de
+status já foi garantida acima, o que o predicado ainda pode recusar ali é a data — e o erro tem
+nome disso. Membro novo `InvoiceError.CannotCloseBeforeClosingDate`
+(`core/model/.../domain/error/InvoiceError.kt:25`) com ramo próprio em `toUiText()` e a chave
+`invoice_error_cannot_close_before_closing_date` nos dois `strings.xml` (pt e en). A guarda de
+mês continua onde estava: as duas juntas descrevem a janela `[closingDate, fim do mês de
+fechamento]`. A `description` e o parâmetro `date` de `close_invoice`
+(`feature/mcp/impl/.../tool/InvoiceOperationTools.kt`) passaram a dizer que a data também tem de
+cair em ou depois da data de fechamento — antes prometiam só o mês.
+
+**Prova** — teste novo `closing before the closing day is refused, even inside the closing month`
+em `CloseInvoiceUseCaseTest`: fatura aberta com `closingDate=2026-02-05`, fechamento pedido em
+2026-02-04 (mês certo, dia anterior). Vermelho antes da correção
+(`expected:<CannotCloseBeforeClosingDate> but was:<null>` — o fechamento era aceito), verde
+depois, com as outras 10 do arquivo intactas (`tests="11" failures="0"`). Rodado com
+`./gradlew :feature:creditcards:impl:testDebugUnitTest --tests "*.CloseInvoiceUseCaseTest"`; as
+suítes de `:feature:creditcards:impl`, `:core:model`, `:feature:mcp:impl` e
+`:feature:transactions:impl` seguem verdes.
+
+**Commit** — `Fix(Domain): hold the three date rules the screens were holding alone`

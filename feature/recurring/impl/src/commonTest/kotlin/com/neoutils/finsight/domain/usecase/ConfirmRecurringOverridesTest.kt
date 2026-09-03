@@ -21,7 +21,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -84,7 +86,7 @@ class ConfirmRecurringOverridesTest {
                 throw NotImplementedError("every card test here passes the invoice in")
         },
         accountRepository = StubAccounts(listOf(account, cardAccount)),
-        clock = StoppedClock(),
+        clock = StoppedClock(date.atStartOfDayIn(TimeZone.currentSystemDefault())),
     )
 
     /**

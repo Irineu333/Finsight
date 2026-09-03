@@ -108,6 +108,7 @@ val accountsModule = module {
             accountRepository = get(),
             transactionRepository = get(),
             calculateBalanceUseCase = get(),
+            clock = get(),
         )
     }
     factory {

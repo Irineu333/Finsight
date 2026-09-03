@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Account
@@ -10,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.ExperimentalTime
 
 /**
  * Ties the sign [AdjustBalanceUseCase] *records* to the sign the screen *shows*, end to
@@ -43,6 +46,7 @@ class BalanceAdjustmentSignTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(date),
         )(targetBalance = target, adjustmentDate = date, account = account).getOrNull()
 
         val (id, entries) = ledger.entriesByTransaction

@@ -266,6 +266,7 @@ class EditAccountBalanceViewModelTest {
             accountRepository = OneAccount(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         ),
         calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         accountRepository = OneAccount(account),

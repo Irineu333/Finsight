@@ -266,13 +266,14 @@ internal class CloseInvoiceTool(
             "PERIMETER: closing settles nothing. An invoice that owes zero is marked paid by " +
             "closing, because there is nothing to write; one with a balance stays owed until " +
             "pay_invoice posts the payment. The date has to fall inside the invoice's closing " +
-            "month. Undoing this is reopen_invoice."
+            "month and on or after its closing date — a cycle is not closed before the day it " +
+            "closes on. Undoing this is reopen_invoice."
 
     override val inputSchema = schema(
         "id" to number("The invoice to close, from list_invoices."),
         "date" to text(
             "The day it closed, as `2026-03-14`. Defaults to today, and has to fall in the " +
-                "invoice's closing month.",
+                "invoice's closing month, on or after its closing date.",
         ),
         required = listOf("id"),
     )

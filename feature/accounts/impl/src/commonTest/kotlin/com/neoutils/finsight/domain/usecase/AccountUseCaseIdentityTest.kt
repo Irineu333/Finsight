@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.error.AccountError
@@ -10,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
 
 /**
  * The account use cases are identified by **id**, and that form is the one that
@@ -149,6 +152,7 @@ class AccountUseCaseIdentityTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = transactions,
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(date),
         )
 
         val error = assertIs<AccountException>(
@@ -168,12 +172,14 @@ class AccountUseCaseIdentityTest {
             accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(byIdLedger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(byIdLedger)),
+            clock = ClockOn(date),
         )(targetBalance = 100.0, adjustmentDate = date, accountId = account.id)
 
         AdjustBalanceUseCaseImpl(
             accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(byAccountLedger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(byAccountLedger)),
+            clock = ClockOn(date),
         )(targetBalance = 100.0, adjustmentDate = date, account = account)
 
         assertEquals(byIdLedger.adjustmentsByDate(), byAccountLedger.adjustmentsByDate())

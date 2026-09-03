@@ -214,6 +214,43 @@ class RegistrationFamilyOverTheProtocolTest {
     }
 
     /**
+     * **An `invoice_month` aimed at an account is refused, rather than carried to a build that has
+     * no invoice to put it on.**
+     *
+     * The sibling of the split above, and the one drop on this surface the form does not make:
+     * `TransactionForm.from` carries `invoiceDueMonth` through untouched, and the account branch of
+     * `BuildTransactionUseCaseImpl` returns without ever reading it. Silently, that is a purchase
+     * the caller placed on a named invoice, written onto no invoice at all, and answered as
+     * recorded.
+     */
+    @Test
+    fun `an invoice_month on an account is refused, naming the month and the account`() = runTest {
+        withRegistrationWorld { world, client ->
+            val before = world.database.entryDao().getAll()
+
+            val response = client.callTool(
+                "create_transaction",
+                """{"type":"expense","amount":90.00,"title":"Padaria","account_id":1,"invoice_month":"2026-04"}""",
+            )
+
+            assertTrue(response.isToolError(), "the invoice month was dropped and the posting written")
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "invoice_month" in reason && "account_id" in reason,
+                "the refusal does not name both arguments, so the agent cannot tell which to change: $reason",
+            )
+
+            assertEquals(
+                0,
+                world.transactionRepository.getAllTransactions().count { it.title == "Padaria" },
+                "the posting was written without the invoice the call named",
+            )
+            assertEquals(before, world.database.entryDao().getAll(), "the ledger moved anyway")
+        }
+    }
+
+    /**
      * **An income aimed at a card is refused for the card, not for an account nobody named.**
      *
      * This pair was never written silently: the form drops the card, leaves the target on an account
@@ -459,6 +496,86 @@ class RegistrationFamilyOverTheProtocolTest {
                 )
             }
         }
+
+    /**
+     * **An `invoice_month` given for a posting that does not sit on a card is refused, not
+     * swallowed.**
+     *
+     * The other drops on this surface happen in `TransactionForm.from`, and the refusals above
+     * stand in front of them. This one happens a step later: `BuildTransactionUseCaseImpl` returns
+     * from its account branch without ever reading `form.invoiceDueMonth`, so the month reaches
+     * nothing at all. What comes back is the answer written for the opposite case — everything the
+     * call did not name kept its value — about the one thing the call did name.
+     */
+    @Test
+    fun `an invoice_month on a posting that sits in an account is refused, not dropped`() = runTest {
+        withRegistrationWorld { world, client ->
+            val id = world.groceriesId
+
+            val response = client.callTool(
+                "update_transaction",
+                """{"id":$id,"invoice_month":"2026-04"}""",
+            )
+
+            assertTrue(
+                response.isToolError(),
+                "the invoice month went nowhere and the edit answered as complete: " +
+                    response.toolText(),
+            )
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "invoice_month" in reason && "card_id" in reason,
+                "the refusal names neither the argument that cannot apply nor what would make it " +
+                    "apply, so the agent cannot tell what happened to the month it gave: $reason",
+            )
+        }
+    }
+
+    /**
+     * **The same refusal when the account is where the call is moving the posting to.**
+     *
+     * The two arguments are consistent with each other only if read one at a time: a card posting
+     * does have invoices to move between, and this call takes that away in the same breath as it
+     * names one. The target the edit resolves to is what decides, not the one the posting had.
+     */
+    @Test
+    fun `an invoice_month named while the posting moves off the card is refused`() = runTest {
+        withRegistrationWorld { world, client ->
+            val card = world.cards.single()
+            val account = assertNotNull(
+                world.transactionRepository.getTransactionById(world.groceriesId)?.sourceAccount,
+                "the seeded expense sits in no account",
+            )
+
+            val purchase = client.callTool(
+                "create_transaction",
+                """{"type":"expense","amount":80.00,"title":"Livraria","card_id":${card.id},"date":"2026-03-10"}""",
+            )
+            assertTrue(
+                !purchase.isToolError(),
+                "the card purchase under test was refused: ${purchase.toolText()}",
+            )
+            val id = purchase.payload().at("transaction").identity()
+
+            val response = client.callTool(
+                "update_transaction",
+                """{"id":$id,"account_id":${account.id},"invoice_month":"2026-04"}""",
+            )
+
+            assertTrue(
+                response.isToolError(),
+                "the posting left the card, the invoice month went nowhere, and the edit " +
+                    "answered as complete: ${response.toolText()}",
+            )
+
+            val reason = assertNotNull(response.payload().text("reason"))
+            assertTrue(
+                "invoice_month" in reason && "account_id" in reason,
+                "the refusal does not name the two arguments that disagree: $reason",
+            )
+        }
+    }
 
     /**
      * **Erasing a classification is something the call can say, which is what makes the two

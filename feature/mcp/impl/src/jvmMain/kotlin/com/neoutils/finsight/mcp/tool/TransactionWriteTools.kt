@@ -125,7 +125,8 @@ internal class CreateTransactionTool(
         "card_id" to number("The card it was charged to, from list_cards. Expenses only."),
         "invoice_month" to text(
             "Which invoice a card purchase lands on, as `2026-04` — the month it falls due. " +
-                "Defaults to the card's open invoice.",
+                "Defaults to the card's open invoice. An account has no invoices, so giving " +
+                "this beside an account_id is refused.",
         ),
         "installments" to number("How many instalments to split a card purchase into. Defaults to 1."),
         "is_recurring" to yesOrNo(
@@ -185,6 +186,21 @@ internal class CreateTransactionTool(
             )
         }
 
+        // The same shape as the split above, and the one drop the form does not make: it carries
+        // `invoiceDueMonth` through untouched, and the account branch of the build returns without
+        // ever reading it. So the month reaches nothing, and "Recorded." is the answer for a
+        // purchase the caller placed on a named invoice and that landed on none.
+        val namedInvoiceMonth = arguments.monthOrNull("invoice_month")
+        if (namedInvoiceMonth != null && account != null) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "An invoice is a card affordance: give `invoice_month` with a " +
+                        "`card_id`, not with an `account_id`.",
+                ),
+                summary = summary,
+            )
+        }
+
         // The sheet drops the recurring mark when a purchase is split, and says why: paying in
         // instalments is already a repetition. It can drop it silently because it also stops
         // showing it. Nothing was ever shown here, so the same drop would be a template the
@@ -221,7 +237,7 @@ internal class CreateTransactionTool(
             creditCard = card,
             // Absent means the invoice the card is on right now, which is what the app's own
             // sheet pre-selects; the build step resolves or opens the cycle either way.
-            invoiceDueMonth = arguments.monthOrNull("invoice_month")
+            invoiceDueMonth = namedInvoiceMonth
                 ?: card?.let { invoiceRepository.getOpenInvoice(it.id)?.dueMonth },
             account = account,
             installments = installments,
@@ -382,7 +398,10 @@ internal class UpdateTransactionTool(
         ),
         "account_id" to number("Move it to this account, from list_accounts."),
         "card_id" to number("Move it to this card, from list_cards. Expenses only."),
-        "invoice_month" to text("Move a card posting to the invoice falling due in this month, as `2026-04`."),
+        "invoice_month" to text(
+            "Move a card posting to the invoice falling due in this month, as `2026-04`. " +
+                "Refused when the edit leaves the posting in an account, which has no invoices.",
+        ),
         required = listOf("id"),
     )
 
@@ -465,6 +484,30 @@ internal class UpdateTransactionTool(
             )
         }
 
+        // The one argument here the form does not drop. It carries `invoiceDueMonth` through
+        // untouched and the account branch of `BuildTransactionUseCaseImpl` returns without ever
+        // reading it, so the drop happens a step further down than every refusal above stands —
+        // and what comes back is the note written for the opposite case, saying that everything
+        // the call did not name kept its value, about the one thing it did name.
+        val namedInvoiceMonth = arguments.monthOrNull("invoice_month")
+        if (namedInvoiceMonth != null && card == null) {
+            val remedy = if (namedAccount != null) {
+                "This call puts the posting in an account: give `account_id` or `invoice_month`, " +
+                    "not both."
+            } else {
+                "This posting sits in an account: give a `card_id` to move it onto a card, or " +
+                    "leave `invoice_month` out."
+            }
+
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "An account has no invoices, and `invoice_month` moves a posting " +
+                        "between the invoices of the card it sits on. $remedy",
+                ),
+                summary = summary,
+            )
+        }
+
         // Absent leaves the classification as it is, which is what every other field does here; a
         // `category_id` of 0 is how the call says the posting has none, and the only way this edit
         // takes a classification away.
@@ -514,7 +557,7 @@ internal class UpdateTransactionTool(
             category = declaredCategory ?: carriedCategory,
             target = if (card != null) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT,
             creditCard = card,
-            invoiceDueMonth = arguments.monthOrNull("invoice_month")
+            invoiceDueMonth = namedInvoiceMonth
                 ?: stored.liabilityDimensionId?.let { dimensionId ->
                     invoiceRepository.getAllInvoices().firstOrNull { it.dimensionId == dimensionId }
                 }?.dueMonth

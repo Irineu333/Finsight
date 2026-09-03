@@ -1,7 +1,7 @@
 # Notas de versão — Finsight
 
-Histórico de funcionalidades e correções, versão a versão, do primeiro commit até a
-versão que está em produção hoje.
+Histórico de funcionalidades e correções, versão a versão, do primeiro commit até o que
+está no `main` hoje.
 
 O projeto **não usa tags git**: a versão é declarada em `app/android/build.gradle.kts`
 (`versionName` / `versionCode`), em `iosApp/project.yml` (`MARKETING_VERSION`) e em
@@ -11,7 +11,208 @@ alcançáveis a partir do commit que subiu a versão e não alcançáveis a part
 Uma versão ainda em preparação separa o que entrou por cada release candidate; quando
 ela sai, as seções se consolidam.
 
-Estado atual: **1.10.0** em produção. Nenhum ciclo aberto depois dela.
+Estado atual: **1.10.0** em produção, com um ciclo aberto depois dela e ainda sem número
+declarado.
+
+---
+
+## Sem versão — em preparação
+
+**Nenhum número foi subido ainda**: `versionCode` 34 e `versionName` 1.10.0 continuam nos três
+lugares onde a versão vive — `app/android/build.gradle.kts:20-21`, `iosApp/project.yml:22-23` e
+`app/desktop/build.gradle.kts:55`. Esquema do banco: **14**, o mesmo de 1.10.0 — nenhuma migração
+neste ciclo. São os **193 commits** alcançáveis a partir do `main` e não a partir de `16559741e`, o
+commit que subiu 1.10.0 — escritos entre 20/08/2026 e 02/09/2026, porque o ramo do backup local foi
+aberto durante o ciclo de 1.10.0 e mesclado depois que ela fechou.
+
+O ciclo em que o acervo passou a caber num arquivo, e o app passou a guardar cópias dele.
+
+### Backup local
+
+- **Exportar e restaurar o acervo num arquivo**, com o mesmo arquivo servindo nas três plataformas.
+  O backup é o banco inteiro — plano de contas, transações, entries, dimensões, categorias, cartões,
+  faturas, parcelamentos, orçamentos, recorrentes, moedas e taxas — e deliberadamente não leva as
+  preferências que vivem fora do banco: moeda base, layout do dashboard, estado de sincronização de
+  taxas, estado da janela. Restaurar numa instalação de moeda base diferente troca o acervo e deixa
+  aquela preferência onde estava.
+- **Um arquivo só altera o acervo depois de aprovado por inteiro**: ser um SQLite legível e
+  íntegro, declarar um schema que este app saiba abrir, sobreviver à cadeia de migrações e satisfazer
+  os invariantes do razão — `Σ entries = 0` por `(transação, moeda)`, nenhuma entry apontando para
+  dimensão inexistente, nenhuma violação de chave estrangeira. A verificação corre numa conexão à
+  parte, sobre o candidato: a corrupção de um arquivo escolhido não tem como ser atribuída ao banco
+  em uso. Um arquivo de uma versão mais nova do app é recusado dizendo que o app é que está velho, e
+  não que o arquivo é inválido.
+- **A confirmação identifica o arquivo antes de perguntar**: data de criação, plataforma de origem,
+  versão do app que o gerou e as contagens do acervo. A pergunta não é feita antes da aprovação —
+  perguntar sobre um arquivo que ainda pode ser recusado transfere ao usuário uma decisão que o app
+  ainda não sustenta.
+- **Restaurar não reinicia o app.** A substituição roda na conexão de escrita do próprio Room, numa
+  transação: `ATTACH` no arquivo aprovado, cada tabela esvaziada e refeita, `DETACH` no `finally`.
+  Os flows que já estavam coletando reemitem sozinhos, e nada é fechado, reconstruído ou invalidado —
+  o que também é o que faz o caminho valer no iOS, onde reiniciar o processo por conta própria não é
+  admissível.
+- **O app parou de delegar backup à plataforma.** No Android, `allowBackup="false"` mais os dois
+  formatos de regra — `backup_rules.xml` para a API 24–30 e `data_extraction_rules.xml` para a 31+,
+  este com `<cloud-backup>` e `<device-transfer>` escritos por extenso, porque uma seção ausente não
+  é uma seção desligada. No iOS, o arquivo do banco é marcado com `NSURLIsExcludedFromBackupKey`. A
+  consequência é dita na tela em vez de descoberta na troca de aparelho: recuperar os dados em outro
+  aparelho passou a depender de um arquivo que esteja fora dele.
+- **O êxito é dito, e o não-êxito não.** Uma exportação que salvou diz que salvou, e uma restauração
+  diz que concluiu — nenhuma das duas deixa prova na tela. Fechar o seletor sem escolher destino não
+  diz nada: quem não salvou nada não falhou em nada, e "backup concluído" ali afirmaria um arquivo
+  que não existe.
+- A porta fica em **Ajustes**, e as duas telas ficam sob o grafo da própria feature, pendurado no de
+  Ajustes: backup não é uma seção do app, é uma porta dentro de uma — e é isso que mantém Ajustes
+  selecionado na cromagem enquanto elas estão abertas.
+
+### O cofre
+
+- **O cofre nasce desligado**, em toda instalação, e enquanto estiver assim nenhum gatilho escreve
+  nada. Ligá-lo põe os três gatilhos em vigor de uma vez, com valores que ninguém precisa escolher;
+  o periódico e o preventivo podem ser desligados depois, separadamente.
+- **A oferta chega onde o risco está.** A primeira ação destrutiva traz a oferta junto da
+  confirmação, e aceitar ali liga o cofre inteiro sem passar por tela de ajustes. Recusar não retira
+  a oferta — muda o tom dela: a que ninguém recusou chega marcada, e a recusada chega desmarcada e
+  diz que foi.
+- **Três gatilhos**: a abertura depois de um prazo (padrão de 3 dias, entre 1, 3, 7 e 15), a ação
+  destrutiva prestes a acontecer, e a atualização que vai reescrever o banco. A tela não promete "a
+  cada N dias" — nenhuma plataforma suportada garante execução fora do uso do app —, e sim que a
+  cópia acontece quando o app é aberto.
+- **Uma regra só decide se há o que copiar**: se alguma **linha nova** foi criada desde a última
+  cópia. Não é frugalidade — uma exclusão nunca torna a cópia anterior insuficiente, porque ela é
+  justamente a mais completa das duas. Vinte exclusões seguidas produzem uma cópia; abrir o app por
+  dias sem lançar nada não produz nenhuma; renomear uma categoria também não. Editar um lançamento
+  conta, porque reescrever as partidas dele é criar outras.
+- **Quais ações são destrutivas é do domínio, por classificação.** O inventário é completo de
+  propósito: uma ação não coberta está escrita como não coberta, com o motivo na sua classe — as
+  exclusões que o domínio já recusa quando há histórico (conta, cartão, categoria, orçamento,
+  recorrente) não disparam nada, porque nada de digitado vai junto. A tela decide *se* o gatilho
+  vale, nunca *quais* ações ele cobre, e uma exclusão acrescentada ao app nasce coberta pela classe
+  que receber.
+- **Antes de uma migração**, com o cofre ligado, o banco é copiado antes de a cadeia rodar — numa
+  conexão somente-leitura e por `VACUUM INTO`, porque abrir para perguntar se há migração pendente já
+  teria migrado. Essa cópia vai para o armazenamento do próprio app, mesmo com uma pasta escolhida,
+  não entra na contagem da retenção e só é substituída pela cópia da migração seguinte. Ela aparece
+  no histórico de qualquer jeito: é justamente ela que se procura quando um número deixa de bater
+  depois de uma atualização.
+- **Dois destinos, e a tela diz o que cada um não cobre.** O armazenamento do próprio app, que é
+  onde o cofre começa, ou uma pasta apontada pelo usuário — nas três plataformas. E são **três**
+  frases, não duas: no desktop o armazenamento do app é uma pasta no diretório do usuário, que
+  desinstalação nenhuma esvazia, então ali a tela não afirma que desinstalar leva as cópias junto.
+- **Uma captura só é dada como boa depois de a cópia ser lida de volta**, pelas mesmas verificações
+  do fluxo de restauração — um destino que aceita o arquivo prova que existe um arquivo com aquele
+  nome, não que o conteúdo dele é um banco deste app. Uma cópia provadamente ruim não move o instante
+  da última captura bem-sucedida e não remove nenhuma cópia existente; uma verificação que **não pôde
+  correr** não é reprovação, porque acusar falsamente uma cópia possivelmente boa, no instante em que
+  se informa que o backup deu certo, é pior que a checagem que não aconteceu.
+- **O histórico tem tela própria**, lida do destino no momento em que ela abre — e não de uma tabela,
+  que viajaria dentro do backup e voltaria no tempo com a restauração. Cada cópia diz quando foi
+  feita, quanto ocupa e o que a distingue; a anterior a uma migração se identifica como tal. Dali uma
+  cópia é restaurada, removida, ou entregue a um destino escolhido na hora, pelo mesmo caminho da
+  exportação manual — o que tira do aparelho uma cópia que o cofre guardou, sem capturar outra.
+- **Duas portas fora dos gatilhos**: capturar agora, e trazer para o destino um arquivo que a pessoa
+  tenha em outro lugar. As duas ficam à vista em todos os estados da tela — inclusive sem nenhuma
+  cópia e com o destino ilegível, que é justamente quando alguém as procura — e nenhuma escreve nada
+  com o cofre desligado. Capturar agora não é recusada porque nada mudou desde a última cópia: num
+  controle que a pessoa acabou de tocar, essa pré-condição produziria um botão que não faz nada.
+- **Retenção configurável** — 5, 10, 20 (o padrão) ou não remover nada —, a mesma nos dois destinos,
+  e aplicada só **depois** de uma captura bem-sucedida, de modo que a remoção esteja sempre ancorada
+  na existência de uma cópia nova e o destino nunca fique vazio por efeito dela.
+- **A pasta é apontada uma vez e reencontrada.** O mesmo apontamento serve para configurar, para
+  reconectar quando o acesso se perdeu e para reencontrar um histórico numa instalação nova — apontar
+  uma pasta que já tem cópias faz o histórico dela aparecer inteiro. O acesso é verificado na
+  abertura, e não só na hora de escrever; perdido, o app diz e oferece as duas saídas, e enquanto a
+  resposta não vem continua capturando no armazenamento próprio, declarando que é provisório.
+- **Trocar de pasta copia, e nunca depende da antiga.** A migração leva as cópias mais recentes que a
+  retenção comporta, não remove nada da pasta anterior — uma falha no meio deixa arquivos nos dois
+  lugares, nunca em nenhum — e funciona com a pasta anterior inacessível.
+- **A tela diz sempre quando foi o último backup que deu certo**, e em que destino: um cofre pode
+  parar sem defeito e sem ação do usuário, e esse instante é o único meio pelo qual a pessoa
+  descobre. O aviso de atraso só aparece com a verificação na abertura ligada — desligada, não há
+  intervalo em vigor contra o qual atrasar.
+
+### Um botão de ação para o app inteiro
+
+- **De dez botões para um.** Um vivia na casca e nove no `Scaffold` da sua tela — contas, cartões,
+  categorias, orçamentos, recorrentes, parcelamentos, moedas, taxas e suporte —, e em janela larga
+  dois botões idênticos ficavam na mesma janela: a rail carregava o da casca no `header` enquanto a
+  tela desenhava o seu. Agora a casca é dona do único botão do app: a tela publica as ações que
+  oferece **enquanto está em foco**, pelo canal de chrome, e a casca as desenha sem nomear a feature
+  que as originou.
+- **A forma é uma só, e a lista decide o que acioná-lo faz.** Nenhuma ação, e o botão não aparece;
+  uma, e acioná-lo executa a ação e ele carrega a identidade dela; duas ou mais, e ele abre um menu
+  que lista todas, a primeira inclusive, com rótulo visível. A quantidade não altera a silhueta. Três
+  telas têm menu — contas, com três ações, cartões e categorias, com duas cada —, e nelas a primeira
+  ação passou a custar dois toques.
+- **A ação universal.** Uma tela que não publica nada recebe *registrar transação* em vez de ficar
+  sem botão, o que estendeu ao celular o alcance que o desktop já tinha. Ficar sem botão virou um ato
+  explícito na configuração de chrome, e deixou de ser a consequência de não ter ação própria — ou de
+  o destino não ser uma aba primária, regra que agora vale só para a bottom bar.
+- **Uma tela que ancora o próprio controle no rodapé suprime o botão** — o envio de uma conversa, o
+  "Gerar" do relatório. Não é aparência: a casca desenha por cima, e o toque ia para a superfície de
+  cima, de modo que o usuário mirava o controle da tela e recebia a ação universal.
+- **Onde o botão fica**: central e ancorado à bottom bar quando ela está visível, no canto do
+  conteúdo quando não, e `header` da rail em janela larga — exatamente onde cada um dos dez já
+  estava. O caminho entre as duas posições é uma figura só, `0` na barra e `1` no canto, e é isso que
+  faz a volta refazer a ida ao contrário em vez de tomar outro caminho.
+- **A chrome passou a poder não ser dita.** Uma tela que ainda está lendo publica `null` em vez de um
+  palpite que a leitura desmente: com o palpite a chrome se move duas vezes, com o silêncio ela se
+  move uma, quando a resposta chega.
+- **Pré-seleção** nas ações que abrem o formulário de outra feature: a transação aberta do menu de
+  cartões nasce com o cartão em evidência, e a do menu de contas com a conta em evidência — o foco do
+  pager, e não o argumento de rota, que fica velho assim que o usuário desliza.
+
+### Arquitetura
+
+- **`:core:database` ganhou o mecanismo de snapshot**: capturar o próprio conteúdo num arquivo,
+  carimbá-lo com a origem, verificar um candidato em isolamento e fazer o banco em uso passar a valer
+  o conteúdo dele. Ele não conhece cofre nem tela — a promessa feita a quem digitou os lançamentos é
+  da capacidade `local-backup`, e as cópias que o app guarda sozinho são da `automatic-backup`.
+- **`:core:ledger` ganhou um prelúdio de remoção.** Uma remoção de transação se anuncia **antes** de
+  as linhas saírem, e o silêncio é a versão que fala: quem não passa o argumento anuncia. Calar exige
+  um valor com nome próprio e um `@OptIn` que o compilador cobra no ponto de chamada — porque uma
+  cópia preventiva tirada depois registra o estado já mutilado.
+- **`:feature:backup`**, api e impl, com o domínio do cofre e os serviços de arquivo de cada
+  plataforma. Ajustes hospeda as suas telas vendo apenas o `api`: o registro é pedido ao entry
+  point, e o `impl` do backup continua invisível para todo mundo menos a casca.
+- **Três testes estruturais**, no lugar de regras que nada mais tem como impor: nenhum `Scaffold` de
+  feature declara `floatingActionButton`; toda chave de string existe nos dois idiomas; e o backup
+  mora sob Ajustes, com as duas telas dentro do próprio grafo.
+- Suíte E2E de **19 fluxos**, quatro deles novos e do backup — alcance da tela, o cofre da chave à
+  primeira cópia, o gatilho periódico e o preventivo —, mais um subfluxo para o toque a mais que as
+  três telas com menu passaram a exigir. Não houve rodada da suíte neste ciclo depois do último
+  commit; o que está registrado são as rodadas de cada change, nas suas tarefas.
+- `./gradlew jvmTest` verde: **2.263 testes, 0 falhas**, rodado neste estado da árvore.
+- O backlog ganhou **12 entradas** no ciclo — três da revisão do cofre, sete da varredura de
+  cromagem, a do painel de detalhe e a da supressão do botão em relatórios —, duas delas corrigidas e
+  arquivadas no próprio ciclo. São **76 abertos e 11 arquivados**.
+
+### Correções
+
+- Cruzar 600dp ou 840dp cortava a cromagem de um quadro para o outro, em vez de animá-la: a largura
+  da janela particionava a casca em ramos, e um ramo não anima — insere e remove. Estreitar era pior
+  que cortar, porque o slot da bottom bar compunha pela primeira vez naquele quadro e se semeava a
+  partir de um pai que ainda dizia que havia barra, de modo que uma barra inteira aparecia só para
+  tocar a própria saída.
+- A configuração de relatório escondia o botão de ação também em janela larga, onde ele é o `header`
+  da rail e não há com o que colidir.
+- O card de um problema no Suporte não acusava o toque dentro dos próprios limites: o clique estava
+  no modifier do chamador, que o `Surface` encadeia antes do `clip`, então o ripple pintava os cantos
+  quadrados — e um `Card` sem `onClick` não entrega interação alguma à própria elevação.
+- Remover uma taxa de câmbio não tinha confirmação nenhuma — era a única exclusão de trabalho
+  digitado no app sem uma.
+- A exclusão de uma fatura chamava de "futura" uma fatura retroativa, justamente a que já carrega
+  transações lançadas, e não dizia que elas vão junto; agora diz quantas, exceto quando não há
+  nenhuma. A remoção também passou a ser uma transação só, em vez de uma por linha.
+- Uma compra parcelada recusada pelo razão registrava a recusa no Crashlytics e parava, deixando a
+  folha aberta e muda — enquanto a compra única idêntica, vinte e nove linhas abaixo, se explicava.
+- `removeAllNaming` não tinha chamador nenhum, e chamá-la teria removido as taxas de uma moeda
+  **fora** da transação que a exclusão abre para que as duas remoções aconteçam ou nenhuma.
+- Três figuras que um driver E2E só conseguia afirmar como presentes, nunca como o número que dizem,
+  porque a `testTag` estava no contêiner e não no nó que renderiza o texto.
+
+Não estão listadas as correções que reparam código escrito neste mesmo ciclo e que build nenhuma
+carregou: as entradas acima descrevem o comportamento que ficou.
 
 ---
 

@@ -3,7 +3,8 @@
 App de finanças em Kotlin Multiplatform (Android/Desktop/iOS) com Compose Multiplatform.
 
 Produção atual: **1.10.0**.
-Nenhum ciclo aberto depois dela.
+Há um ciclo aberto depois dela, ainda sem número declarado: as linhas com `—` na coluna de versão
+já estão no `main` e não saíram em release nenhuma.
 
 ## Entregue
 
@@ -63,6 +64,10 @@ Nenhum ciclo aberto depois dela.
 | **Ajuste no detalhe único**     | Um ajuste abre o mesmo detalhe de qualquer operação, nomeado pelo alvo que corrige    | Funcionalidade | 1.10.0        |
 | **Telemetria de arquivar**      | Arquivar deixou de ser reportado como apagar, e reabrir deixou de não ser reportado   | Arquitetura    | 1.10.0        |
 | **Backup local**                | Exportar e restaurar o acervo num arquivo, com o backup automático da plataforma desligado | Funcionalidade | —             |
+| **Cofre de backups**            | O app guarda cópias sozinho por três gatilhos, com retenção e histórico no destino    | Funcionalidade | —             |
+| **Botão de ação único**         | Um FAB para o app: a tela publica as ações, a casca decide a forma e a posição        | Funcionalidade | —             |
+| **Snapshot do banco**           | Capturar, verificar em isolamento e substituir o conteúdo, sem reiniciar o app        | Arquitetura    | —             |
+| **Prelúdio de remoção**         | O razão anuncia a remoção antes das linhas saírem; calar exige `@OptIn`               | Arquitetura    | —             |
 
 ## Planejado
 

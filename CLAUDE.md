@@ -78,7 +78,8 @@ enforced mechanically by convention plugins in `build-logic`
 
 Features: home (tab chrome: `HomeGraph`, `NavigationItem`, `HomeChromeHost`, FAB), support,
 categories, budgets, accounts, creditcards (incl. invoices/installments/invoiceTransactions),
-recurring, transactions, report, dashboard, settings.
+recurring, transactions, report, dashboard, settings, backup (manual export, restore, the
+automatic vault, reached from settings).
 
 > Normative reference: **`feature/README.md`** (dependency rules, entry points, shell role).
 

@@ -205,6 +205,22 @@ internal object McpSurface {
             reason = "Repeating a lost call duplicates the posting. Acknowledged, not solved — " +
                 "which is why the activity log puts the two side by side rather than hiding one.",
         ),
+        McpSurfaceExclusion(
+            capability = "Capturing and configuring backups — manual export, the automatic " +
+                "vault, retention",
+            kind = McpSurfaceExclusion.Kind.OUT_OF_SCOPE,
+            reason = "Harmless on its own, since it only copies the archive out, and simply " +
+                "not reached.",
+        ),
+        McpSurfaceExclusion(
+            capability = "Restoring the database from a backup",
+            kind = McpSurfaceExclusion.Kind.OUT_OF_SCOPE,
+            reason = "Not reached, though it carries the same shape of damage as writing a " +
+                "rate or moving the base currency: one call replaces everything in the ledger " +
+                "at once, irreversibly outside the app. Acknowledged rather than forbidden by " +
+                "a written requirement the way those two are — a decision for whoever owns " +
+                "the surface.",
+        ),
     )
 
     /** The exclusions a requirement forbids offering, as opposed to those merely not reached. */

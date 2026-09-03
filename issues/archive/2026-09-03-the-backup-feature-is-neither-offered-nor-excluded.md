@@ -2,6 +2,7 @@
 area: mcp
 severity: low
 type: ux
+verdict: fixed
 ---
 
 # A feature de backup não está nem oferecida pela superfície MCP, nem declarada como exclusão
@@ -80,3 +81,21 @@ que este achado resolve.
 Acrescentar uma entrada (ou duas, se exportar e restaurar merecerem tratamentos diferentes) em
 `McpSurface.exclusions`, e incluir `backup` na lista de features do `CLAUDE.md`. Não
 vinculante — quem decide o perímetro da superfície escolhe a forma.
+
+## Desfecho
+
+**Causa real** — a lacuna era exatamente a descrita: a feature de backup nunca foi varrida
+contra a superfície MCP quando `McpSurface.exclusions` foi escrita, e `CLAUDE.md` nunca a citou.
+
+**Mudança** — duas entradas novas em `McpSurface.exclusions`, ambas `OUT_OF_SCOPE`: capturar e
+configurar backups (export manual, cofre automático, retenção — inofensivo, simplesmente não
+alcançado), e restaurar o banco (não alcançado, com a ressalva honesta de que carrega o mesmo
+formato de dano que escrever uma taxa ou mudar a moeda base, mas sem um `MUST NOT` escrito em
+`openspec/specs/mcp-tool-surface/spec.md` que sustente `WITHHELD` — isso ficou registrado como
+decisão em aberto, não resolvida aqui). `CLAUDE.md` passou a citar `backup` na lista de features.
+
+**Prova** — `McpSurfaceIsClosedTest` (que exige razão não vazia em toda exclusão, e verifica o
+conjunto `WITHHELD` contra a constante do teste) segue verde depois da mudança — rodado via
+`./gradlew :feature:mcp:impl:jvmTest --tests "*.McpSurfaceIsClosedTest"`.
+
+**Commit** — `Fix(Mcp): declare backup and restore as out-of-scope capabilities`

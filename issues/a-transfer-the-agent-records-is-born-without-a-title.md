@@ -27,6 +27,13 @@ de repassá-lo.
 omite o argumento, deixando o default. Não há recusa nem normalização envolvida — o parâmetro
 simplesmente não atravessa a superfície.
 
+A ferramenta não foi escrita incompleta: `8f087f3aa` (16/08) a criou com os cinco parâmetros que a
+operação tinha então, e ela nunca mais foi editada. O título entrou seis dias depois, em
+`c48076142` (22/08), que tocou trinta e um arquivos entre domínio, tela, `core/ui` e relatório —
+e nenhum em `feature/mcp`. É o caso mais simples de
+`capabilities-the-app-offers-and-the-agent-cannot-reach.md`: nada relaciona uma capacidade nova à
+superfície, então nada ficou vermelho.
+
 ## Evidência
 
 - `TransferBetweenAccountsUseCase.invoke()` — `title: String? = null`, com KDoc próprio
@@ -34,6 +41,8 @@ simplesmente não atravessa a superfície.
 - `TransferBetweenAccountsViewModel.submit()` — `title.trim().takeIf { it.isNotEmpty() }`
 - `TransferTool.inputSchema` — cinco parâmetros, nenhum é o título
 - `TransferTool.call()` — chama `transferBetweenAccounts(...)` sem `title`
+- `8f087f3aa` (16/08) — cria `AccountOperationTools.kt`; é o único commit que o arquivo tem
+- `c48076142` (22/08) — acrescenta o título ao app, sem tocar `feature/mcp`
 
 ## Consequência
 

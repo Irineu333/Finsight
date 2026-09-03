@@ -2,6 +2,7 @@
 area: mcp
 severity: medium
 type: ux
+verdict: fixed
 ---
 
 # O agente não tem como passar de uma captura preventiva que falhou
@@ -76,3 +77,48 @@ Duas saídas independentes, a primeira mais barata: traduzir `PreventiveCaptureE
 `AgentRefusal` descritivo, como as demais recusas do domínio, em vez de deixá-la cair no catch-all
 genérico — isso já tornaria o diagnóstico possível. A segunda, maior: dar às três tools uma forma
 explícita de dizer "prosseguir sem cópia", espelhando a pergunta que a tela faz. Não vinculante.
+
+## Desfecho
+
+**Causa real** — a mecânica registrada estava certa inteira; a `## Sugestão` errou o alvo na
+segunda metade. O defeito é só a **tradução ausente**: `PreventiveCaptureException` é a única
+recusa do domínio que chega como exceção, `writing {}` trata apenas `BadArgument`, e nada entre a
+tool e o catch-all de `AgentActivityJournal` a reconhece.
+
+O travamento em si **não é defeito** — é o cofre fazendo o que existe para fazer. Três contratos no
+código dizem que só uma pessoa pode responder "prosseguir sem cópia": `PreventiveBackup.kt:31-33`
+(*"only the person told about the failure may say to go on without a copy"*), `CaptureRefusal.kt:18-19`
+(*"Nobody else may answer it"*) e `McpSurface.kt:208-214`, que já declara capturar e configurar
+backup como fora do escopo desta superfície. Um `without_copy` no fio — a segunda saída sugerida —
+daria ao agente, uma chamada por vez, exatamente a salvaguarda que ele não pode nem configurar, e
+tornaria falso o comentário que justifica o `@OptIn(WithheldAnnouncement::class)` em
+`DeleteTransactionUseCaseImpl.kt:18-19` (*"The person was already offered the copy and said to go on
+without it"*). Fechou-se então pelo primeiro ramo do `DEVERIA`, e a ausência do `without_copy`
+passou a ser decisão declarada em vez de omissão.
+
+**Mudança** — `removing(summary) { }` em `mcp/tool/WriteSupport.kt`, ao lado do `writing {}` cuja
+lacuna ela fecha: captura `PreventiveCaptureException` e a traduz num `AgentRefusal` que diz que
+nada foi removido, cita as palavras do próprio cofre (`refused.message`, sem reescrevê-las, como
+`AgentRefusal.fromDomain` faz com as demais) e aponta onde a pessoa resolve. Passam por ela as três
+tools que removem lançamentos — `DeleteTransactionTool`, `DeleteInstallmentTool` e
+`DeleteInvoiceTool` (o arquivo do bug a chamava `DeleteFutureInvoiceTool`; a classe no disco é
+`DeleteInvoiceTool`, em `InvoiceWriteTools.kt`) —, cada uma passando o resumo legível que já
+calculava, o que de quebra tira o `summary = tool.name` do registro de atividade. `feature/mcp/impl`
+ganhou `implementation(projects.feature.backup.api)` no `jvmMain`: sem o tipo não há o que capturar.
+Nenhum `inputSchema` mudou. `docs/mcp-tool-surface.md` passa a declarar a recusa e a ausência
+deliberada do `without_copy`, uma vez para a família inteira em vez de três.
+
+**Prova** — `PreventiveCaptureReachesTheAgentTest` (novo, em `feature/mcp/impl/src/jvmTest`), pelo
+fio, contra o registro de produção com só as três remoções religadas a um cofre que não grava. Seis
+testes, **cinco vermelhos antes da mudança**, com a mensagem deste arquivo palavra por palavra:
+`"the vault's refusal fell through to the journal's catch-all… Actual: The operation could not be
+completed."` nas três tools, o `payload()` estourando por o texto não ser JSON, e `"the tool's name
+stood in for the posting… Actual: delete_transaction"`. O sexto — nada é removido enquanto a cópia é
+devida — nasceu verde de propósito: guarda a metade do comportamento que a correção não podia mexer.
+
+Rodados `:feature:mcp:impl:jvmTest --tests "*.PreventiveCaptureReachesTheAgentTest"` (6 verdes) e a
+suíte inteira `./gradlew jvmTest`: **2196 testes, 0 falhas, 0 erros** em 341 arquivos de resultado.
+A árvore estava compartilhada com outras correções em voo (`stringOr`/título vazio, `invoice_month`),
+e a suíte verde inclui as três.
+
+**Commit** — nenhum: a mudança ficou no working tree para revisão, a pedido.

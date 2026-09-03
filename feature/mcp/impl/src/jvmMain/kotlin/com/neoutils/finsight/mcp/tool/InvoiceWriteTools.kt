@@ -130,18 +130,20 @@ internal class DeleteInvoiceTool(
         // The use case answers a typed `InvoiceException`, which is a `Throwable` — so the one
         // shape every write reports through holds it as it is, and the refusal that reaches the
         // agent is the invoice's own words.
-        deleteFutureInvoice(id).reported(
-            summary = summary,
-            payload = {
-                AgentRemovalAnswer(
-                    removed = "invoice",
-                    id = id,
-                    name = "${stored.creditCard.name} — ${stored.dueMonth}",
-                    alsoRemoved = listOf("every posting that had been booked into it"),
-                    note = "Removed. The cycle had not started, so nothing settled was lost.",
-                )
-            },
-            reference = { reference(AgentActivity.Reference.Kind.INVOICE, id) },
-        )
+        removing(summary) {
+            deleteFutureInvoice(id).reported(
+                summary = summary,
+                payload = {
+                    AgentRemovalAnswer(
+                        removed = "invoice",
+                        id = id,
+                        name = "${stored.creditCard.name} — ${stored.dueMonth}",
+                        alsoRemoved = listOf("every posting that had been booked into it"),
+                        note = "Removed. The cycle had not started, so nothing settled was lost.",
+                    )
+                },
+                reference = { reference(AgentActivity.Reference.Kind.INVOICE, id) },
+            )
+        }
     }
 }

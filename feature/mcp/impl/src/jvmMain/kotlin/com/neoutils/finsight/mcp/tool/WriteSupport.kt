@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.mcp.McpToolResult
 import com.neoutils.finsight.mcp.surface.AgentRefusal
@@ -103,6 +104,49 @@ internal suspend fun writing(block: suspend () -> McpToolResult): McpToolResult 
     } catch (bad: BadArgument) {
         refusedWith(bad.refusal, summary = bad.refusal.reason)
     }
+
+/**
+ * Runs the removal a tool was asked for, turning a copy the vault could not take into the refusal
+ * that says so.
+ *
+ * [PreventiveCaptureException] is the one refusal of the domain that arrives as a throw, and it is
+ * thrown for a reason: the copy is owed *before* the rows go, so a caller free to leave the refusal
+ * unread would be the one destroying something with nothing behind it. A screen answers it by asking
+ * the person — that is `CaptureRefusal`, and only their yes runs the removal again with the capture
+ * skipped. **This surface has nobody to ask, and does not ask on their behalf**: it reaches no tool
+ * that touches the vault, because capturing and configuring backups is declared out of scope
+ * ([McpSurface][com.neoutils.finsight.mcp.McpSurface]), and a flag that skipped the copy per call
+ * would hand an agent the very safeguard the user switched on, one removal at a time.
+ *
+ * **So the refusal is where the agent's part ends, and naming it is the whole of this.** Left to the
+ * journal's catch-all the removal comes back as *"the operation could not be completed"* — a
+ * sentence with nothing in it about a copy, a vault or a backup. Told that and nothing else, an
+ * agent looks for the fault in the posting it was asked to remove and reports the data as broken.
+ * Told what actually stopped it, it has one thing to relay and the person has one thing to fix.
+ */
+internal suspend fun removing(
+    summary: String,
+    remove: suspend () -> McpToolResult,
+): McpToolResult = try {
+    remove()
+} catch (refused: PreventiveCaptureException) {
+    // The vault's own words, for the reason `AgentRefusal.fromDomain` uses the domain's: a second
+    // wording maintained here would be a second answer to "why not". The trailing stop is this
+    // sentence's, because the messages it quotes carry none.
+    val why = refused.message?.takeIf { it.isNotBlank() }?.trimEnd('.')
+
+    refusedWith(
+        AgentRefusal(
+            reason = "Nothing was removed. The preventive backup vault is on, so a copy of the " +
+                "archive is owed before a deletion, and this one could not be taken" +
+                (why?.let { ": $it" } ?: "") + ". Repairing the destination or switching the " +
+                "vault off is done in the app's backup settings, which no tool of this surface " +
+                "reaches — a person has to answer this one before the removal can be asked for " +
+                "again.",
+        ),
+        summary = summary,
+    )
+}
 
 /** A reference to what an act produced, so the user reaches the posting from the log. */
 internal fun reference(kind: AgentActivity.Reference.Kind, id: Long) =

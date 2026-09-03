@@ -75,6 +75,14 @@ kotlin {
             implementation(projects.feature.report.api)
             implementation(projects.feature.transactions.api)
 
+            // The one refusal of the domain that arrives as a throw rather than in an
+            // `Either`: the copy owed before a removal could not be taken. A screen answers
+            // it by asking the person; this surface has nobody to ask and no tool that
+            // reaches the vault, so it translates the exception into the refusal that says
+            // as much. Without the type there is nothing to catch, and the removal comes
+            // back as "the operation could not be completed".
+            implementation(projects.feature.backup.api)
+
             // Every write use case answers `Either`, so the type is on the signature of
             // everything the registration family calls.
             implementation(libs.arrow.core)

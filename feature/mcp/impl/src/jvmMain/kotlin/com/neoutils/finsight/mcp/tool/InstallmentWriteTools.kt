@@ -254,17 +254,21 @@ internal class DeleteInstallmentTool(
                 summary = "delete installment $id",
             )
 
-        deleteInstallment(id).reported(
-            summary = "installment $id, ${stored.count} shares of ${stored.totalAmount}",
-            payload = {
-                AgentRemovalAnswer(
-                    removed = "installment",
-                    id = id,
-                    alsoRemoved = listOf("every posting that belonged to the plan"),
-                    note = "Removed, with all ${stored.count} of its postings.",
-                )
-            },
-            reference = { reference(AgentActivity.Reference.Kind.INSTALLMENT, id) },
-        )
+        val summary = "installment $id, ${stored.count} shares of ${stored.totalAmount}"
+
+        removing(summary) {
+            deleteInstallment(id).reported(
+                summary = summary,
+                payload = {
+                    AgentRemovalAnswer(
+                        removed = "installment",
+                        id = id,
+                        alsoRemoved = listOf("every posting that belonged to the plan"),
+                        note = "Removed, with all ${stored.count} of its postings.",
+                    )
+                },
+                reference = { reference(AgentActivity.Reference.Kind.INSTALLMENT, id) },
+            )
+        }
     }
 }

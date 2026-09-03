@@ -186,6 +186,16 @@ correspondente, do razão.
 *remover definitivamente*, sem qualificar entidade, e enumera em "registrar e editar" apenas
 *criar e alterar*.
 
+As três que removem lançamentos — `delete_transaction`, `delete_installment`, `delete_invoice` —
+passam antes pelo cofre de backup preventivo, e o cofre pode recusar. Quando a cópia devida não
+pode ser gravada, `PreventiveCaptureException` sobe do domínio como exceção, e `removing`
+(`WriteSupport.kt`) a traduz numa recusa que **nomeia a cópia** em vez de deixá-la cair no
+catch-all de `AgentActivityJournal`, que responderia *"the operation could not be completed"* —
+sem pista de que o problema é o cofre. Nada é removido. **Não existe `without_copy` na
+superfície**, e a ausência é decisão, não esquecimento: quem responde "prosseguir sem cópia" é a
+pessoa diante do modal (`CaptureRefusal`, cujo contrato diz que ninguém mais pode responder), e
+configurar o cofre já está declarado fora de escopo em `McpSurface`.
+
 | Ferramenta | Entrada | Decide | Adapta / traz |
 |---|---|---|---|
 | `create_transaction` | `type`, `amount`, `date?`, `title?`, `category_id?`, `account_id?` \| `card_id?`, `invoice_month?`, `installments?`, `is_recurring?` | ✚ **`RegisterTransactionUseCase`** — despacha para ✔ `AddInstallmentUseCase`, ✔ `StartRecurringFromTransactionUseCase` ou ✔ `BuildTransactionUseCase` + `createTransaction` | monta `TransactionForm` a partir de ids. **O despacho é inteiro do use case**: a ferramenta lê `installments > 1` apenas para recusar o que o domínio não modela — parcelas numa conta, parcelas ao lado de `is_recurring` —, nunca para decidir no que um formulário válido vai dar. **Traz:** o que foi criado — uma transação ou as N do parcelamento, e **uma** entrada no registro de atividade |

@@ -576,17 +576,21 @@ internal class DeleteTransactionTool(
                 summary = "delete transaction $id",
             )
 
-        deleteTransaction(id).reported(
-            summary = stored.asLogLine(),
-            payload = {
-                AgentRemovalAnswer(
-                    removed = "transaction",
-                    id = id,
-                    name = stored.title,
-                    note = "Removed, with its ledger entries.",
-                )
-            },
-            reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, id) },
-        )
+        val summary = stored.asLogLine()
+
+        removing(summary) {
+            deleteTransaction(id).reported(
+                summary = summary,
+                payload = {
+                    AgentRemovalAnswer(
+                        removed = "transaction",
+                        id = id,
+                        name = stored.title,
+                        note = "Removed, with its ledger entries.",
+                    )
+                },
+                reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, id) },
+            )
+        }
     }
 }

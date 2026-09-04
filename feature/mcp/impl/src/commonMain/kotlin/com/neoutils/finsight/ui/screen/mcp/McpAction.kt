@@ -27,12 +27,13 @@ sealed interface McpAction {
     data object ToggleTokenVisibility : McpAction
 
     /**
-     * Unfolds the address and the token, or folds them back.
+     * Shows one of the two ways in.
      *
-     * They are folded to begin with: what a client needs is the command above them, and the HTTP
-     * path is for the client that cannot launch one.
+     * The section opens on the command, because that is the one that answers with the window
+     * closed. Choosing the address does not make the two equivalent — it changes what is drawn,
+     * and each tab keeps saying when it answers.
      */
-    data object ToggleAdvanced : McpAction
+    data class SelectConnectionTab(val tab: McpConnectionTab) : McpAction
 
     /** Mints a new token; the previous one stops being accepted. */
     data object RegenerateToken : McpAction

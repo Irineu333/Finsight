@@ -30,10 +30,10 @@ import kotlin.time.Instant
  * controller for as long as the screen is open, so a bind that fails after the app started reads as
  * failed here too; nothing on this screen is derived from the switch being on.
  *
- * **The command is the instruction, and the address is the alternative to it.** A client that
- * launches [launchCommand] is answered whether or not the window is open, so that is what the
- * section leads with; the address and the token answer only while the window is up, and are folded
- * away behind [isAdvancedExpanded] for the clients that want them.
+ * **The two ways in sit side by side, and the words tell them apart.** A client that launches
+ * [launchCommand] is answered whether or not the window is open; the address and the token answer
+ * only while the window is up. The section offers both as tabs and opens on the command, so the
+ * difference is carried by what each tab says rather than by one being buried under the other.
  */
 data class McpUiState(
     /**
@@ -52,7 +52,8 @@ data class McpUiState(
      * which is every target without a process to launch.
      */
     val launchCommand: McpLaunchCommand? = null,
-    val isAdvancedExpanded: Boolean = false,
+    /** The way in the user asked to see. What is actually drawn is [selectedConnectionTab]. */
+    val connectionTab: McpConnectionTab = McpConnectionTab.COMMAND,
     val permissions: List<McpPermissionUi> = emptyList(),
     val recentActivity: List<McpActivityUi> = emptyList(),
 ) {
@@ -83,12 +84,28 @@ data class McpUiState(
         }
 
     /**
-     * Whether the address and the token are on screen.
+     * The way in whose content is on screen — not always the one that was asked for.
      *
-     * They are folded away only because there is a better instruction above them. Where there is no
-     * command to launch, "advanced" would be describing the only path there is, so it is unfolded.
+     * Where the process cannot say what it was launched from there is no command to offer, and the
+     * address stops being one of two ways in: it is the way in. [connectionTab] is the user's
+     * choice, this is the choice the section can honour.
      */
-    val showsAdvanced: Boolean get() = isAdvancedExpanded || launch == null
+    val selectedConnectionTab: McpConnectionTab
+        get() = if (launch == null) McpConnectionTab.ADDRESS else connectionTab
+
+    /**
+     * Whether there is a choice to offer at all.
+     *
+     * One tab is not a tab: with no command to launch, a row of tabs holding a single option would
+     * be an affordance that decides nothing, so the address is simply drawn.
+     */
+    val showsConnectionTabs: Boolean get() = launch != null
+
+    /** Whether the command — the block and its one-line form — is the content on screen. */
+    val showsCommand: Boolean get() = selectedConnectionTab == McpConnectionTab.COMMAND
+
+    /** Whether the address, the token and the block built from them are the content on screen. */
+    val showsAddress: Boolean get() = selectedConnectionTab == McpConnectionTab.ADDRESS
 
     /** The address a client is configured with, which outlives a bind that failed. */
     val address: String get() = "http://$LOOPBACK_HOST:$port$MCP_PATH"
@@ -200,6 +217,26 @@ data class McpUiState(
         /** Not text to translate: it stands for characters, and every language hides them alike. */
         const val MASK = "••••••••••••••••"
     }
+}
+
+/**
+ * The two ways a client reaches this app, as the section offers them: side by side.
+ *
+ * **They are not equivalent, and tabs do not say so.** Side by side the two look alike, so the
+ * whole of the difference has to be carried by what each one says: [COMMAND] answers whether or not
+ * the window is open, [ADDRESS] only while it is up, and each tab states its own half of that in
+ * words. The section opens on [COMMAND] because it is the one that holds either way.
+ */
+enum class McpConnectionTab {
+
+    /** The client launches the app itself and speaks to it over standard input and output. */
+    COMMAND,
+
+    /** The client is pointed at a `url` and authenticates with the token. */
+    ADDRESS;
+
+    /** A stable name for the tab, for the test tag that reaches it. */
+    val key: String = name.lowercase()
 }
 
 /**

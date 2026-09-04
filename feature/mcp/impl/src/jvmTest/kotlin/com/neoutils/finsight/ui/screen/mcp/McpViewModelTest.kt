@@ -319,7 +319,7 @@ class McpViewModelTest {
     }
 
     // ------------------------------------------------------------------------------
-    // The instruction is the command, and the address is behind it
+    // The two ways in, side by side
     // ------------------------------------------------------------------------------
 
     @Test
@@ -384,8 +384,15 @@ class McpViewModelTest {
         )
     }
 
+    /**
+     * The two tabs are drawn as equals, and only one of them holds with the window closed.
+     *
+     * Which one the section opens on is therefore not a matter of taste: the command answers either
+     * way, the address only while the window is up, and a section opening on the address would be
+     * handing the user the narrower path as if it were the plain one.
+     */
     @Test
-    fun `the address is folded away until it is asked for, and unfolding it reveals no token`() = runTest {
+    fun `the section opens on the command, with the address as the other way in`() = runTest {
         val controller = FakeController(
             enabled = true,
             token = "abcdef0123456789",
@@ -394,45 +401,120 @@ class McpViewModelTest {
         val viewModel = viewModelOf(controller)
         val state = subscribe(viewModel)
 
-        assertFalse(
-            state().showsAdvanced,
-            "the address and the token were on screen above the instruction that replaced them",
+        assertTrue(state().showsConnectionTabs, "the section offered no choice between the two")
+        assertEquals(
+            McpConnectionTab.COMMAND,
+            state().selectedConnectionTab,
+            "the section opened on the path that only answers with the window up",
         )
+        assertTrue(state().showsCommand, "the instruction the section opens on was not drawn")
+        assertFalse(
+            state().showsAddress,
+            "the address was on screen beside the command instead of behind its own tab",
+        )
+    }
 
-        viewModel.onAction(McpAction.ToggleAdvanced)
+    @Test
+    fun `choosing the address draws it, and choosing the command draws it back`() = runTest {
+        val controller = FakeController(
+            enabled = true,
+            token = "abcdef0123456789",
+            launchCommand = installedAt(MACOS),
+        )
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
 
-        assertTrue(state().showsAdvanced, "asking for the advanced path showed nothing")
+        viewModel.onAction(McpAction.SelectConnectionTab(McpConnectionTab.ADDRESS))
+
+        assertTrue(state().showsAddress, "choosing the address tab showed nothing")
+        assertFalse(state().showsCommand, "the two tabs were on screen at once")
         assertEquals("http://127.0.0.1:8477/mcp", state().address, "the address is not copyable")
         assertEquals("abcdef0123456789", state().token, "copying has to reach the real token")
         assertTrue(
             state().connectionSnippet.contains("\"Authorization\": \"Bearer abcdef0123456789\""),
-            "the block under the advanced path stopped being copyable",
-        )
-        assertFalse(
-            state().displayedToken.orEmpty().contains("abcdef"),
-            "unfolding the advanced path put the token on screen without it being asked for",
+            "the block under the address tab stopped being copyable",
         )
 
-        viewModel.onAction(McpAction.ToggleAdvanced)
+        viewModel.onAction(McpAction.SelectConnectionTab(McpConnectionTab.COMMAND))
 
-        assertFalse(state().showsAdvanced, "the advanced path could not be folded back")
+        assertTrue(state().showsCommand, "the command tab could not be reached again")
+        assertFalse(state().showsAddress, "the address stayed on screen under the command tab")
+        val launch = assertNotNull(state().launch, "the command stopped being copyable")
+        assertTrue(launch.snippet.contains(MACOS), "the block came back without the executable")
     }
 
     /**
-     * A path is only "advanced" while there is a plainer one above it.
+     * Changing tabs is not asking for the token.
      *
-     * Where the process cannot say what it was launched from there is no command to show, and the
-     * address is not the alternative — it is the way in. Folding it away would leave the section
-     * offering nothing.
+     * The tab row is the one control that puts the token on screen, and it is reached by a user
+     * looking for a `url` rather than for the secret beside it. If arriving there unmasked the
+     * token, the mask would be protecting the token from everyone except whoever pressed the tab.
      */
     @Test
-    fun `with no command to launch, the address is not folded away`() = runTest {
+    fun `arriving at the address tab does not reveal the token`() = runTest {
+        val controller = FakeController(
+            enabled = true,
+            token = "abcdef0123456789",
+            launchCommand = installedAt(MACOS),
+        )
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        viewModel.onAction(McpAction.SelectConnectionTab(McpConnectionTab.ADDRESS))
+
+        assertFalse(
+            state().displayedToken.orEmpty().contains("abcdef"),
+            "choosing the address tab put the token on screen without it being asked for",
+        )
+        assertFalse(
+            state().displayedConnectionSnippet.contains("abcdef0123456789"),
+            "the block handed the token to a screenshot the row above it had masked",
+        )
+
+        viewModel.onAction(McpAction.ToggleTokenVisibility)
+
+        assertEquals(
+            "abcdef0123456789",
+            state().displayedToken,
+            "asking for the token under the address tab showed nothing",
+        )
+    }
+
+    /**
+     * One tab is not a tab.
+     *
+     * Where the process cannot say what it was launched from there is no command to offer, and the
+     * address stops being one of two ways in — it is the way in. A tab row holding a single option
+     * would be an affordance that decides nothing, so there is none and the address is drawn.
+     */
+    @Test
+    fun `with no command to launch there is nothing to choose between, and the address is shown`() = runTest {
         val controller = FakeController(enabled = true, launchCommand = null)
         val viewModel = viewModelOf(controller)
         val state = subscribe(viewModel)
 
         assertNull(state().launch)
-        assertTrue(state().showsAdvanced, "the only way to connect was folded away")
+        assertFalse(state().showsConnectionTabs, "a single way in was offered as a choice")
+        assertTrue(state().showsAddress, "the only way to connect was not on screen")
+        assertFalse(state().showsCommand, "a command the app cannot name was drawn anyway")
+    }
+
+    /**
+     * A tab the user asked for that the section cannot honour is not remembered as if it could be.
+     *
+     * The choice is a field of the state and the command tab is its default, so with no command to
+     * launch the section has to answer with what it can draw rather than with what was asked.
+     */
+    @Test
+    fun `with no command to launch, asking for the command still shows the address`() = runTest {
+        val controller = FakeController(enabled = true, launchCommand = null)
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        viewModel.onAction(McpAction.SelectConnectionTab(McpConnectionTab.COMMAND))
+
+        assertEquals(McpConnectionTab.ADDRESS, state().selectedConnectionTab)
+        assertTrue(state().showsAddress, "the section drew neither of the two")
     }
 
     // ------------------------------------------------------------------------------
@@ -475,6 +557,47 @@ class McpViewModelTest {
                     note.contains(state, ignoreCase = true),
                     "the instructions in $language do not say the command works with the app " +
                         "$state: \"$note\"",
+                )
+            }
+        }
+    }
+
+    /**
+     * Tabs put the two ways in on the same footing, so the text carries the whole difference.
+     *
+     * Folded away under "advanced", the address was visibly the second choice and its one
+     * limitation could ride along in the fold. As a tab it looks exactly like the command, and the
+     * only thing left saying that it goes dead with the window is this sentence.
+     */
+    @Test
+    fun `the address tab says it only answers with the app open`() {
+        mapOf(
+            "values" to "aberto",
+            "values-en" to "open",
+        ).forEach { (language, open) ->
+            val note = assertNotNull(
+                stringsOf(language)["mcp_address_note"],
+                "$language/strings.xml does not say when the address answers",
+            )
+
+            assertTrue(
+                note.contains(open, ignoreCase = true),
+                "the address tab in $language does not say it needs the app open: \"$note\"",
+            )
+        }
+    }
+
+    /** "Advanced" described a fold, and there is no fold: a key left behind names a path that is
+     * now a tab like the other one. */
+    @Test
+    fun `the section no longer offers an advanced path`() {
+        listOf("values", "values-en").forEach { language ->
+            val strings = stringsOf(language)
+
+            listOf("mcp_advanced_title", "mcp_advanced_body").forEach { key ->
+                assertFalse(
+                    strings.containsKey(key),
+                    "$language/strings.xml still declares $key, which the tabs replaced",
                 )
             }
         }

@@ -1080,14 +1080,17 @@
     <string name="mcp_copy">Copiar</string>
 
     <string name="mcp_instructions_title">Como conectar um cliente</string>
-    <string name="mcp_instructions_body">Qualquer cliente que fale o protocolo MCP conecta — não há um cliente oficial. A maioria aceita a configuração abaixo: o cliente lança o app em modo servidor e conversa com ele pela entrada e saída padrão.</string>
+    <string name="mcp_instructions_body">Qualquer cliente que fale o protocolo MCP conecta — não há um cliente oficial. Escolha abaixo a forma que o seu aceita.</string>
+    <string name="mcp_connection_tab_command">Comando</string>
+    <string name="mcp_connection_tab_address">Endereço HTTP</string>
+    <string name="mcp_command_body">O cliente lança o app em modo servidor e conversa com ele pela entrada e saída padrão.</string>
     <string name="mcp_command_label">Comando para o cliente</string>
     <string name="mcp_command_copy">Copiar o comando</string>
     <string name="mcp_command_claude_label">Claude Code, em uma linha</string>
     <string name="mcp_command_claude_copy">Copiar a linha do Claude Code</string>
     <string name="mcp_command_note">Funciona com o app aberto ou fechado: o cliente lança o app quando precisa dele, e com a janela aberta é ela quem responde.</string>
-    <string name="mcp_advanced_title">Avançado: endereço HTTP e token</string>
-    <string name="mcp_advanced_body">Para clientes que preferem url, e só com o app aberto: aponte-o para o endereço abaixo, com transporte HTTP (streamable), e faça-o enviar o token no cabeçalho Authorization.</string>
+    <string name="mcp_address_body">Para clientes que preferem url: aponte-o para o endereço abaixo, com transporte HTTP (streamable), e faça-o enviar o token no cabeçalho Authorization.</string>
+    <string name="mcp_address_note">Só funciona com o app aberto: quem atende neste endereço é a janela, e com ela fechada não há nada escutando.</string>
     <string name="mcp_instructions_copy">Copiar as instruções</string>
 
     <string name="mcp_permissions_title">O que o agente pode fazer</string>

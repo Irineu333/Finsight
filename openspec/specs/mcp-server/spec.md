@@ -2,7 +2,7 @@
 
 ## Purpose
 
-O servidor MCP local embutido no app desktop: existência, ciclo de vida e perímetro. Ele sobe e desce com o processo da janela — sem segundo executável —, escuta apenas na interface de loopback e exige token. É uma das duas formas da mesma superfície: a outra é o modo `--mcp` do mesmo binário, que um cliente lança e que atende com a janela aberta ou fechada (capability `mcp-stdio-mode`). Inclui a seção de configurações que o liga, apresenta o comando de lançamento e — como caminho avançado — o endereço e o token, diz quem está conectado, e guarda o registro persistido do que um agente fez, nos dois modos: o único lugar do app onde a **autoria** de uma escrita aparece.
+O servidor MCP local embutido no app desktop: existência, ciclo de vida e perímetro. Ele sobe e desce com o processo da janela — sem segundo executável —, escuta apenas na interface de loopback e exige token. É uma das duas formas da mesma superfície: a outra é o modo `--mcp` do mesmo binário, que um cliente lança e que atende com a janela aberta ou fechada (capability `mcp-stdio-mode`). Inclui a seção de configurações que o liga, apresenta as duas formas de conectar — o comando de lançamento e o endereço HTTP com o token — em abas lado a lado, diz quem está conectado, e guarda o registro persistido do que um agente fez, nos dois modos: o único lugar do app onde a **autoria** de uma escrita aparece.
 
 ## Requirements
 
@@ -136,11 +136,17 @@ MUST NOT exigir nenhuma outra decisão para ligá-lo — comando, endereço, tok
 instruções de conexão só fazem sentido depois que existe um servidor a que se conectar.
 
 Com o servidor habilitado, a seção SHALL apresentar os eixos de permissão e as instruções de
-conexão em forma copiável. A instrução principal SHALL ser o **comando**: o caminho absoluto do
-executável instalado com `--mcp`, no formato `command` + `args` que os clientes MCP usam, e a
-seção SHALL dizer que ele funciona com o app aberto ou fechado. O endereço HTTP e o token SHALL
-continuar disponíveis como caminho avançado, recolhidos, para clientes que preferem `url` com o
-app aberto; o token SHALL ficar oculto por padrão, revelado sob ação explícita.
+conexão em forma copiável, nas duas formas de conectar, oferecidas como **abas lado a lado**. A
+instrução principal SHALL ser o **comando**: o caminho absoluto do executável instalado com
+`--mcp`, no formato `command` + `args` que os clientes MCP usam, e a seção SHALL abrir nessa aba e
+dizer que ele funciona com o app aberto ou fechado. O endereço HTTP e o token SHALL continuar
+disponíveis na outra aba, para clientes que preferem `url`; o token SHALL ficar oculto por padrão,
+revelado sob ação explícita.
+
+Porque abas desenham os dois caminhos como iguais, a diferença entre eles SHALL estar dita em
+texto: a aba do endereço MUST dizer que ele só responde com o app aberto. Havendo apenas um
+caminho a oferecer — quando o processo não sabe dizer o que o lançou, e não há comando —, a seção
+MUST NOT apresentar abas: uma aba só não é escolha alguma, e o endereço é exibido direto.
 
 As instruções MUST NOT ser específicas de um cliente: o servidor fala o protocolo, e qualquer
 cliente que o fale conecta.
@@ -155,7 +161,7 @@ cliente que o fale conecta.
 
 #### Scenario: Usuário liga o servidor
 - **WHEN** o usuário habilita o servidor na seção de configurações
-- **THEN** o servidor embutido passa a aceitar conexões e a seção passa a exibir os eixos de permissão, o comando de lançamento e, recolhidos, o endereço e o token
+- **THEN** o servidor embutido passa a aceitar conexões e a seção passa a exibir os eixos de permissão e as duas abas de conexão, aberta na do comando de lançamento
 
 #### Scenario: Usuário desliga o servidor
 - **WHEN** o usuário desabilita o servidor
@@ -169,12 +175,20 @@ cliente que o fale conecta.
 - **WHEN** o usuário lê as instruções de conexão
 - **THEN** elas dizem que o comando funciona com o app aberto ou fechado
 
-#### Scenario: O caminho avançado continua copiável
-- **WHEN** o usuário expande o caminho avançado
+#### Scenario: A aba do endereço continua copiável
+- **WHEN** o usuário escolhe a aba do endereço HTTP
 - **THEN** ele consegue copiar o endereço e o token
 
+#### Scenario: A aba do endereço diz que precisa do app aberto
+- **WHEN** o usuário lê a aba do endereço HTTP
+- **THEN** ela diz que esse caminho só responde com o app aberto
+
+#### Scenario: Sem comando a lançar, não há abas
+- **WHEN** o processo não sabe dizer o que o lançou e não há comando a oferecer
+- **THEN** a seção exibe o endereço direto, sem abas
+
 #### Scenario: O token não fica exposto
-- **WHEN** o caminho avançado é exibido
+- **WHEN** a aba do endereço é exibida
 - **THEN** o token aparece oculto, e só é revelado sob ação explícita do usuário
 
 ### Requirement: O que um agente escreve fica registrado

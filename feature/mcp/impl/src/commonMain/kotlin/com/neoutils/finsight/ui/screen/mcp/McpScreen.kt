@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.mcp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,8 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
@@ -37,6 +36,9 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
 import com.neoutils.finsight.ui.component.FinsightSwitch
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.editPort.EditPortModal
@@ -49,6 +51,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
@@ -63,14 +66,17 @@ import com.neoutils.finsight.resources.mcp_about_body
 import com.neoutils.finsight.resources.mcp_about_reach_note
 import com.neoutils.finsight.resources.mcp_activity_see_all
 import com.neoutils.finsight.resources.mcp_activity_title
+import com.neoutils.finsight.resources.mcp_address_body
 import com.neoutils.finsight.resources.mcp_address_label
-import com.neoutils.finsight.resources.mcp_advanced_body
-import com.neoutils.finsight.resources.mcp_advanced_title
+import com.neoutils.finsight.resources.mcp_address_note
+import com.neoutils.finsight.resources.mcp_command_body
 import com.neoutils.finsight.resources.mcp_command_claude_copy
 import com.neoutils.finsight.resources.mcp_command_claude_label
 import com.neoutils.finsight.resources.mcp_command_copy
 import com.neoutils.finsight.resources.mcp_command_label
 import com.neoutils.finsight.resources.mcp_command_note
+import com.neoutils.finsight.resources.mcp_connection_tab_address
+import com.neoutils.finsight.resources.mcp_connection_tab_command
 import com.neoutils.finsight.resources.mcp_copy
 import com.neoutils.finsight.resources.mcp_disconnect_sessions
 import com.neoutils.finsight.resources.mcp_enable_description
@@ -328,13 +334,15 @@ private fun StatusCard(
 }
 
 /**
- * How a client is pointed at this app: the command it launches, and — folded away — the address and
- * the token behind it.
+ * How a client is pointed at this app, in the two ways there are: the command it launches and the
+ * address it is pointed at, side by side.
  *
- * The command comes first because it is the instruction that holds either way: the client starts
- * the app itself when the window is closed, and reaches the open window through it when it is not.
- * The address answers only while the window is up, so it is what the section offers second, to the
- * client that wants a `url`.
+ * **Side by side is not equal footing, and the words are what keep it from reading that way.** The
+ * command holds either way — the client starts the app itself when the window is closed, and
+ * reaches the open window through it when it is not — while the address answers only while the
+ * window is up. A tab row draws the two labels alike, so each panel states when its way in answers,
+ * in the same slot and the same style as the other; the section opens on the command because it is
+ * the one that works in both cases.
  *
  * The instructions name no client on purpose: the server speaks the protocol, and whatever speaks
  * it connects. The one line that does name one is labelled as that client's own shorthand for the
@@ -355,86 +363,177 @@ private fun ConnectionCard(
         color = colorScheme.onSurfaceVariant,
     )
 
+    if (uiState.showsConnectionTabs) {
+        ConnectionTabs(
+            selected = uiState.selectedConnectionTab,
+            onSelect = { onAction(McpAction.SelectConnectionTab(it)) },
+        )
+    }
+
     val launch = uiState.launch
 
-    if (launch != null) {
-        CodeBlock(
-            shown = launch.snippet,
-            copied = launch.snippet,
-            copyDescription = stringResource(Res.string.mcp_command_copy),
-            testTag = "mcp_command",
-            label = stringResource(Res.string.mcp_command_label),
-        )
-
-        CodeBlock(
-            shown = launch.claudeCodeLine,
-            copied = launch.claudeCodeLine,
-            copyDescription = stringResource(Res.string.mcp_command_claude_copy),
-            testTag = "mcp_command_claude",
-            label = stringResource(Res.string.mcp_command_claude_label),
-        )
-
-        Text(
-            text = stringResource(Res.string.mcp_command_note),
-            modifier = Modifier.testTag("mcp_command_note"),
-            style = typography.bodySmall,
-            color = colorScheme.onSurfaceVariant,
-        )
-
-        AdvancedToggle(
-            expanded = uiState.isAdvancedExpanded,
-            onClick = { onAction(McpAction.ToggleAdvanced) },
-        )
+    if (uiState.showsCommand && launch != null) {
+        CommandPanel(launch = launch)
     }
 
-    if (uiState.showsAdvanced) {
-        Text(
-            text = stringResource(Res.string.mcp_advanced_body),
-            style = typography.bodyMedium,
-            color = colorScheme.onSurfaceVariant,
-        )
-
-        AddressRow(uiState = uiState, onAction = onAction)
-
-        TokenRow(uiState = uiState, onAction = onAction)
-
-        Text(
-            text = stringResource(Res.string.mcp_instructions_json_note),
-            modifier = Modifier.testTag("mcp_instructions_json_note"),
-            style = typography.bodySmall,
-            color = colorScheme.onSurfaceVariant,
-        )
-
-        CodeBlock(
-            // The token is masked here until it is revealed, and copying reaches the real one: what
-            // a screenshot of the section carries is what the row above it carries.
-            shown = uiState.displayedConnectionSnippet,
-            copied = uiState.connectionSnippet,
-            copyDescription = stringResource(Res.string.mcp_instructions_copy),
-            testTag = "mcp_instructions_json",
-        )
+    if (uiState.showsAddress) {
+        AddressPanel(uiState = uiState, onAction = onAction)
     }
 }
 
-/** The way into the address and the token, and out of them again. */
+/**
+ * The choice between the two ways in: the labels in a row, the selected one underlined, and the
+ * panel it names below the line.
+ *
+ * Secondary rather than primary tabs, which is what Material means by the two: primary tabs are a
+ * screen's own top-level destinations, sitting under the app bar, while secondary tabs divide the
+ * content *inside* one area of a screen. This row lives in one card of a section, under that card's
+ * own title, which is the second case exactly — and the lighter indicator is what keeps it from
+ * reading as a navigation level the screen does not have.
+ *
+ * **The two colours the row would otherwise decide by itself are decided here.** Its container
+ * defaults to `surface`, and this card is `surfaceContainer`: the default would lay a paler band
+ * across the card instead of a row of labels on it, so the row is given no colour of its own and
+ * the card shows through. Its content colour follows from that — a transparent container has no
+ * colour to derive one from — so the selected label and the indicator take the primary the rest of
+ * this screen marks a selection with, and the unselected label the muted tone the card's own prose
+ * uses.
+ */
 @Composable
-private fun AdvancedToggle(
-    expanded: Boolean,
-    onClick: () -> Unit,
-) = TextButton(
-    onClick = onClick,
-    modifier = Modifier.testTag("mcp_advanced_toggle"),
+private fun ConnectionTabs(
+    selected: McpConnectionTab,
+    onSelect: (McpConnectionTab) -> Unit,
 ) {
-    Text(text = stringResource(Res.string.mcp_advanced_title))
+    val selectedIndex = McpConnectionTab.entries.indexOf(selected)
 
-    Spacer(modifier = Modifier.width(4.dp))
+    SecondaryTabRow(
+        selectedTabIndex = selectedIndex,
+        containerColor = Color.Transparent,
+        contentColor = colorScheme.onSurfaceVariant,
+        indicator = {
+            TabRowDefaults.SecondaryIndicator(
+                modifier = Modifier.tabIndicatorOffset(selectedIndex),
+                color = colorScheme.primary,
+            )
+        },
+        // The same rule every other divider in this section follows, said rather than inherited.
+        divider = { HorizontalDivider(color = colorScheme.outlineVariant) },
+    ) {
+        McpConnectionTab.entries.forEach { tab ->
+            Tab(
+                selected = tab == selected,
+                onClick = { onSelect(tab) },
+                modifier = Modifier.testTag("mcp_connection_tab_${tab.key}"),
+                text = { Text(text = stringResource(tab.labelRes)) },
+                selectedContentColor = colorScheme.primary,
+                unselectedContentColor = colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
 
-    Icon(
-        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-        contentDescription = null,
-        modifier = Modifier.size(20.dp),
+/** What the command tab names: how the client uses it, the two shapes it is copied in, and when it
+ * answers. */
+@Composable
+private fun CommandPanel(launch: McpLaunchUi) = ConnectionPanel {
+    Text(
+        text = stringResource(Res.string.mcp_command_body),
+        style = typography.bodyMedium,
+        color = colorScheme.onSurfaceVariant,
+    )
+
+    CodeBlock(
+        shown = launch.snippet,
+        copied = launch.snippet,
+        copyDescription = stringResource(Res.string.mcp_command_copy),
+        testTag = "mcp_command",
+        label = stringResource(Res.string.mcp_command_label),
+    )
+
+    CodeBlock(
+        shown = launch.claudeCodeLine,
+        copied = launch.claudeCodeLine,
+        copyDescription = stringResource(Res.string.mcp_command_claude_copy),
+        testTag = "mcp_command_claude",
+        label = stringResource(Res.string.mcp_command_claude_label),
+    )
+
+    Text(
+        text = stringResource(Res.string.mcp_command_note),
+        modifier = Modifier.testTag("mcp_command_note"),
+        style = typography.bodySmall,
+        color = colorScheme.onSurfaceVariant,
     )
 }
+
+/** What the address tab names: how the client is pointed at it, the address and the token
+ * themselves, the block built from the two, and when it answers. */
+@Composable
+private fun AddressPanel(
+    uiState: McpUiState,
+    onAction: (McpAction) -> Unit,
+) = ConnectionPanel {
+    Text(
+        text = stringResource(Res.string.mcp_address_body),
+        style = typography.bodyMedium,
+        color = colorScheme.onSurfaceVariant,
+    )
+
+    AddressRow(uiState = uiState, onAction = onAction)
+
+    TokenRow(uiState = uiState, onAction = onAction)
+
+    Text(
+        text = stringResource(Res.string.mcp_instructions_json_note),
+        modifier = Modifier.testTag("mcp_instructions_json_note"),
+        style = typography.bodySmall,
+        color = colorScheme.onSurfaceVariant,
+    )
+
+    CodeBlock(
+        // The token is masked here until it is revealed, and copying reaches the real one: what
+        // a screenshot of the section carries is what the row above it carries.
+        shown = uiState.displayedConnectionSnippet,
+        copied = uiState.connectionSnippet,
+        copyDescription = stringResource(Res.string.mcp_instructions_copy),
+        testTag = "mcp_instructions_json",
+    )
+
+    // The counterpart of the note the command panel ends on, in the same slot and the same style.
+    // It is the whole of what separates the two tabs, and a tab row draws them as equals: with
+    // this sentence gone, the section would be offering a path that goes dead with the window
+    // as if it were the other one.
+    Text(
+        text = stringResource(Res.string.mcp_address_note),
+        modifier = Modifier.testTag("mcp_address_note"),
+        style = typography.bodySmall,
+        color = colorScheme.onSurfaceVariant,
+    )
+}
+
+/**
+ * The body of whichever tab is selected, as one thing hanging off the row rather than as loose
+ * children of the card.
+ *
+ * It is what makes the section read as tab-and-panel: the row's divider closes the labels, and
+ * everything below it belongs to the label that is underlined. A panel is also what the section
+ * falls back to when there is no row — with no command to launch there is nothing to choose
+ * between, and the address is drawn as the same body with no labels above it.
+ */
+@Composable
+private fun ConnectionPanel(
+    content: @Composable ColumnScope.() -> Unit,
+) = Column(
+    modifier = Modifier.fillMaxWidth(),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+    content = content,
+)
+
+private val McpConnectionTab.labelRes
+    get() = when (this) {
+        McpConnectionTab.COMMAND -> Res.string.mcp_connection_tab_command
+        McpConnectionTab.ADDRESS -> Res.string.mcp_connection_tab_address
+    }
 
 /**
  * A block of configuration, shown and not merely copyable.

@@ -20,8 +20,8 @@ import kotlinx.coroutines.launch
 
 /**
  * The MCP server section: the switch, what the socket is actually doing, the four permission axes,
- * the command a client launches — with the address and the token behind it — and what an agent has
- * been doing.
+ * the two ways a client reaches the app — the command it launches and the address it is pointed at,
+ * offered side by side — and what an agent has been doing.
  *
  * **The state is collected, never inferred.** Everything about the socket comes from
  * [McpServerController.state] for as long as the screen is subscribed, which is what lets the
@@ -42,15 +42,15 @@ class McpViewModel(
 
     private val isTokenRevealed = MutableStateFlow(false)
 
-    private val isAdvancedExpanded = MutableStateFlow(false)
+    private val connectionTab = MutableStateFlow(McpConnectionTab.COMMAND)
 
     private val fieldState = combine(
         controller.port,
         controller.token,
         isTokenRevealed,
-        isAdvancedExpanded,
-    ) { port, token, revealed, advanced ->
-        FieldState(port = port, token = token, revealed = revealed, advanced = advanced)
+        connectionTab,
+    ) { port, token, revealed, tab ->
+        FieldState(port = port, token = token, revealed = revealed, connectionTab = tab)
     }
 
     private val recentActivity = activityRepository
@@ -75,7 +75,7 @@ class McpViewModel(
             // the controller rather than collected — and it is the controller's to answer, beside
             // the port and the token, so that no screen goes looking for it in the system.
             launchCommand = controller.launchCommand,
-            isAdvancedExpanded = fields.advanced,
+            connectionTab = fields.connectionTab,
             permissions = McpPermissionAxis.entries.map { axis ->
                 McpPermissionUi(
                     axis = axis,
@@ -111,7 +111,7 @@ class McpViewModel(
 
             McpAction.ToggleTokenVisibility -> isTokenRevealed.value = !isTokenRevealed.value
 
-            McpAction.ToggleAdvanced -> isAdvancedExpanded.value = !isAdvancedExpanded.value
+            is McpAction.SelectConnectionTab -> connectionTab.value = action.tab
 
             McpAction.RegenerateToken -> viewModelScope.launch { controller.regenerateToken() }
 
@@ -125,7 +125,7 @@ class McpViewModel(
         val port: Int,
         val token: String?,
         val revealed: Boolean,
-        val advanced: Boolean,
+        val connectionTab: McpConnectionTab,
     )
 
     companion object {

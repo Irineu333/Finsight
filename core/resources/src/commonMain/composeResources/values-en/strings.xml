@@ -1079,14 +1079,17 @@
     <string name="mcp_copy">Copy</string>
 
     <string name="mcp_instructions_title">How to connect a client</string>
-    <string name="mcp_instructions_body">Any client that speaks the MCP protocol connects — there is no official one. Most take the configuration below: the client launches the app in server mode and speaks to it over standard input and output.</string>
+    <string name="mcp_instructions_body">Any client that speaks the MCP protocol connects — there is no official one. Pick below the form yours takes.</string>
+    <string name="mcp_connection_tab_command">Command</string>
+    <string name="mcp_connection_tab_address">HTTP address</string>
+    <string name="mcp_command_body">The client launches the app in server mode and speaks to it over standard input and output.</string>
     <string name="mcp_command_label">Command for the client</string>
     <string name="mcp_command_copy">Copy the command</string>
     <string name="mcp_command_claude_label">Claude Code, in one line</string>
     <string name="mcp_command_claude_copy">Copy the Claude Code line</string>
     <string name="mcp_command_note">It works whether the app is open or closed: the client launches the app when it needs it, and while the window is open it is the window that answers.</string>
-    <string name="mcp_advanced_title">Advanced: HTTP address and token</string>
-    <string name="mcp_advanced_body">For clients that prefer a url, and only while the app is open: point it at the address below, over HTTP (streamable) transport, and have it send the token in the Authorization header.</string>
+    <string name="mcp_address_body">For clients that prefer a url: point it at the address below, over HTTP (streamable) transport, and have it send the token in the Authorization header.</string>
+    <string name="mcp_address_note">It only works while the app is open: what answers at this address is the window, and with it closed there is nothing listening.</string>
     <string name="mcp_instructions_copy">Copy the instructions</string>
 
     <string name="mcp_permissions_title">What the agent may do</string>

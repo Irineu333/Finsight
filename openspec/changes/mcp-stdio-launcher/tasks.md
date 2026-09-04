@@ -19,9 +19,9 @@
 
 ## 2. Posse do banco (`mcp-stdio-mode`: "Há no máximo um dono do banco por vez")
 
-- [ ] 2.1 `DatabaseOwnership` em `:core:database` (`jvmMain`): lock exclusivo por `FileChannel.tryLock` num arquivo ao lado do banco, com `acquire(timeout)`, `tryAcquire()` e liberação; o caminho do arquivo derivado de `defaultDatabasePath()`.
-- [ ] 2.2 A janela toma a posse em `main()` antes de montar o grafo Koin, com a espera limitada de D10, e a segura até `exitApplication()`.
-- [ ] 2.3 Testes: toma e recusa entre dois processos (subprocesso JVM), solta ao fechar, a espera termina quando o outro solta, e a espera respeita o limite.
+- [x] 2.1 `DatabaseOwnership` em `:core:database` (`jvmMain`): lock exclusivo por `FileChannel.tryLock` num arquivo ao lado do banco, com `acquire(timeout)`, `tryAcquire()` e liberação; o caminho do arquivo derivado de `defaultDatabasePath()`.
+- [x] 2.2 A janela toma a posse em `main()` antes de montar o grafo Koin, com a espera limitada de D10, e a segura até `exitApplication()`.
+- [x] 2.3 Testes: toma e recusa entre dois processos (subprocesso JVM), solta ao fechar, a espera termina quando o outro solta, e a espera respeita o limite.
 
 ## 3. Montador comum do servidor (design D8)
 

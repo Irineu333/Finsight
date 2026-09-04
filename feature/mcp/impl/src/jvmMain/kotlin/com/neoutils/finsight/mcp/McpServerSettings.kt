@@ -108,6 +108,38 @@ internal class McpServerSettings(
     }
 
     /**
+     * What the store says **at this instant** about the server the window holds: whether it is on,
+     * where it listens, and what it expects to be presented with.
+     *
+     * A different question from the flows above, which answer with what this process read when it
+     * was built. The bridge asks this one, because between a headless process starting and a call
+     * arriving on it the window may have been switched off, moved to another port or given a new
+     * token — and the window is the one whose choice is live (design D7).
+     *
+     * The three are read together under one [Preferences.sync], because they are one answer: a port
+     * from before a change and a token from after it would address nothing.
+     */
+    fun currentChoice(): Choice = read {
+        Choice(
+            enabled = settings.getBoolean(KEY_ENABLED, false),
+            port = settings.getInt(KEY_PORT, McpServerController.DEFAULT_PORT),
+            token = settings.getStringOrNull(KEY_TOKEN),
+        )
+    }
+
+    /**
+     * The persisted server, as a process that is not the window finds it.
+     *
+     * [token] is `null` where none was ever minted, which is an app that has never had a server to
+     * present one to — and therefore nothing to connect to either.
+     */
+    data class Choice(
+        val enabled: Boolean,
+        val port: Int,
+        val token: String?,
+    )
+
+    /**
      * Answers from the store as another process left it: [Preferences.sync] pulls in what was
      * committed elsewhere before the value is read.
      */

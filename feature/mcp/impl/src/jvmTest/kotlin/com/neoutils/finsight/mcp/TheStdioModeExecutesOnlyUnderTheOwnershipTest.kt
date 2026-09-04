@@ -4,7 +4,6 @@ import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -20,9 +19,10 @@ import kotlin.test.assertTrue
  * makes that a fact rather than a claim: the same conversation, the same client, and the answer
  * changes the moment the other process lets go.
  *
- * What this session answers *instead* is deliberately not asserted in words here: it is the
- * placeholder for the forwarding that belongs to the bridge, and the requirement it stands in for
- * is only that nothing ran locally.
+ * What this session answers *instead* is named exactly. The other process here holds the archive
+ * and binds no socket, which is a window on its way up, so the bridge answers `STILL_OPENING` and
+ * the assertion says so by identity — a refusal matched on a word several of them share would be an
+ * assertion that passes for a reason it never asked about.
  */
 class TheStdioModeExecutesOnlyUnderTheOwnershipTest {
 
@@ -43,11 +43,11 @@ class TheStdioModeExecutesOnlyUnderTheOwnershipTest {
                         answer.isError ?: false,
                         "The call came back as though it had been carried out.",
                     )
-                    assertContains(
+                    assertEquals(
+                        McpBridge.STILL_OPENING,
                         (answer.content.single() as TextContent).text,
-                        "open",
-                        message = "The refusal was about something other than the app being open, " +
-                            "so this test is passing for a reason it did not ask about.",
+                        "The refusal was not the one about a window on its way up, so this test " +
+                            "is passing for a reason it did not ask about.",
                     )
                     assertEquals(
                         0,

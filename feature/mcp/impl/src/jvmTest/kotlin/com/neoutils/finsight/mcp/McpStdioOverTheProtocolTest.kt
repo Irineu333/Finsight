@@ -195,6 +195,19 @@ class McpStdioOverTheProtocolTest {
                 )
                 assertEquals(0, tool.calls, "The tool ran on a server that is switched off.")
 
+                // Every call, and not only the ones on a name the app has. A switched-off app is
+                // not offering a surface at all, so it says nothing about which names are on it —
+                // and it must never answer *"tool not found"* on a name that would work, which is
+                // the false statement about the app that the whole notice exists to prevent.
+                val invented = client.callTool("get_horoscope", emptyMap())
+                assertTrue(invented.isError ?: false, "An invented name was not refused.")
+                assertContains(
+                    invented.text(),
+                    McpPermissionNotice.THE_SECTION,
+                    message = "A switched-off server answered a call by telling the agent about " +
+                        "its own list of names instead of about the switch.",
+                )
+
                 assertContains(
                     assertNotNull(client.serverInstructions, "the handshake said nothing"),
                     McpPermissionNotice.THE_SECTION,
@@ -206,6 +219,87 @@ class McpStdioOverTheProtocolTest {
                 harness.activity.observeAll().first().isEmpty(),
                 "A server that is switched off wrote to the archive to say it did nothing.",
             )
+        }
+    }
+
+    /**
+     * The switch is moved **while a session is running**, and the session obeys it.
+     *
+     * The window is closed throughout, so this process is the one that would carry the call out —
+     * which is what makes it the case that matters: the requirement is that a switched-off server
+     * refuses *every* call, not every call that arrived after a process happened to start. A
+     * session that read the switch once, when it began, would go on executing here for as long as
+     * the agent stayed connected, with the app saying it was offering nothing.
+     */
+    @Test
+    fun `the server is switched off during a session and the next call is refused`() = runBlocking {
+        val tool = SpyTool(name = McpToolName.CREATE_TRANSACTION.wireName, effect = McpToolEffect.CHANGES)
+
+        McpServerHarness(tools = listOf(tool)).use { harness ->
+            harness.serverSettings.setEnabled(true)
+
+            harness.stdioSession().servedOverStdio { client ->
+                assertEquals(
+                    "done",
+                    client.callTool(tool.name, emptyMap()).text(),
+                    "The call was not carried out while the server was on.",
+                )
+
+                harness.serverSettings.setEnabled(false)
+
+                val refused = client.callTool(tool.name, emptyMap())
+                assertTrue(refused.isError ?: false, "The refusal did not arrive as one.")
+                assertContains(
+                    refused.text(),
+                    McpPermissionNotice.THE_SECTION,
+                    message = "The refusal did not say where the user switches the server on.",
+                )
+                assertEquals(1, tool.calls, "The tool ran after the user switched the server off.")
+
+                assertTrue(
+                    client.listTools().tools.isEmpty(),
+                    "A server the user has just switched off went on announcing tools.",
+                )
+            }
+        }
+    }
+
+    /**
+     * And the other way round, which is the same defect seen from its other side.
+     *
+     * A process that started with the switch off has to become useful the moment the user switches
+     * it on, without them having to know that their agent's client holds a process that read the
+     * answer once. Nothing here reconnects: it is the same session, the same pipes.
+     */
+    @Test
+    fun `the server is switched on during a session that began with it off`() = runBlocking {
+        val tool = SpyTool(name = McpToolName.LIST_ACCOUNTS.wireName, effect = McpToolEffect.READS)
+
+        McpServerHarness(tools = listOf(tool)).use { harness ->
+            assertFalse(
+                harness.serverSettings.isEnabled.value,
+                "the case being asked about is a session that began with the server off",
+            )
+
+            harness.stdioSession().servedOverStdio { client ->
+                assertTrue(
+                    client.listTools().tools.isEmpty(),
+                    "A switched-off server announced tools.",
+                )
+
+                harness.serverSettings.setEnabled(true)
+
+                assertEquals(
+                    listOf(tool.name),
+                    client.listTools().tools.map { it.name },
+                    "The user switched the server on and the session went on offering nothing.",
+                )
+                assertEquals(
+                    "done",
+                    client.callTool(tool.name, emptyMap()).text(),
+                    "The user switched the server on and the call was still refused.",
+                )
+            }
         }
     }
 

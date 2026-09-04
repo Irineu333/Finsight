@@ -22,20 +22,33 @@ import java.io.PrintStream
  * **It is the same server as the window's, over a different pipe.** The tools, the permission filter
  * on what is announced and on what runs, the journal every call passes through and the instructions
  * of the handshake all come from [McpSessionFactory], so the two modes cannot answer differently for
- * the same permissions (design D8). What this adds is what only a process without a window has: the
- * database is not its own, so every call takes the ownership before it runs and gives it back after
- * (design D3, D4), and the app's switch has to be honoured by a process that speaks even when it is
- * off (design D7) — which is a different server altogether, assembled next door.
+ * the same permissions (design D8). What this adds is what only a process without a window has:
+ * [McpStdioCallSite], which asks of every request the two things this process cannot settle once —
+ * whether the app is offering its server at all, and whether the database is its to touch. When the
+ * database is another's, the request goes to the window over [McpBridge], which is the whole of what
+ * "with the app open, the app answers" means (design D3, D4, D7).
  *
- * **One server per process, and no lifecycle.** There is nothing to start, nothing to stop and
- * nothing to reconnect to: the session begins when the process does and ends when the client closes
- * the input, which is also when the process has nothing left to do.
+ * **One server per process, whatever the switch says.** A session assembled around the switch would
+ * be wrong for the rest of its life the moment the user moved it, so the surface is always the whole
+ * surface and it is the site above that answers for it. What is read once, at start-up, is the
+ * opening line on the diagnostics stream: that one is a report of an instant, and says so.
+ *
+ * **No lifecycle.** There is nothing to start, nothing to stop and nothing to reconnect to: the
+ * session begins when the process does and ends when the client closes the input, which is also when
+ * the process has nothing left to do.
  */
 internal class DesktopMcpStdioSession(
     private val settings: McpServerSettings,
     private val journal: AgentActivityJournal,
     private val tools: List<McpTool>,
     private val ownership: DatabaseOwnership,
+    /**
+     * The way to the window's own server, taken for as long as the window is answering.
+     *
+     * One per session, because what it holds is a conversation and a session has exactly one to
+     * hold.
+     */
+    private val bridge: McpBridge = McpBridge(settings),
     /**
      * Where the process says what it is. Never the standard output, which carries the protocol and
      * nothing else (design D6) — clients display this stream, and it is the only place a session
@@ -58,10 +71,9 @@ internal class DesktopMcpStdioSession(
      * through the real standard output would be testing the launcher instead.
      */
     internal suspend fun serve(input: Source, output: Sink) {
-        val enabled = settings.isEnabled.value
-        announce(enabled)
+        announce(settings.currentChoice().enabled)
 
-        val server = if (enabled) offering() else McpServerOff.newServer()
+        val server = offering()
         val transport = StdioServerTransport(input = input, output = output)
 
         // Completed when the client closes the input, which the transport reports the same way for
@@ -73,17 +85,26 @@ internal class DesktopMcpStdioSession(
             server.createSession(transport)
             ended.await()
         } finally {
-            withContext(NonCancellable) { runCatching { server.close() } }
+            withContext(NonCancellable) {
+                runCatching { server.close() }
+                runCatching { bridge.close() }
+            }
         }
     }
 
-    /** The assembly the window uses, with this process's rule about who may execute added to it. */
+    /**
+     * The assembly the window uses, with this process's rule about who answers added to it.
+     *
+     * The bridge is handed the session as it opens, because an announcement it hears from the
+     * window has to reach the client on this side — the same `tools/list changed` the window sends
+     * over its socket, repeated over the pipe (design D8).
+     */
     private fun offering(): Server = McpSessionFactory(
         settings = settings,
         journal = journal,
         tools = tools,
-        calls = McpStdioCallSite(ownership),
-    ).newServer()
+        calls = McpStdioCallSite(settings, ownership, elsewhere = bridge),
+    ).newServer(onSessionOpen = bridge::relayTo)
 
     /**
      * The opening line: which build answered, in which mode, and whether the app is offering

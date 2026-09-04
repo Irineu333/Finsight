@@ -53,6 +53,12 @@ kotlin {
             // already holds is a client of this app's own loopback endpoint (design D8).
             implementation(libs.mcp.kotlin.sdk.client)
 
+            // And the engine that client speaks over. Declared here because the bridge is
+            // production code and the distribution has to carry it: a client packaged
+            // without an engine is a bridge that only fails on the user's machine. The SDK
+            // brings `ktor-client-core`, which is the API and no engine at all.
+            implementation(libs.ktor.client.okhttp)
+
             // What the user chose about the server outlives the process, and this is the
             // mechanism the app already keeps preferences in (design D11).
             implementation(libs.multiplatform.settings)
@@ -97,12 +103,6 @@ kotlin {
             // the server on and mint tokens, and doing that to the machine's real
             // preferences would leave a secret behind and decide the next run's outcome.
             implementation(libs.multiplatform.settings.test)
-
-            // The engine the SDK's client needs under it. It is the JVM engine the app
-            // already uses elsewhere (`feature/settings/impl`), and it is declared here
-            // rather than in `jvmMain` because nothing in production yet opens a client:
-            // the module that will is the bridge, and it brings its own.
-            implementation(libs.ktor.client.okhttp)
         }
     }
 }

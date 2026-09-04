@@ -1,6 +1,7 @@
 package com.neoutils.finsight.mcp
 
 import com.neoutils.finsight.database.DatabaseOwnership
+import com.neoutils.finsight.feature.mcp.api.McpServerState
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.StdioClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
@@ -112,14 +113,53 @@ internal suspend fun DesktopMcpStdioSession.servedOverStdio(
  */
 internal fun McpServerHarness.stdioSession(
     ownership: DatabaseOwnership = DatabaseOwnership(databasePath),
+    /**
+     * What this process offers. The harness's own by default; a test asking which of the two
+     * processes answered gives the headless one tools of the same names that say so.
+     */
+    tools: List<McpTool> = this.tools,
+    bridge: McpBridge = McpBridge(serverSettings),
     diagnostics: PrintStream = PrintStream(OutputStream.nullOutputStream()),
 ) = DesktopMcpStdioSession(
     settings = serverSettings,
     journal = journal,
     tools = tools,
     ownership = ownership,
+    bridge = bridge,
     diagnostics = diagnostics,
 )
+
+/**
+ * The window of the app, as a headless session finds it: another process owning the archive, and
+ * this app's own server listening at the address the preferences name.
+ *
+ * **The ownership has to be held by a process of its own.** A JDK file lock belongs to the whole
+ * JVM, so a claim taken in the test would be handed straight back to the session under test, and
+ * every forwarding test would prove the opposite of what it set out to.
+ *
+ * **The socket, on the other hand, is this process's own.** It is the very controller the window
+ * runs, and having it here is what lets a test watch a `Flow` of the open app wake up when the
+ * agent writes through the bridge.
+ *
+ * The switch has to be on before this is called: it is the window opening, not the user switching
+ * the server on.
+ */
+internal suspend fun McpServerHarness.openTheWindow(): ArchiveHolder {
+    val window = ArchiveHolder(databasePath)
+    check(window.next() == HELD) { "the window did not take the ownership of the archive" }
+    controller.start()
+    check(controller.state.value is McpServerState.Running) {
+        "the window did not bind its server: ${controller.state.value}"
+    }
+    return window
+}
+
+/** The user closing the app: the socket goes, and then the archive is let go of. */
+internal suspend fun McpServerHarness.closeTheWindow(window: ArchiveHolder) {
+    controller.stop()
+    window.letGo()
+    window.close()
+}
 
 /** How long the session is given to notice that the client hung up. */
 private const val HANG_UP_MILLIS = 10_000L

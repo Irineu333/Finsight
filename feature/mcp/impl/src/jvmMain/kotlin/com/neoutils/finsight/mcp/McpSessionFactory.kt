@@ -4,6 +4,7 @@ import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
 import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolRequest
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.ListToolsRequest
@@ -46,9 +47,10 @@ internal class McpSessionFactory(
      */
     private val tools: List<McpTool> = emptyList(),
     /**
-     * Where a call is carried out. [McpCallSite.Here] is this process, which is the only answer a
-     * server its own app is holding open ever has; a headless session asks the question of every
-     * call, because whether it may touch the database is a fact about the instant (design D3).
+     * Where a request is answered — the list as much as the call. [McpCallSite.Here] is this
+     * process, which is the only answer a server its own app is holding open ever has; a headless
+     * session asks the question of every request, because whether it may touch the database is a
+     * fact about the instant (design D3).
      */
     private val calls: McpCallSite = McpCallSite.Here,
 ) {
@@ -75,10 +77,10 @@ internal class McpSessionFactory(
             // moved a switch is told what is true now. It is the channel that reaches the model
             // before its first question, which is what makes it the place a withheld capability can
             // be declared at all (design D13).
-            instructionsProvider = { McpPermissionNotice.instructions(settings.permissions.value) },
+            instructionsProvider = {
+                calls.instructions { McpPermissionNotice.instructions(settings.permissions.value) }
+            },
         )
-
-        tools.forEach { tool -> server.register(tool) }
 
         /** The sessions already prepared, so a second `onConnect` does not prepare them twice. */
         val prepared = ConcurrentHashMap.newKeySet<String>()
@@ -86,12 +88,15 @@ internal class McpSessionFactory(
         server.onConnect {
             // The only moment the session exists and is reachable: `onConnect` runs at the end of
             // the SDK's own session setup, with the session already registered — and before the
-            // transport hands it the first message, so the handler installed below is in place for
-            // every request the client will ever make on it.
+            // transport hands it the first message, so the handlers installed below are in place
+            // for every request the client will ever make on it.
             server.sessions.values.forEach { session ->
                 if (prepared.add(session.sessionId)) {
                     session.setRequestHandler<ListToolsRequest>(Method.Defined.ToolsList) { _, _ ->
-                        grantedToolList()
+                        calls.list { grantedToolList() }
+                    }
+                    session.setRequestHandler<CallToolRequest>(Method.Defined.ToolsCall) { request, _ ->
+                        answer(request)
                     }
                     onSessionOpen(session)
                 }
@@ -102,10 +107,12 @@ internal class McpSessionFactory(
     }
 
     /**
-     * What the server announces: the tools of the granted axes, and no trace of the others.
+     * What **this process** announces: the tools of the granted axes, and no trace of the others.
      *
      * Computed per request rather than registered once, so a client that re-lists after being told
-     * the list changed reads the answer the switch has just produced.
+     * the list changed reads the answer the switch has just produced. It is offered to the call
+     * site rather than returned to the client, because a session whose calls are answered elsewhere
+     * has to be listed from there too.
      */
     private fun grantedToolList(): ListToolsResult {
         val granted = settings.permissions.value
@@ -117,31 +124,54 @@ internal class McpSessionFactory(
         )
     }
 
-    private fun Server.register(tool: McpTool) = addTool(
-        name = tool.name,
-        description = tool.description,
-        inputSchema = tool.inputSchema,
-    ) { request ->
-        val result = calls.answer(tool, request.arguments) {
+    /**
+     * What a `tools/call` is answered with.
+     *
+     * The dispatch is this assembly's own rather than the SDK's registry, because the call site has
+     * to be consulted for **every** name and the registry answers on its own for the ones it does
+     * not hold. A process whose app is switched off must refuse the whole surface in the app's own
+     * words, and it cannot do that by leaving a name to a registry (design D7).
+     *
+     * Nothing else about the SDK's dispatch is reproduced here: a tool that throws is the journal's
+     * business, and it is the journal that turns it into an answer rather than letting it escape.
+     */
+    private suspend fun answer(request: CallToolRequest): CallToolResult {
+        val result = calls.answer(request.name, request.arguments) {
             // Not announced is not the same as not enforced. A tool called by name without its
             // permission is refused here, before anything of it runs, and the refusal says the
             // operation *exists and is not authorised* — an agent told the name is unknown reports
             // back that the app cannot do the thing, which is false and hides the switch that would
             // fix it.
-            if (tool.axis in settings.permissions.value) {
-                journal.execute(tool, request.arguments)
-            } else {
-                journal.refuse(tool, McpPermissionNotice.refusal(tool))
+            when (val tool = tools.firstOrNull { it.name == request.name }) {
+                null -> unknown(request.name)
+                else -> if (tool.axis in settings.permissions.value) {
+                    journal.execute(tool, request.arguments)
+                } else {
+                    journal.refuse(tool, McpPermissionNotice.refusal(tool))
+                }
             }
         }
 
-        CallToolResult(
+        return CallToolResult(
             content = listOf(TextContent(result.text)),
             // A refusal is the tool's own answer and not a protocol fault: the agent has to read it
             // and change course, which it cannot do with a transport-level error.
             isError = result.outcome == AgentActivity.Outcome.REFUSED,
         )
     }
+
+    /**
+     * A name this app has no operation for, said the way the SDK says it.
+     *
+     * The one case where *not found* is the truth, and it stays the truth in both modes and either
+     * position of the switch: what the app does not do, it does not do. It is the refusal
+     * `McpPermissionNotice` exists to keep off everything else — a name the app **does** have never
+     * reaches this, because every tool is registered whatever the switch says.
+     */
+    private fun unknown(name: String) = McpToolResult(
+        text = "Tool $name not found",
+        outcome = AgentActivity.Outcome.REFUSED,
+    )
 
     companion object {
 

@@ -78,6 +78,11 @@ internal class McpServerHarness(
      * controller.
      */
     val serverSettings = McpServerSettings(settings).also { stored ->
+        // A port of this harness's own, unless the test stated one. A stdio session dials "the
+        // app" at the persisted port, and left at the app's real default it would reach whatever
+        // Finsight the developer has open on 8477 rather than this harness.
+        if (!settings.hasKey(PORT_KEY)) stored.setPort(freePort())
+
         permissions?.let { granted ->
             McpPermissionAxis.entries.forEach { stored.setPermission(it, it in granted) }
         }
@@ -107,5 +112,13 @@ internal class McpServerHarness(
          */
         fun freePort(): Int = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
             .use { it.localPort }
+
+        /**
+         * Where the port is kept, spelled as the settings keep it.
+         *
+         * Named here rather than read off `McpServerSettings`, which holds its keys private on
+         * purpose: what a test states is the stored answer, not the field it lands in.
+         */
+        private const val PORT_KEY = "mcp_server_port"
     }
 }

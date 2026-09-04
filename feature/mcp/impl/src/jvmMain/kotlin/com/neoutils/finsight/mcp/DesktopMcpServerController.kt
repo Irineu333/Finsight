@@ -35,6 +35,21 @@ import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
 /**
+ * The interface this app's server is bound to, and therefore the only one anything in this app
+ * dials.
+ *
+ * The loopback address itself, and never a hostname: `localhost` resolves through the machine's own
+ * configuration, and a machine that resolves it elsewhere would put the server on an interface
+ * nobody asked for. Stated once for both ends — the socket that binds it and the bridge that dials
+ * it — so that "this conversation never leaves the machine" is one fact rather than two spellings
+ * of it.
+ */
+internal const val LOOPBACK_HOST = "127.0.0.1"
+
+/** Where the protocol is spoken on that interface, at both ends for the same reason. */
+internal const val MCP_PATH = "/mcp"
+
+/**
  * The desktop controller — the seat of the real server, because the JVM desktop target is the only
  * one whose process owns a socket.
  *
@@ -314,15 +329,6 @@ internal class DesktopMcpServerController(
     }
 
     private companion object {
-
-        /**
-         * The loopback address itself, and never a hostname: `localhost` resolves through the
-         * machine's own configuration, and a machine that resolves it elsewhere would put the
-         * server on an interface nobody asked for.
-         */
-        const val LOOPBACK_HOST = "127.0.0.1"
-
-        const val MCP_PATH = "/mcp"
 
         val ALLOWED_HOSTS = listOf("localhost", "127.0.0.1", "[::1]")
 

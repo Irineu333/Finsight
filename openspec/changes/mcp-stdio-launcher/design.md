@@ -44,6 +44,12 @@ Bearer estático. Nenhum app desktop com MCP embutido responde com a GUI fechada
 independentes, partindo de briefing neutro, recomendaram o modo stdio e desaconselharam um
 serviço em segundo plano.
 
+**Referência visual.** `how-it-works.html`, nesta pasta, apresenta o funcionamento para quem
+não vai ler o design: os dois modos, a regra de posse, a decisão por chamada, a linha do tempo
+dos cenários e o que a seção passa a mostrar. É a mesma página publicada em
+<https://claude.ai/code/artifact/41bfa025-ad7b-4174-878a-446496d91ce2>. Onde ela e este
+documento divergirem, este documento vale.
+
 ## Goals / Non-Goals
 
 **Goals:**

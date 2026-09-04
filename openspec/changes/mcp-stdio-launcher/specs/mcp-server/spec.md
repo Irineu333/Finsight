@@ -1,0 +1,140 @@
+## MODIFIED Requirements
+
+### Requirement: O servidor vive com o app, e não como segundo programa
+
+A superfície MCP SHALL viver dentro do artefato que o usuário instala, em dois modos do mesmo
+executável: o servidor embutido no processo da janela, que sobe quando ela sobe e encerra quando
+ela encerra, e o modo `--mcp`, que o cliente lança por stdio e que funciona com a janela aberta ou
+fechada (capability `mcp-stdio-mode`). O projeto MUST NOT distribuir um segundo executável,
+script ou serviço para que um agente alcance o app.
+
+Com a janela aberta, toda escrita de agente SHALL ser executada pelo processo da janela — venha
+ela pelo servidor embutido ou encaminhada pelo modo `--mcp` —, porque o `invalidationTracker` do
+Room é **do processo**: um segundo processo escrevendo no mesmo arquivo de banco não acorda
+`Flow` algum da janela, e a tela continuaria exibindo números anteriores à escrita. Com a janela
+fechada, o modo `--mcp` é o único processo e executa sozinho.
+
+#### Scenario: Servidor sobe com o app
+- **WHEN** o app desktop é iniciado com o servidor habilitado
+- **THEN** o servidor embutido passa a aceitar conexões, sem que nenhum outro programa tenha sido executado
+
+#### Scenario: Servidor cai com o app
+- **WHEN** o app desktop é encerrado
+- **THEN** o servidor embutido deixa de aceitar conexões e libera a porta
+
+#### Scenario: A superfície existe com o app fechado
+- **WHEN** o app desktop está encerrado e um cliente lança o executável com `--mcp`
+- **THEN** o agente é atendido, sem que nenhum outro programa tenha sido instalado ou executado
+
+#### Scenario: Um único artefato distribuído
+- **WHEN** o pacote de distribuição do desktop é inspecionado
+- **THEN** ele contém um único executável, e os dois modos da superfície MCP estão dentro dele
+
+### Requirement: A configuração ensina a conectar
+
+O app SHALL oferecer uma seção de configurações dedicada ao servidor, alcançável a partir das
+configurações do app junto das demais **integrações**, onde o usuário o liga e desliga, vê se
+está no ar, e obtém o que um cliente precisa para conectar.
+
+Com o servidor desabilitado, a seção SHALL apresentar o que ele é e o interruptor que o liga, e
+MUST NOT exigir nenhuma outra decisão para ligá-lo — comando, endereço, token, permissões e
+instruções de conexão só fazem sentido depois que existe um servidor a que se conectar.
+
+Com o servidor habilitado, a seção SHALL apresentar os eixos de permissão e as instruções de
+conexão em forma copiável. A instrução principal SHALL ser o **comando**: o caminho absoluto do
+executável instalado com `--mcp`, no formato `command` + `args` que os clientes MCP usam, e a
+seção SHALL dizer que ele funciona com o app aberto ou fechado. O endereço HTTP e o token SHALL
+continuar disponíveis como caminho avançado, recolhidos, para clientes que preferem `url` com o
+app aberto; o token SHALL ficar oculto por padrão, revelado sob ação explícita.
+
+As instruções MUST NOT ser específicas de um cliente: o servidor fala o protocolo, e qualquer
+cliente que o fale conecta.
+
+#### Scenario: Encontrar a configuração
+- **WHEN** o usuário abre as configurações do app
+- **THEN** encontra o servidor MCP entre as integrações
+
+#### Scenario: Primeira visita, com o servidor desabilitado
+- **WHEN** o usuário abre a seção pela primeira vez
+- **THEN** vê o que o servidor é e um interruptor para habilitá-lo, sem precisar decidir mais nada antes
+
+#### Scenario: Usuário liga o servidor
+- **WHEN** o usuário habilita o servidor na seção de configurações
+- **THEN** o servidor embutido passa a aceitar conexões e a seção passa a exibir os eixos de permissão, o comando de lançamento e, recolhidos, o endereço e o token
+
+#### Scenario: Usuário desliga o servidor
+- **WHEN** o usuário desabilita o servidor
+- **THEN** as conexões são encerradas e nenhuma ferramenta é executada, em nenhum dos dois modos, até que ele seja habilitado de novo
+
+#### Scenario: O comando é copiável e aponta para o executável instalado
+- **WHEN** o usuário abre a seção com o servidor habilitado
+- **THEN** ele consegue copiar o bloco `command` + `args` com o caminho absoluto do executável desta instalação, sem transcrevê-lo à mão
+
+#### Scenario: A seção diz que funciona fechado
+- **WHEN** o usuário lê as instruções de conexão
+- **THEN** elas dizem que o comando funciona com o app aberto ou fechado
+
+#### Scenario: O caminho avançado continua copiável
+- **WHEN** o usuário expande o caminho avançado
+- **THEN** ele consegue copiar o endereço e o token
+
+#### Scenario: O token não fica exposto
+- **WHEN** o caminho avançado é exibido
+- **THEN** o token aparece oculto, e só é revelado sob ação explícita do usuário
+
+### Requirement: O que um agente escreve fica registrado
+
+Toda escrita, operação e recusa executada por um agente SHALL ser registrada, e o registro SHALL
+persistir entre execuções do app. Uma entrada SHALL dizer **quando**, **qual operação**, **sobre
+o quê** — em termos que o usuário reconheça, não identificadores soltos — e **qual foi o
+resultado**, referenciando o que criou ou alterou, para que o usuário alcance o lançamento a
+partir dali.
+
+O registro SHALL ser o mesmo nos dois modos: uma escrita feita pelo modo `--mcp` com o app
+fechado SHALL constar dele quando o usuário abrir o app.
+
+Este é o único lugar do app onde a **autoria** de uma escrita aparece. A reatividade mostra o
+resultado — a transação surge na tela —, e não mostra que ela veio de fora: sem o registro, um
+lançamento indevido feito por um agente é indistinguível de um lançamento que o próprio usuário
+esqueceu de ter feito.
+
+O registro também é a única defesa hoje contra a duplicação que a ausência de idempotência
+permite: um agente que repete uma chamada perdida cria dois lançamentos idênticos, e é aqui que
+os dois aparecem lado a lado.
+
+**Leituras MUST NOT ser registradas.** Um agente faz dezenas de consultas para responder a uma
+pergunta, e listá-las afoga exatamente o que o registro existe para mostrar; uma leitura não
+altera nada e não tem o que auditar.
+
+O registro SHALL ter política de retenção declarada, e MUST NOT crescer sem limite. O usuário
+SHALL poder limpá-lo, e a limpeza MUST NOT alterar nenhum lançamento — o registro é rastro do que
+foi feito, e MUST NOT ser tratado como fonte de verdade contábil: apagar uma entrada não desfaz a
+operação que ela descreve.
+
+#### Scenario: Escrita de agente deixa rastro
+- **WHEN** um agente registra um lançamento
+- **THEN** o registro ganha uma entrada com o horário, a operação, o que foi lançado em termos legíveis e a referência ao lançamento criado
+
+#### Scenario: Escrita com o app fechado deixa o mesmo rastro
+- **WHEN** um agente registra um lançamento pelo modo `--mcp` com o app fechado, e o usuário depois abre o app
+- **THEN** a entrada está no registro, indistinguível de uma feita com o app aberto
+
+#### Scenario: Rastro sobrevive ao reinício
+- **WHEN** o app é encerrado e aberto novamente
+- **THEN** as entradas anteriores continuam disponíveis
+
+#### Scenario: Consulta não vira entrada
+- **WHEN** um agente executa uma sequência de consultas para responder a uma pergunta
+- **THEN** nenhuma entrada é criada
+
+#### Scenario: Recusa é registrada
+- **WHEN** uma operação é recusada por falta de permissão ou pelo domínio
+- **THEN** o registro guarda a tentativa e o motivo da recusa
+
+#### Scenario: Duplicação fica visível
+- **WHEN** um agente repete uma chamada de escrita já executada
+- **THEN** as duas execuções aparecem no registro, lado a lado
+
+#### Scenario: Limpar o registro não desfaz nada
+- **WHEN** o usuário limpa o registro
+- **THEN** as entradas somem e todos os lançamentos permanecem intactos

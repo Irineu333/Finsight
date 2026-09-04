@@ -1,9 +1,11 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.feature.mcp.api.McpLaunchCommand
 import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.mcp.api.McpServerFailure
 import com.neoutils.finsight.feature.mcp.api.McpServerState
+import com.neoutils.finsight.feature.mcp.api.ofThisProcess
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -103,6 +105,15 @@ internal class DesktopMcpServerController(
     override val permissions: StateFlow<Set<McpPermissionAxis>> = settings.permissions
 
     override val toolCountByAxis: Map<McpPermissionAxis, Int> = McpSurface.toolCountByAxis
+
+    /**
+     * What a client is told to launch, resolved once from the process this controller was built in.
+     *
+     * The stdio mode is the same executable under another argument, so the command is a fact about
+     * this process rather than about the server it holds — which is why it is settled here and not
+     * asked again on every read (design D9).
+     */
+    override val launchCommand: McpLaunchCommand? = McpLaunchCommand.ofThisProcess()
 
     /**
      * The scope the engine's jobs hang from, owned here rather than left global.

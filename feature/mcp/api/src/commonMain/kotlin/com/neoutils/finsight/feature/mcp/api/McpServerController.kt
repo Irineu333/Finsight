@@ -59,6 +59,19 @@ interface McpServerController {
     val toolCountByAxis: Map<McpPermissionAxis, Int>
 
     /**
+     * How a client launches the app as a server of its own — the executable's own path and the
+     * argument that makes it speak the protocol — or `null` where there is no such process to
+     * launch.
+     *
+     * Answered here, beside the port and the token, for the reason they are: what a client has to
+     * be told in order to connect is the controller's to state, and a section that went looking for
+     * it among the system's properties would be a second place deciding how the app is started.
+     *
+     * A constant and not a flow: what a process was launched from cannot change while it runs.
+     */
+    val launchCommand: McpLaunchCommand?
+
+    /**
      * Brings the server up **if the user has chosen to run it**, and otherwise does nothing.
      *
      * This is what the process calls when it starts: the user switches the server on once, and

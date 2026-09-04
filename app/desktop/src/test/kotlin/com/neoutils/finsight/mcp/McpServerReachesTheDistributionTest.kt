@@ -54,6 +54,35 @@ class McpServerReachesTheDistributionTest {
     }
 
     /**
+     * The bridge the stdio mode takes when the window owns the database is a client of this app's
+     * own loopback server, and a client that is not installed is a bridge that exists only where
+     * the tests run.
+     */
+    @Test
+    fun `the client the bridge speaks through is packed into the desktop distribution`() {
+        assertTrue(
+            distribution.any { it.origin.startsWith("io.modelcontextprotocol:kotlin-sdk-client") },
+            "The MCP client SDK is not in the distribution: a stdio session launched while the " +
+                "app is open would have nothing to forward the call with.",
+        )
+    }
+
+    /**
+     * And the engine under it, which is the half a dependency graph will not supply on its own:
+     * the SDK brings `ktor-client-core`, which is an API with no transport beneath it. Packaging
+     * the client without the engine fails nowhere but on the user's machine, at the first call
+     * made with the window open.
+     */
+    @Test
+    fun `the engine that client speaks over is packed into the desktop distribution`() {
+        assertTrue(
+            distribution.any { it.origin.startsWith("io.ktor:ktor-client-okhttp") },
+            "The client engine is not in the distribution: the bridge's client would have " +
+                "nothing to dial with.",
+        )
+    }
+
+    /**
      * The SDK and the engine arrive because the feature does, and the feature arrives because
      * the app does — one graph, one artifact. A second program shipped alongside would carry
      * them somewhere this manifest never looks.

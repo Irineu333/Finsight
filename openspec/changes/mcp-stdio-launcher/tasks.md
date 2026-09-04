@@ -87,10 +87,17 @@
 
 ## 6. Ponto de entrada do desktop (design D1, D9)
 
-- [ ] 6.1 `main(args)` despacha: `--mcp` → `McpMain` (sem `application {}`, sem `DesktopFirebase.initialize()`, sem `Window`); qualquer outro caso → a janela como hoje.
-- [ ] 6.2 `McpMain`: higiene de `stdout`, `startKoin(appModules)`, resolve `McpStdioSession` e serve até o stdin fechar; encerra o Koin e o banco ao sair.
-- [ ] 6.3 `McpServerController` expõe `launchCommand` (caminho do executável + `--mcp`), lido de `jpackage.app-path` com fallback em `ProcessHandle.current().info().command()`; no-op nos demais targets devolve nulo.
-- [ ] 6.4 Teste do despacho (argumentos vazios, `--mcp`, argumento desconhecido) e do comando (propriedade presente, ausente).
+- [x] 6.1 `main(args)` despacha: `--mcp` → `McpMain` (sem `application {}`, sem `DesktopFirebase.initialize()`, sem `Window`); qualquer outro caso → a janela como hoje. A decisão é `LaunchMode.of(args)` — um valor, e não um `if` dentro do `main` —, porque o outro ramo abre uma janela e uma regra só é afirmável em teste se puder ser lida sem ser executada. O corpo da janela virou `windowMain()`, sem uma linha alterada.
+- [x] 6.2 `McpMain`: higiene de `stdout`, `startKoin(appModules)`, resolve `McpStdioSession` e serve até o stdin fechar; encerra o Koin e o banco ao sair. **O banco é fechado à mão porque ninguém mais o fecha**: o `single<AppDatabase>` de `:core:database` não declara `onClose`, e `stopKoin()` larga a referência sem tocar no que ela segura. Room expõe o `close()` de `RoomDatabase` (o mesmo que `DatabaseRestoreTest` usa), e o efeito é visível: depois de uma sessão com uma chamada de verdade não sobram `-wal`/`-shm` ao lado do arquivo, que é o que um processo que sai sem fechar deixa. **A posse do banco não é tomada aqui** — é por chamada, no `McpStdioCallSite` (4.5); tomá-la no arranque prenderia a janela do usuário pela sessão inteira (D3, D4).
+- [x] 6.3 `McpServerController` expõe `launchCommand` (caminho do executável + `--mcp`), lido de `jpackage.app-path` com fallback em `ProcessHandle.current().info().command()`; no-op nos demais targets devolve nulo. **A forma é `McpLaunchCommand(command, args)` e não uma `String`**: `--mcp` é decisão do ponto de entrada, e uma `String` com o caminho obrigaria a seção a saber qual é o argumento — dois lugares tendo de concordar. O argumento mora em `McpLaunchCommand.STDIO_ARGUMENT`, em `feature/mcp/api`, que é o único módulo que o `main` do desktop e a seção enxergam ao mesmo tempo; `LaunchMode` casa contra a mesma constante que a seção publica. A resolução é `McpLaunchCommand.ofThisProcess()` no `jvmMain` do `api`, ao lado de `McpStdout` e pelo mesmo motivo. Uma linha em `FakeController` (`McpViewModelTest`, arquivo do grupo 7) foi preciso acrescentar para o módulo compilar — membro novo sem valor padrão na interface, como `toolCountByAxis`.
+
+> **O fallback de desenvolvimento não é um comando que funcione, e o grupo 7 precisa saber.**
+> `ProcessHandle.current().info().command()` devolve o binário `java` da JVM, sem classpath e sem
+> classe principal: rodando por `./gradlew :app:desktop:run`, a seção mostra `/…/bin/java --mcp`,
+> que copiado num cliente não sobe o app. O design D9 aceita esse fallback e a instalação
+> empacotada responde certo, então não é defeito a corrigir aqui — é uma armadilha na hora de
+> demonstrar a seção fora de uma instalação real, e o que a tela mostra ali é ilustrativo.
+- [x] 6.4 Teste do despacho (argumentos vazios, `--mcp`, argumento desconhecido) e do comando (propriedade presente, ausente). `LaunchModeTest` (5 casos, `:app:desktop`) cobre os três, mais `--mcp` no meio de outros argumentos e o par que fecha os dois lados: os `args` que a seção publica são os que o despacho reconhece. `McpLaunchCommandTest` (3 casos) mora em `feature/mcp/api/jvmTest`, ao lado de `McpStdoutTest`, que é onde a resolução está — inclui a propriedade em branco, que não é caminho. Exercitado também por linha de comando num processo de verdade: sem argumento e com um argumento desconhecido a JVM sem display morre em `java.awt.HeadlessException` (ramo da janela), e com `--mcp` a mesma JVM completa `initialize` → `tools/list` (58 ferramentas) e sai com 0.
 
 ## 7. Seção de configurações (`mcp-server`: "A configuração ensina a conectar")
 
@@ -100,7 +107,7 @@
 
 ## 8. Distribuição e verificação (design D11)
 
-- [ ] 8.1 `McpServerReachesTheDistributionTest` passa a exigir também `io.modelcontextprotocol:kotlin-sdk-client` na distribuição — e o motor do cliente que 5.1 declarar, porque um cliente empacotado sem motor sobre o qual falar é uma ponte que só falha na máquina do usuário.
+- [x] 8.1 `McpServerReachesTheDistributionTest` passa a exigir também `io.modelcontextprotocol:kotlin-sdk-client` na distribuição — e o motor do cliente que 5.1 declarar, porque um cliente empacotado sem motor sobre o qual falar é uma ponte que só falha na máquina do usuário. O motor é `io.ktor:ktor-client-okhttp` (`McpBridge.kt:76`, `HttpClient(OkHttp)`); o manifesto de `writeDistributionManifest` traz `io.modelcontextprotocol:kotlin-sdk-client-jvm:0.14.0` e `io.ktor:ktor-client-okhttp-jvm:3.4.3`.
 - [ ] 8.2 Tarefa Gradle `verifyMcpLauncher` em `:app:desktop`, dependente de `createDistributable`: lança o launcher empacotado com `--mcp`, completa `initialize` → `tools/list` pelo stdio, confere que `stderr` recebeu a linha de abertura e que `jpackage.app-path` está definido. Fora de `jvmTest`, executada à mão como a suíte Maestro.
 - [ ] 8.3 Executar `verifyMcpLauncher` neste macOS e registrar no relatório da mudança em que SO rodou, o tempo até `initialize` e a memória do processo.
 - [ ] 8.4 `./gradlew jvmTest` verde, com a contagem de testes conferida contra os **2973 casos** da linha de base do cabeçalho: o total final é ela mais os testes que cada grupo acrescentou, e uma diferença que não se explique assim é um teste que sumiu.

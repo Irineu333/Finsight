@@ -1,5 +1,6 @@
 package com.neoutils.finsight.mcp
 
+import com.neoutils.finsight.feature.mcp.api.McpLaunchCommand
 import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.mcp.api.McpServerState
@@ -32,6 +33,12 @@ internal class UnavailableMcpServerController : McpServerController {
     override val permissions: StateFlow<Set<McpPermissionAxis>> = MutableStateFlow(emptySet())
 
     override val toolCountByAxis: Map<McpPermissionAxis, Int> = emptyMap()
+
+    /**
+     * There is no command, because there is no process a client could start: here the app is
+     * launched by the system on the user's tap, and its standard streams go to a log.
+     */
+    override val launchCommand: McpLaunchCommand? = null
 
     override suspend fun start() = Unit
 

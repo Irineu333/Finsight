@@ -12,6 +12,7 @@ import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.feature.mcp.api.IAgentActivityRepository
+import com.neoutils.finsight.feature.mcp.api.McpLaunchCommand
 import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.mcp.api.McpServerFailure
@@ -481,6 +482,8 @@ class McpViewModelTest {
             McpPermissionAxis.REMOVE to 8,
             McpPermissionAxis.OPERATE to 13,
         )
+
+        override val launchCommand: McpLaunchCommand? = null
 
         override suspend fun start() = Unit
 

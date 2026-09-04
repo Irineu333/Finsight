@@ -23,8 +23,21 @@ import kotlinx.coroutines.withContext
 import org.koin.core.context.startKoin
 import java.awt.Dimension
 
+/**
+ * The one entry point of the one executable, and the argument that says which of its two programs
+ * is being asked for (design D1).
+ *
+ * The arguments are read before anything else happens, because what the answer settles is whether a
+ * window, a toolkit and a cloud service ever come into existence — decisions that cannot be undone
+ * once taken.
+ */
+fun main(args: Array<String>) = when (LaunchMode.of(args)) {
+    LaunchMode.MCP_STDIO -> mcpStdioMain()
+    LaunchMode.WINDOW -> windowMain()
+}
+
 @OptIn(FlowPreview::class)
-fun main() = application {
+private fun windowMain() = application {
     // Before the graph, because the graph is what opens the database and the ownership is the
     // claim to be the process that does (design D4). A headless `--mcp` process takes it a
     // call at a time, so the wait here is a call in flight finishing; it is bounded, and a

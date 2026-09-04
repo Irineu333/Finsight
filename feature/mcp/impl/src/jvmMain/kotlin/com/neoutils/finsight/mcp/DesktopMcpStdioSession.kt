@@ -73,7 +73,6 @@ internal class DesktopMcpStdioSession(
     internal suspend fun serve(input: Source, output: Sink) {
         announce(settings.currentChoice().enabled)
 
-        val server = offering()
         val transport = StdioServerTransport(input = input, output = output)
 
         // Completed when the client closes the input, which the transport reports the same way for
@@ -81,12 +80,15 @@ internal class DesktopMcpStdioSession(
         val ended = CompletableDeferred<Unit>()
         transport.onClose { ended.complete(Unit) }
 
+        var server: Server? = null
         try {
-            server.createSession(transport)
+            // Through the assembly rather than `createSession`, because a client that lists the
+            // instant it is connected must read this app's answer and not the SDK's empty one.
+            server = offering().openSession(transport, onSessionOpen = bridge::relayTo)
             ended.await()
         } finally {
             withContext(NonCancellable) {
-                runCatching { server.close() }
+                server?.let { runCatching { it.close() } }
                 runCatching { bridge.close() }
             }
         }
@@ -99,12 +101,12 @@ internal class DesktopMcpStdioSession(
      * window has to reach the client on this side — the same `tools/list changed` the window sends
      * over its socket, repeated over the pipe (design D8).
      */
-    private fun offering(): Server = McpSessionFactory(
+    private fun offering() = McpSessionFactory(
         settings = settings,
         journal = journal,
         tools = tools,
         calls = McpStdioCallSite(settings, ownership, elsewhere = bridge),
-    ).newServer(onSessionOpen = bridge::relayTo)
+    )
 
     /**
      * The opening line: which build answered, in which mode, and whether the app is offering

@@ -30,7 +30,9 @@ internal object McpSurface {
      * beside it — the family an agent resolves a name into an identity through. Family 3, the
      * registration — what is created, altered and removed —, which straddles two axes: fifteen
      * tools a user grants by saying "record and edit", and eight `delete_*` on an axis of its own.
-     * And family 4, the operations: thirteen tools that move money or move a life cycle.
+     * And family 4, the operations: fifteen tools that move money or move a life cycle — the two
+     * corrections among them, because rewriting the two monetary legs of a transfer or of a
+     * payment moves money exactly as writing them the first time did.
      */
     val offered: Set<McpToolName> = setOf(
         McpToolName.GET_BALANCE,
@@ -87,12 +89,14 @@ internal object McpSurface {
         // nowhere, which is the decision this list exists to record.
         McpToolName.PAY_INVOICE,
         McpToolName.ADVANCE_INVOICE_PAYMENT,
+        McpToolName.UPDATE_ADVANCE_INVOICE_PAYMENT,
         McpToolName.CLOSE_INVOICE,
         McpToolName.OPEN_INVOICE,
         McpToolName.REOPEN_INVOICE,
         McpToolName.ADJUST_INVOICE,
         McpToolName.ADJUST_BALANCE,
         McpToolName.TRANSFER,
+        McpToolName.UPDATE_TRANSFER,
         McpToolName.SET_DEFAULT_ACCOUNT,
         McpToolName.CONFIRM_RECURRING,
         McpToolName.SKIP_RECURRING,

@@ -110,8 +110,12 @@ Uma recusa por identidade não encontrada SHALL dizer o que não foi encontrado.
 - **THEN** a recusa informa o motivo e nomeia a operação de arquivamento como alternativa
 
 #### Scenario: Edição recusada por forma da operação
-- **WHEN** um agente tenta editar uma transferência ou um pagamento de fatura
-- **THEN** a recusa informa que a operação possui mais de uma perna monetária e por isso não é editável por essa ferramenta
+- **WHEN** um agente tenta editar uma transferência ou um pagamento de fatura pela ferramenta do formulário de transação
+- **THEN** a recusa informa que a operação possui mais de uma perna monetária e por isso não é editável por essa ferramenta, e nomeia a ferramenta que a corrige
+
+#### Scenario: Qual ferramenta corrige uma operação
+- **WHEN** a ferramenta que corrige uma operação precisa ser decidida
+- **THEN** ela decorre da natureza que o razão deriva das pernas, pela mesma leitura que a tela de detalhe usa para escolher o formulário, e não de uma contagem de pernas
 
 #### Scenario: Identidade inexistente
 - **WHEN** um agente informa o identificador de algo que não existe

@@ -47,9 +47,9 @@ Duas consequências operacionais:
 
 | | |
 |---|---|
-| Ferramentas | **56**, em 4 famílias |
-| Por eixo | ler **20** · registrar e editar **15** · apagar **8** · operar **13** |
-| Use cases que passaram a estar na `api` de uma feature | **43** — **34** promovidos de `impl` e **9** criados |
+| Ferramentas | **58**, em 4 famílias |
+| Por eixo | ler **20** · registrar e editar **15** · apagar **8** · operar **15** |
+| Use cases que passaram a estar na `api` de uma feature | **45** — **36** promovidos de `impl` e **9** criados |
 | Ferramentas visíveis com permissão só-leitura | **20** |
 
 > As contagens por eixo não são mantidas à mão em lugar nenhum: `McpToolName` declara o eixo de
@@ -199,7 +199,7 @@ configurar o cofre já está declarado fora de escopo em `McpSurface`.
 | Ferramenta | Entrada | Decide | Adapta / traz |
 |---|---|---|---|
 | `create_transaction` | `type`, `amount`, `date?`, `title?`, `category_id?`, `account_id?` \| `card_id?`, `invoice_month?`, `installments?`, `is_recurring?` | ✚ **`RegisterTransactionUseCase`** — despacha para ✔ `AddInstallmentUseCase`, ✔ `StartRecurringFromTransactionUseCase` ou ✔ `BuildTransactionUseCase` + `createTransaction` | monta `TransactionForm` a partir de ids. **O despacho é inteiro do use case**: a ferramenta lê `installments > 1` apenas para recusar o que o domínio não modela — parcelas numa conta, parcelas ao lado de `is_recurring`, um `invoice_month` ao lado de um `account_id` —, nunca para decidir no que um formulário válido vai dar. **Traz:** o que foi criado — uma transação ou as N do parcelamento, e **uma** entrada no registro de atividade |
-| `update_transaction` | `id`, `type?`, `amount?`, `date?`, `title?`, `category_id?`, `account_id?`, `card_id?`, `invoice_month?` | ✚ **`UpdateTransactionUseCase`** — nasceu nesta mudança, e `EditTransactionViewModel` passou a consumi-lo | **só quando editável** (uma perna monetária); `Transaction.editObstacle` é o dono da derivação e a recusa chega nas palavras do domínio. Editar o valor para algo que não seja **maior que zero** — zero ou negativo — é recusado, nomeando `delete_transaction`. O que `TransactionForm.from` normalizaria em silêncio é recusado antes do formulário: uma receita com cartão em jogo — o nomeado em `card_id` ou o que o lançamento já tinha —, e uma categoria que a direção não classifica — tanto a citada em `category_id` quanto **a que o lançamento já tem**, que a chamada não mencionou. `invoice_month` é o único que o formulário **não** normaliza — ele o carrega intacto e o ramo de conta de `BuildTransactionUseCaseImpl` retorna sem lê-lo —, então a recusa está um passo além: vale quando o destino que a edição resolve não é um cartão, porque uma conta não tem fatura. `category_id = 0` é como a chamada diz *sem categoria*, e a única forma de a edição tirar uma classificação |
+| `update_transaction` | `id`, `type?`, `amount?`, `date?`, `title?`, `category_id?`, `account_id?`, `card_id?`, `invoice_month?` | ✚ **`UpdateTransactionUseCase`** — nasceu nesta mudança, e `EditTransactionViewModel` passou a consumi-lo | **só quando editável** (uma perna monetária); `Transaction.editObstacle` é o dono da derivação e a recusa chega nas palavras do domínio, com `try_instead` nomeando a ferramenta que corrige aquela operação — `update_transfer` para uma transferência, `update_advance_invoice_payment` para um pagamento, `adjust_balance`/`adjust_invoice` para um ajuste. Qual delas decorre do que a operação **é**, e a leitura tem um dono só (`Transaction.correctionTool`), irmão do `editFormFor` que a tela de detalhe usa. Editar o valor para algo que não seja **maior que zero** — zero ou negativo — é recusado, nomeando `delete_transaction`. O que `TransactionForm.from` normalizaria em silêncio é recusado antes do formulário: uma receita com cartão em jogo — o nomeado em `card_id` ou o que o lançamento já tinha —, e uma categoria que a direção não classifica — tanto a citada em `category_id` quanto **a que o lançamento já tem**, que a chamada não mencionou. `invoice_month` é o único que o formulário **não** normaliza — ele o carrega intacto e o ramo de conta de `BuildTransactionUseCaseImpl` retorna sem lê-lo —, então a recusa está um passo além: vale quando o destino que a edição resolve não é um cartão, porque uma conta não tem fatura. `category_id = 0` é como a chamada diz *sem categoria*, e a única forma de a edição tirar uma classificação |
 | `delete_transaction` *(Apagar)* | `id` | ✔ `DeleteTransactionUseCase(transactionId)` | resolve o lançamento antes de removê-lo, para o registro poder dizer o que era |
 | `create_account` | `name`, `currency`, `is_default?`, `yields_interest?` | ⬆ `CreateAccountUseCase` | a moeda não tem padrão, por desenho — a ferramenta também não inventa uma. Ícone não entra na superfície |
 | `update_account` | `id`, `name?`, `is_default?`, `yields_interest?` | ⬆ `UpdateAccountUseCase(accountId, update)` | o patch vira a lambda `(Account) -> Account`; a moeda é recusada pelo domínio |
@@ -229,16 +229,24 @@ configurar o cofre já está declarado fora de escopo em `McpSurface`.
 **Permissão: Operar.** Movem dinheiro ou mudam ciclo de vida. É o eixo que o CRUD não
 alcança — e onde está quase tudo que se faz num dia normal.
 
+As duas correções — `update_transfer` e `update_advance_invoice_payment` — estão aqui, e não na
+família 3 ao lado de `update_transaction`. Reescrever as duas pernas monetárias de uma
+transferência ou de um pagamento **move dinheiro**, exatamente como escrevê-las da primeira vez:
+um agente com "registrar e editar" e sem "operar" não pode transferir corrigindo uma
+transferência antiga.
+
 | Ferramenta | Entrada | Decide | Adapta / traz |
 |---|---|---|---|
 | `pay_invoice` | `id`, `account_id`, `date?`, `paid_amount?` | ⬆ **`PayInvoicePaymentUseCase(invoiceId, date, accountId, paidAmount?)`** — ⚠️ **não** `PayInvoiceUseCase`, veja a armadilha 3 | resolve a conta pagadora; `paid_amount` só quando as moedas divergem. A fatura e o saldo da resposta são **lidos de volta** depois da operação |
 | `advance_invoice_payment` | `id`, `amount`, `account_id`, `date?`, `paid_amount?` | ⬆ `AdvanceInvoicePaymentUseCase(invoiceId, amount, date, accountId, paidAmount?)` | pagamento parcial/antecipado; `amount` é na moeda do **cartão** |
+| `update_advance_invoice_payment` | `id`, `invoice_id?`, `amount?`, `account_id?`, `date?`, `paid_amount?` | ⬆ `UpdateAdvanceInvoicePaymentUseCase(transactionId, invoiceId, amount, date, accountId, paidAmount?)` | corrige o parcial **no lugar**: as pernas são reescritas e a operação continua a mesma. O que a chamada não nomeia é carregado da operação — o título junto, que o formulário não exibe. O modo não é redecidido: a fatura de destino tem de aceitar parcial, e o teto deixa de fora a contribuição da própria operação (`excluding`), que é o que torna *aumentar* o pagamento uma correção legítima. `paid_amount` só sobrevive enquanto as duas pontas divergem de moeda |
 | `close_invoice` | `id`, `date?` | ⬆ `CloseInvoiceUseCase(invoiceId, closedAt)` | |
 | `open_invoice` | `card_id`, `opening_month` | ⬆ `OpenInvoiceUseCase(creditCardId, openingMonth)` | **promove** a fatura já declarada para o mês em vez de duplicá-la |
 | `reopen_invoice` | `id` | ⬆ `ReopenInvoiceUseCase(invoiceId)` | recusa se já aberta |
 | `adjust_invoice` | `id`, `target`, `date?` | ⬆ `AdjustInvoiceUseCase(invoiceId, target, adjustmentDate)` | lança o ajuste; não edita um campo. Ajustar para o que já se deve é recusado |
 | `adjust_balance` | `account_id`, `target_balance`, `date?` | ⬆ `AdjustBalanceUseCase(targetBalance, adjustmentDate, accountId)` | idem — a diferença vira lançamento |
-| `transfer` | `from_account_id`, `to_account_id`, `amount`, `destination_amount?`, `date?` | ⬆ `TransferBetweenAccountsUseCase` | `destination_amount` quando cruza moedas; a taxa é colhida, nunca informada — nenhum parâmetro do schema a menciona |
+| `transfer` | `from_account_id`, `to_account_id`, `amount`, `destination_amount?`, `date?`, `title?` | ⬆ `TransferBetweenAccountsUseCase` | `destination_amount` quando cruza moedas; a taxa é colhida, nunca informada — nenhum parâmetro do schema a menciona |
+| `update_transfer` | `id`, `from_account_id?`, `to_account_id?`, `amount?`, `destination_amount?`, `date?`, `title?` | ⬆ `UpdateTransferUseCase(transactionId, sourceAccountId, destinationAccountId, amount, date, title, destinationAmount?)` | corrige a transferência **no lugar**: as pernas são reescritas e a operação continua a mesma. O que a chamada não nomeia é carregado da operação; `title` vazio apaga, como no formulário que o exibe. `destination_amount` é carregado só enquanto as duas pontas divergem de moeda — uma correção que traz as duas para a mesma moeda não transforma uma figura em duas |
 | `set_default_account` | `id` | ⬆ `SetDefaultAccountUseCase(accountId)` | |
 | `confirm_recurring` | `id`, `date?`, `amount?`, `title?`, `category_id?`, `account_id?`, `card_id?`, `invoice_month?` | ⬆ `ConfirmRecurringUseCase(recurringId, date, …)` | os opcionais são a edição no ato de confirmar. **Título e categoria não citados são pré-preenchidos do template pela ferramenta e passados explicitamente** — o use case não os deriva mais do agregado, e repassar `null` gravaria o ciclo sem nome. `title` vazio e `category_id = 0` são as duas formas de apagar |
 | `skip_recurring` | `id`, `date?` | ⬆ `SkipRecurringUseCase(recurringId, date)` | |
@@ -257,7 +265,7 @@ ferramenta: ela decide **quais ferramentas existem** no `tools/list`.
 | Ler | 1 + 2 | 20 |
 | Registrar e editar | 3, menos os apagar | 15 |
 | Apagar | as 8 marcadas *(Apagar)* | 8 |
-| Operar | 4 | 13 |
+| Operar | 4 | 15 |
 
 Um agente com só-leitura vê 20 ferramentas e não tenta as outras — não erra, não gasta
 contexto. `ServerCapabilities.Tools(listChanged = true)` já existe no SDK Kotlin, então mexer no

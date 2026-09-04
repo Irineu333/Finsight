@@ -4,47 +4,36 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
+import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.exception.AccountException
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 
 /**
- * Correcting a partial invoice payment that is already registered, in place.
+ * [ValidateAdvanceInvoicePaymentUseCase] owns the rules, and this reads the same ones
+ * [AdvanceInvoicePaymentUseCase] reads — including `acceptsPartialPayment`, which is what
+ * keeps a correction from reaching an invoice a registration could not.
  *
- * It is the counterpart of [AdvanceInvoicePaymentUseCase] and shares its rules wholesale
- * — [ValidateAdvanceInvoicePaymentUseCase] owns them, and a payment is no more or less
- * admissible for having been written once already. What differs is the write: the legs
- * of an existing operation are rewritten rather than created, so the operation keeps its
- * identity instead of becoming a new one.
- *
- * **The mode is not redecided here.** Correcting a partial payment is reaffirming a
- * partial payment, which is why the validator's `acceptsPartialPayment` is inherited
- * rather than relaxed: an invoice that stopped taking spending refuses the correction
- * too, whether or not a screen offers it. Nothing on this path marks an invoice `PAID` —
- * that belongs to the payment that discharges one, and this is not it.
- *
- * Crossing currencies takes no branch here either. The intent arrives at the boundary
- * incomplete and is completed there, conversion legs and all, exactly as on creation.
+ * What the payment looks like in the ledger is [WriteInvoicePaymentUseCase]'s, in its
+ * rewriting form: same two legs, same owner, and the transaction keeps its identity.
  */
-class UpdateAdvanceInvoicePaymentUseCase(
+class UpdateAdvanceInvoicePaymentUseCaseImpl(
     private val writeInvoicePayment: WriteInvoicePaymentUseCase,
     private val validateInvoicePayment: ValidateAdvanceInvoicePaymentUseCase,
     private val transactionRepository: ITransactionRepository,
-) {
-    /**
-     * @param amount how much of the invoice is being settled, in the **card's** currency.
-     * @param paidAmount what leaves [account], when it is denominated differently.
-     * `null` is the same-currency case.
-     */
-    suspend operator fun invoke(
+    private val accountRepository: IAccountRepository,
+) : UpdateAdvanceInvoicePaymentUseCase {
+
+    override suspend fun invoke(
         transactionId: Long,
         invoiceId: Long,
         amount: Double,
         date: LocalDate,
-        account: Account,
-        paidAmount: Double? = null,
+        accountId: Long,
+        paidAmount: Double?,
     ): Either<Throwable, Unit> = either {
         // The operation leaves its own contribution out of the ceiling: it already
         // reduced what the invoice owes, and a ceiling counting it would refuse the
@@ -57,6 +46,14 @@ class UpdateAdvanceInvoicePaymentUseCase(
             paidAmount = paidAmount,
             excluding = transactionId,
         ).mapLeft { InvoiceException(it) }.bind()
+
+        // The paying account is resolved here, and not merely handed in, because the
+        // currency the rate is harvested against is the one it carries *now*.
+        val account = ensureNotNull(
+            catch { accountRepository.getAccountById(accountId) }.bind()
+        ) {
+            AccountException(AccountError.NOT_FOUND)
+        }
 
         // Read to refuse correcting an operation that is not there — and for the one
         // thing carried forward from it: the title, which this form does not exhibit

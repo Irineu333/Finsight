@@ -18,7 +18,7 @@ import com.neoutils.finsight.domain.usecase.StaticAccounts
 import com.neoutils.finsight.domain.usecase.SuggestCrossCurrencyAmountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCaseImpl
-import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransferUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateTransferUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.Dispatchers
@@ -94,7 +94,7 @@ class TransferBetweenAccountsViewModelTest {
                 validateTransfer = validate,
                 harvestExchangeRate = HarvestExchangeRateUseCase(rates),
             ),
-            updateTransferUseCase = UpdateTransferUseCase(
+            updateTransferUseCase = UpdateTransferUseCaseImpl(
                 transactionRepository = transactions,
                 validateTransfer = validate,
                 harvestExchangeRate = HarvestExchangeRateUseCase(rates),

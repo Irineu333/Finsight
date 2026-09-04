@@ -31,7 +31,7 @@ internal interface McpTool {
      * be carried out.
      *
      * Read off [name] rather than declared a second time: `McpToolName` already says which axis
-     * governs each of the fifty-six, and a tool free to state its own would be free to state a
+     * governs each of them, and a tool free to state its own would be free to state a
      * different one from the surface — a removal announcing itself as recording, say, would remove
      * under a grant the user gave for writing.
      */

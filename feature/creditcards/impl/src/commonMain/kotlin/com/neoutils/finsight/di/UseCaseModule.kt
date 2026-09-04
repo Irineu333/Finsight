@@ -38,6 +38,7 @@ import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCase
@@ -124,11 +125,12 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        UpdateAdvanceInvoicePaymentUseCase(
+    factory<UpdateAdvanceInvoicePaymentUseCase> {
+        UpdateAdvanceInvoicePaymentUseCaseImpl(
             writeInvoicePayment = get(),
             validateInvoicePayment = get(),
             transactionRepository = get(),
+            accountRepository = get(),
         )
     }
 

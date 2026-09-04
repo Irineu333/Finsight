@@ -51,14 +51,20 @@ class UpdateAdvanceInvoicePaymentUseCaseTest {
     private val dimensionId = checkNotNull(invoice.dimensionId)
     private val payday = LocalDate(2026, 5, 20)
 
+    /**
+     * The paying accounts the chart resolves, because the operation reads the one that
+     * pays rather than taking the caller's copy of it.
+     */
+    private val payingAccounts = mapOf(wallet.id to wallet, savings.id to savings)
+
     private fun useCase(
         ledger: InvoicePaymentLedger,
         store: RecordingInvoiceStore,
         rates: RecordingExchangeRates = RecordingExchangeRates(),
-        accounts: FakeCardAccountRepository = FakeCardAccountRepository(),
+        accounts: FakeCardAccountRepository = FakeCardAccountRepository(payingAccounts),
     ): UpdateAdvanceInvoicePaymentUseCase {
         val transactions = LedgerTransactionRepository(ledger)
-        return UpdateAdvanceInvoicePaymentUseCase(
+        return UpdateAdvanceInvoicePaymentUseCaseImpl(
             writeInvoicePayment = WriteInvoicePaymentUseCase(
                 transactionRepository = transactions,
                 harvestExchangeRate = HarvestExchangeRateUseCase(rates),
@@ -70,6 +76,7 @@ class UpdateAdvanceInvoicePaymentUseCaseTest {
                 clock = StoppedClock(today),
             ),
             transactionRepository = transactions,
+            accountRepository = accounts,
         )
     }
 
@@ -266,7 +273,7 @@ class UpdateAdvanceInvoicePaymentUseCaseTest {
             store = RecordingInvoiceStore(foreignInvoice),
             rates = rates,
             accounts = FakeCardAccountRepository(
-                accountsById = mapOf(foreignCardAccount.id to foreignCardAccount),
+                accountsById = payingAccounts + (foreignCardAccount.id to foreignCardAccount),
             ),
         )(
             transactionId = paymentId,

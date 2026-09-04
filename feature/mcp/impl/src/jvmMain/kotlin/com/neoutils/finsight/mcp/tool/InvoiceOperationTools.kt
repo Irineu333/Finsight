@@ -1,9 +1,11 @@
 package com.neoutils.finsight.mcp.tool
 
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
@@ -11,6 +13,9 @@ import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.extension.liabilityLeg
+import com.neoutils.finsight.extension.sourceLeg
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.mcp.McpTool
 import com.neoutils.finsight.mcp.McpToolEffect
@@ -25,7 +30,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlin.time.Clock
 
 /**
- * The six operations that move an invoice — through its life cycle, or through a payment.
+ * The seven operations that move an invoice — through its life cycle, or through a payment.
  *
  * **The trap this family exists around is `pay_invoice`.** Two use cases are named almost alike:
  * `PayInvoiceUseCase` writes `status = PAID` and nothing else, and `PayInvoicePaymentUseCase` posts
@@ -236,6 +241,147 @@ internal class AdvanceInvoicePaymentTool(
                 )
             },
             reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, it.id) },
+        )
+    }
+}
+
+// ----------------------------------------------------------------------------------
+// update_advance_invoice_payment
+// ----------------------------------------------------------------------------------
+
+/**
+ * **Corrects a partial payment that is already registered, in place.**
+ *
+ * The counterpart of [AdvanceInvoicePaymentTool], and the same rules judge it: what an invoice
+ * accepts, what it owes, and the window a payment may be dated in. **The mode is not redecided** —
+ * correcting a partial payment is reaffirming a partial payment, so the invoice it points at has to
+ * be one still taking spending, and nothing here ever marks an invoice paid.
+ *
+ * The ceiling leaves the operation's own contribution out, which is what makes *raising* a payment
+ * beyond what the invoice currently owes a legitimate correction rather than a refusal: the figure
+ * it is compared against is what the invoice would owe without this payment.
+ *
+ * **Every field is carried rather than patched**, the title included — this operation has one and
+ * the payment form does not show it, so no correction erases it.
+ */
+internal class UpdateAdvanceInvoicePaymentTool(
+    private val transactionRepository: ITransactionRepository,
+    private val invoiceRepository: IInvoiceRepository,
+    private val accountRepository: IAccountRepository,
+    private val calculateInvoice: CalculateInvoiceUseCase,
+    private val updateAdvanceInvoicePayment: UpdateAdvanceInvoicePaymentUseCase,
+) : McpTool {
+
+    override val name: String = McpToolName.UPDATE_ADVANCE_INVOICE_PAYMENT.wireName
+
+    override val effect = McpToolEffect.CHANGES
+
+    override val description: String =
+        "Correct a partial card payment that was already recorded — the invoice it pays, the " +
+            "account it leaves, its amount or its date. What is not given keeps the value it " +
+            "already has, and the operation keeps its identity: the legs are rewritten, so this " +
+            "is not the same as removing it and recording another. " +
+            "PERIMETER: it stays a partial payment. The invoice it ends up on has to be one that " +
+            "still takes spending, so a closed one is refused; the cycle is not marked paid and " +
+            "not closed; and the correction is refused outright on an invoice that was already " +
+            "settled, which is history rather than an omission. The date has to fall inside the " +
+            "window of whichever invoice it ends up on, and amount cannot exceed what that " +
+            "invoice owes without this payment. " +
+            "amount is in the card's currency; when the paying account is denominated " +
+            "differently, paid_amount says what leaves the account, and the rate is derived from " +
+            "the two ends rather than given."
+
+    override val inputSchema = schema(
+        "id" to number("The payment to correct, from list_transactions."),
+        "invoice_id" to number("Point the payment at this invoice instead, from list_invoices."),
+        "amount" to amount("The new amount settled on the invoice, in the card's currency."),
+        "account_id" to number("Take the money out of this account instead, from list_accounts."),
+        "date" to text("The new day, as `2026-03-14`. Inside the invoice's window, never in the future."),
+        "paid_amount" to amount(
+            "The new amount leaving the account, in the account's own currency — only when that " +
+                "currency differs from the card's.",
+        ),
+        required = listOf("id"),
+    )
+
+    override suspend fun call(arguments: JsonObject?) = writing {
+        val id = arguments.requiredLong("id")
+
+        val stored = transactionRepository.getTransactionById(id)
+            ?: return@writing refusedWith(
+                AgentRefusal.notFound("transaction", id),
+                summary = "correct payment $id",
+            )
+
+        val summary = "payment of ${stored.amount}, ${stored.date}"
+
+        // What the operation *is* decides which form corrects it, and the answer has one owner.
+        if (stored.label != TransactionLabel.PAYMENT) {
+            return@writing refusedWith(stored.correctedElsewhere(name), summary)
+        }
+
+        val storedCardLeg = stored.entries.liabilityLeg()
+        val storedAccountLeg = stored.entries.sourceLeg()
+
+        if (storedCardLeg == null || storedAccountLeg == null) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "This payment does not state both of its ends, so there is nothing " +
+                        "to correct it from.",
+                ),
+                summary = summary,
+            )
+        }
+
+        val invoice = arguments.long("invoice_id")?.let { named ->
+            invoiceRepository.getInvoiceById(named)
+                ?: return@writing refusedWith(AgentRefusal.notFound("invoice", named), summary)
+        } ?: storedCardLeg.dimensionId?.let { dimensionId ->
+            invoiceRepository.getAllInvoices().firstOrNull { it.dimensionId == dimensionId }
+        } ?: return@writing refusedWith(
+            AgentRefusal(
+                reason = "This payment is not tagged with an invoice, so there is none to " +
+                    "correct it on: give `invoice_id`.",
+            ),
+            summary = summary,
+        )
+
+        val account = arguments.long("account_id")?.let { accountRepository.require(it) }
+            ?: storedAccountLeg.account
+
+        val amount = arguments.money("amount") ?: storedCardLeg.amount.absoluteAmount()
+
+        // Absent means "as it left", and only while there are two figures to state. Where the
+        // correction leaves both ends in one currency there is no second figure at all, and
+        // carrying the old one would state a crossing the operation no longer is.
+        val crossesCurrencies = invoice.creditCard.currency?.let { it != account.currency } == true
+
+        val leaving = arguments.money("paid_amount")
+            ?: storedAccountLeg.amount.absoluteAmount().takeIf { crossesCurrencies }
+
+        updateAdvanceInvoicePayment(
+            transactionId = id,
+            invoiceId = invoice.id,
+            amount = amount,
+            date = arguments.date("date") ?: stored.date,
+            accountId = account.id,
+            paidAmount = leaving,
+        ).reported(
+            summary = "$amount towards ${invoice.asLogLine()} from ${account.name}",
+            payload = {
+                AgentInvoiceOperationAnswer(
+                    invoice = invoiceRepository.answerFor(invoice.id, invoice, calculateInvoice),
+                    // Read back rather than echoed: the corrected operation is the ledger's
+                    // answer, and the crossing it may have become is only visible there.
+                    transaction = transactionRepository.getTransactionById(id)?.toAgentTransaction(
+                        perspective = TransactionPerspective(account.id),
+                    ),
+                    note = "Corrected, and it is still the same operation and still a partial " +
+                        "payment. The cycle stays open and the invoice is not settled; `owed` is " +
+                        "what is left on it. Everything the call did not name kept the value it had.",
+                )
+            },
+            reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, id) },
         )
     }
 }

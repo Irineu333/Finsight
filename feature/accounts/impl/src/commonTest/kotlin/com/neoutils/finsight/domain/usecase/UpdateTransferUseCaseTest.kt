@@ -46,7 +46,7 @@ class UpdateTransferUseCaseTest {
     private fun useCase(
         transactions: RewriteRecordingTransactions,
         rates: RecordingRates = RecordingRates(),
-    ) = UpdateTransferUseCase(
+    ) = UpdateTransferUseCaseImpl(
         transactionRepository = transactions,
         validateTransfer = ValidateTransferUseCase(
             accountRepository = StaticAccounts(accounts),

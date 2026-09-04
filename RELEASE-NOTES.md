@@ -74,9 +74,16 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
 
 ### A superfície de ferramentas
 
-- **56 ferramentas em quatro famílias, que são as quatro partes de uma tela** com um agente no lugar
+- **58 ferramentas em quatro famílias, que são as quatro partes de uma tela** com um agente no lugar
   de quem lê: as figuras do topo (perguntas, 10), a lista abaixo delas (catálogo, 10), o formulário
-  (registro, 23) e os botões (operações, 13).
+  (registro, 23) e os botões (operações, 15).
+- **Corrigir uma transferência e corrigir um pagamento parcial de fatura**, que a pessoa faz na tela
+  e o agente não alcançava. As duas reescrevem as pernas da operação e **preservam a identidade
+  dela** — não é apagar e registrar outra —, consultam as mesmas regras que o registro consulta, e
+  o que a chamada não nomeia é carregado da operação como ela está no razão. Ficam no eixo de
+  **operar**, e não no de registrar: reescrever duas pernas monetárias move dinheiro tanto quanto
+  escrevê-las da primeira vez. Com elas, a recusa de `update_transaction` sobre uma transferência ou
+  um pagamento passa a nomear a ferramenta que os corrige, em vez de terminar em não.
 - **Nenhuma ferramenta decide regra de domínio.** O servidor é uma camada de apresentação — a mesma
   regra que a UI já obedecia, aplicada a uma segunda superfície —, então ele compõe leituras,
   resolve id em nome, formata, pagina e ordena; e consome os donos que já existiam para o que

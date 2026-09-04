@@ -56,11 +56,13 @@ import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.UpdateBudgetUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCategoryUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
 import kotlin.time.Clock
 
 /**
@@ -140,12 +142,14 @@ internal class McpToolDependencies(
     // marked settled with the money still in the account.
     val payInvoicePayment: PayInvoicePaymentUseCase,
     val advanceInvoicePayment: AdvanceInvoicePaymentUseCase,
+    val updateAdvanceInvoicePayment: UpdateAdvanceInvoicePaymentUseCase,
     val closeInvoice: CloseInvoiceUseCase,
     val openInvoice: OpenInvoiceUseCase,
     val reopenInvoice: ReopenInvoiceUseCase,
     val adjustInvoice: AdjustInvoiceUseCase,
     val adjustBalance: AdjustBalanceUseCase,
     val transferBetweenAccounts: TransferBetweenAccountsUseCase,
+    val updateTransfer: UpdateTransferUseCase,
     val setDefaultAccount: SetDefaultAccountUseCase,
     val confirmRecurring: ConfirmRecurringUseCase,
     val skipRecurring: SkipRecurringUseCase,

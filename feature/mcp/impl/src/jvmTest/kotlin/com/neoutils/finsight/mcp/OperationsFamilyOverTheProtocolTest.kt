@@ -240,6 +240,175 @@ class OperationsFamilyOverTheProtocolTest {
     }
 
     // ------------------------------------------------------------------------------
+    // Correcting an operation, which is the operation restated and not a second one
+    // ------------------------------------------------------------------------------
+
+    /**
+     * **A transfer the agent corrects is the same operation afterwards, with both ends moved.**
+     *
+     * That is the whole distinction between correcting and removing-then-registering, and it is
+     * asserted the only way it can be: the ledger holds no second posting, and the identity the
+     * correction answers with is the one the registration produced.
+     *
+     * The second half is what a carried field means on a tool with no form. The call below names an
+     * amount and nothing else, so the title and the date are the operation's own — a correction
+     * that blanked them would be taking away what the agent never mentioned, and reporting it as
+     * kept.
+     */
+    @Test
+    fun `correcting a transfer rewrites both ends and keeps the operation`() = runTest {
+        withOperationsWorld { world, client ->
+            val registered = client.callTool(
+                "transfer",
+                """
+                {"from_account_id":${world.checkingId},"to_account_id":${world.savingsId},
+                 "amount":150.00,"date":"2026-03-10","title":"$TRANSFER_TITLE"}
+                """.trimIndent().replace("\n", ""),
+            )
+            assertTrue(!registered.isToolError(), "the transfer was refused: ${registered.toolText()}")
+
+            val id = registered.payload().at("transaction").identity()
+            val postings = world.transactionRepository.getAllTransactions().size
+
+            val corrected = client.callTool("update_transfer", """{"id":$id,"amount":200.00}""")
+
+            assertTrue(!corrected.isToolError(), "the correction was refused: ${corrected.toolText()}")
+
+            // One operation, and the same one: the legs were rewritten under it.
+            assertEquals(
+                postings,
+                world.transactionRepository.getAllTransactions().size,
+                "correcting left a second operation behind",
+            )
+            assertEquals(id, corrected.payload().at("transaction").identity())
+
+            // Both ends moved to the corrected figure.
+            assertEquals(
+                Operations.BALANCE_BEFORE - 200.0,
+                world.entryRepository.balance(world.checkingId),
+                "the source end was not rewritten",
+            )
+            assertEquals(
+                200.0,
+                world.entryRepository.balance(world.savingsId),
+                "the destination end was not rewritten",
+            )
+
+            // And what the call did not name is what it was.
+            val posting = assertNotNull(world.transactionRepository.getTransactionById(id))
+            assertEquals(TRANSFER_TITLE, posting.title, "the correction erased a title nobody named")
+            assertEquals(LocalDate(2026, 3, 10), posting.date, "the correction moved a date nobody named")
+
+            assertEquals(2, world.activityOf(client).size)
+        }
+    }
+
+    /**
+     * **A partial payment is corrected against what the invoice would owe without it.**
+     *
+     * The ceiling is the point. This payment already reduced the invoice, so a ceiling counting it
+     * would refuse the very correction that raises the figure — the invoice owes 150 with the
+     * payment on it and 200 without, and correcting to 200 has to be admissible while 250 does not.
+     *
+     * The mode is not redecided either: what comes back is still a partial payment, so the cycle is
+     * left open and the invoice unsettled even where the correction takes it to zero.
+     */
+    @Test
+    fun `correcting a partial payment is judged by what the invoice owes without it`() = runTest {
+        withOperationsWorld { world, client ->
+            val registered = client.callTool(
+                "advance_invoice_payment",
+                """{"id":${world.openInvoiceId},"amount":50.00,"account_id":${world.checkingId},
+                   "date":"2026-03-10"}""".trimIndent().replace("\n", ""),
+            )
+            assertTrue(!registered.isToolError(), "the advance was refused: ${registered.toolText()}")
+
+            val id = registered.payload().at("transaction").identity()
+            val postings = world.transactionRepository.getAllTransactions().size
+
+            // Past the whole of the invoice, ceiling included: refused.
+            val beyond = client.callTool(
+                "update_advance_invoice_payment",
+                """{"id":$id,"amount":250.00}""",
+            )
+            assertTrue(beyond.isToolError(), "a correction past what the invoice owes was accepted")
+
+            val corrected = client.callTool(
+                "update_advance_invoice_payment",
+                """{"id":$id,"amount":${Operations.OPEN_INVOICE_OWED}}""",
+            )
+
+            assertTrue(!corrected.isToolError(), "the correction was refused: ${corrected.toolText()}")
+
+            assertEquals(
+                postings,
+                world.transactionRepository.getAllTransactions().size,
+                "correcting left a second payment behind",
+            )
+            assertEquals(id, corrected.payload().at("transaction").identity())
+
+            assertEquals(
+                Operations.BALANCE_BEFORE - Operations.OPEN_INVOICE_OWED,
+                world.entryRepository.balance(world.checkingId),
+                "the paying account did not part with the corrected figure",
+            )
+            assertEquals(
+                0.0,
+                corrected.payload().at("invoice", "owed").amount(),
+                "the invoice does not read as paid down to nothing",
+            )
+            assertEquals(
+                Invoice.Status.OPEN,
+                assertNotNull(world.invoiceRepository.getInvoiceById(world.openInvoiceId)).status,
+                "correcting a partial payment settled the cycle",
+            )
+        }
+    }
+
+    /**
+     * **Every correction tool names the one that corrects what it was handed instead.**
+     *
+     * A refusal that only says no teaches the agent to invent a way round it, and here there is a
+     * way that is not invented: which form corrects an operation follows from what the operation is,
+     * and each of the three answers the same reading. Asserted in both directions, because a
+     * mapping written twice would be free to disagree with itself.
+     */
+    @Test
+    fun `a correction tool handed another kind of operation names the one that corrects it`() = runTest {
+        withOperationsWorld { world, client ->
+            val purchase = world.transactionRepository.getAllTransactions()
+                .single { it.title == MARCH_PURCHASE }
+
+            val transfer = client.callTool(
+                "transfer",
+                """
+                {"from_account_id":${world.checkingId},"to_account_id":${world.savingsId},
+                 "amount":150.00,"date":"2026-03-10"}
+                """.trimIndent().replace("\n", ""),
+            ).payload().at("transaction").identity()
+
+            // A card purchase is the transaction form's, not the transfer form's.
+            val asTransfer = client.callTool("update_transfer", """{"id":${purchase.id}}""")
+            assertTrue(asTransfer.isToolError(), "a card purchase was accepted as a transfer")
+            assertEquals(
+                "update_transaction",
+                asTransfer.payload().text("try_instead"),
+                "the refusal does not name the tool that corrects a purchase",
+            )
+
+            // And the way back: the transaction form refuses a transfer, naming the one that takes
+            // its two monetary legs.
+            val asTransaction = client.callTool("update_transaction", """{"id":$transfer,"amount":10}""")
+            assertTrue(asTransaction.isToolError(), "a transfer was accepted by the transaction form")
+            assertEquals(
+                "update_transfer",
+                asTransaction.payload().text("try_instead"),
+                "the refusal does not name the tool that corrects a transfer",
+            )
+        }
+    }
+
+    // ------------------------------------------------------------------------------
     // 11.5 — what an omitted title and an omitted category mean to a tool with no form
     // ------------------------------------------------------------------------------
 
@@ -933,6 +1102,9 @@ class OperationsFamilyOverTheProtocolTest {
         /** Why the money moved, as the person said it — the sentence the call has to carry. */
         const val TRANSFER_TITLE = "Reserva da viagem"
 
+        /** The card purchase the fixture seeds on the open cycle, named so a test can find it. */
+        const val MARCH_PURCHASE = "Compra de março"
+
         /** What the generic pair operates on — the surface's decision, restated for the assertion. */
         val ARCHIVABLE_KINDS = setOf("account", "card", "category", "recurring")
 
@@ -945,12 +1117,14 @@ class OperationsFamilyOverTheProtocolTest {
         val MISSING_IDENTITY: Map<McpToolName, String> = mapOf(
             McpToolName.PAY_INVOICE to """{"id":9999,"account_id":1}""",
             McpToolName.ADVANCE_INVOICE_PAYMENT to """{"id":9999,"amount":10,"account_id":1}""",
+            McpToolName.UPDATE_ADVANCE_INVOICE_PAYMENT to """{"id":9999,"amount":10}""",
             McpToolName.CLOSE_INVOICE to """{"id":9999}""",
             McpToolName.OPEN_INVOICE to """{"card_id":9999,"opening_month":"2026-06"}""",
             McpToolName.REOPEN_INVOICE to """{"id":9999}""",
             McpToolName.ADJUST_INVOICE to """{"id":9999,"target":10}""",
             McpToolName.ADJUST_BALANCE to """{"account_id":9999,"target_balance":10}""",
             McpToolName.TRANSFER to """{"from_account_id":9999,"to_account_id":1,"amount":10}""",
+            McpToolName.UPDATE_TRANSFER to """{"id":9999,"amount":10}""",
             McpToolName.SET_DEFAULT_ACCOUNT to """{"id":9999}""",
             McpToolName.CONFIRM_RECURRING to """{"id":9999}""",
             McpToolName.SKIP_RECURRING to """{"id":9999}""",

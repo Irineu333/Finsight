@@ -379,6 +379,19 @@ internal class AgentWorld(
 
     private val openInvoice = WorldOpenInvoice(invoiceRepository, creditCardRepository, clock)
 
+    /**
+     * The two rules a write and its correction share, held once each: registering an operation and
+     * correcting one are judged alike, and a second copy would be free to disagree.
+     */
+    private val validateTransfer = WorldValidateTransfer(accountRepository, clock)
+
+    private val validateAdvancePayment = WorldValidateAdvancePayment(
+        invoiceRepository = invoiceRepository,
+        accountRepository = accountRepository,
+        calculateInvoice = calculateInvoice,
+        clock = clock,
+    )
+
     private val addInstallment = WorldAddInstallment(
         transactionRepository = transactionRepository,
         installmentRepository = installmentRepository,
@@ -466,11 +479,13 @@ internal class AgentWorld(
         ),
         advanceInvoicePayment = WorldAdvanceInvoicePayment(
             transactionRepository = transactionRepository,
-            invoiceRepository = invoiceRepository,
-            accountRepository = accountRepository,
-            calculateInvoice = calculateInvoice,
+            validatePayment = validateAdvancePayment,
             harvestExchangeRate = harvestExchangeRate,
-            clock = clock,
+        ),
+        updateAdvanceInvoicePayment = WorldUpdateAdvanceInvoicePayment(
+            transactionRepository = transactionRepository,
+            validatePayment = validateAdvancePayment,
+            harvestExchangeRate = harvestExchangeRate,
         ),
         closeInvoice = WorldCloseInvoice(
             invoiceRepository = invoiceRepository,
@@ -488,9 +503,13 @@ internal class AgentWorld(
         ),
         transferBetweenAccounts = WorldTransfer(
             transactionRepository = transactionRepository,
-            accountRepository = accountRepository,
+            validateTransfer = validateTransfer,
             harvestExchangeRate = harvestExchangeRate,
-            clock = clock,
+        ),
+        updateTransfer = WorldUpdateTransfer(
+            transactionRepository = transactionRepository,
+            validateTransfer = validateTransfer,
+            harvestExchangeRate = harvestExchangeRate,
         ),
         setDefaultAccount = WorldSetDefaultAccount(accountRepository),
         confirmRecurring = WorldConfirmRecurring(

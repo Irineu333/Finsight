@@ -14,13 +14,19 @@ O usuário SHALL controlar o que um agente pode fazer por quatro eixos independe
 - **Registrar e editar** — criar e alterar lançamentos, contas, cartões, categorias,
   orçamentos, parcelamentos e recorrências;
 - **Apagar** — remover definitivamente;
-- **Operar** — mover dinheiro entre contas, pagar, fechar, reabrir e ajustar faturas,
-  confirmar e pular recorrências, arquivar e desarquivar.
+- **Operar** — mover dinheiro entre contas e corrigir um movimento já feito, pagar, fechar,
+  reabrir e ajustar faturas, confirmar e pular recorrências, arquivar e desarquivar.
 
 Os eixos SHALL ser independentes: conceder um MUST NOT conceder outro. **Apagar** SHALL ser um
 eixo próprio, e não o grau máximo de "registrar e editar" — remover não é uma edição mais
 intensa. **Operar** SHALL ser um eixo próprio, e não parte de "registrar e editar" — pagar
 uma fatura move dinheiro entre contas, o que registrar não faz.
+
+A **correção** de uma operação SHALL ficar no mesmo eixo da operação que ela corrige, e
+MUST NOT ser tratada como edição por ser uma correção: reescrever as duas pernas monetárias de
+uma transferência ou de um pagamento move dinheiro exatamente como escrevê-las da primeira vez.
+Sob "registrar e editar" um agente transferiria corrigindo uma transferência antiga, que é a
+capacidade que esse eixo não concede.
 
 #### Scenario: Eixos são independentes
 - **WHEN** o usuário concede "registrar e editar" sem conceder "apagar"
@@ -29,6 +35,11 @@ uma fatura move dinheiro entre contas, o que registrar não faz.
 #### Scenario: Operar não vem junto com registrar
 - **WHEN** o usuário concede "registrar e editar" sem conceder "operar"
 - **THEN** o agente registra lançamentos, e não paga faturas nem transfere entre contas
+
+#### Scenario: Corrigir um movimento é operar
+- **WHEN** o usuário concede "registrar e editar" sem conceder "operar"
+- **THEN** o agente não corrige uma transferência nem um pagamento de fatura, porque corrigir
+  qualquer dos dois reescreve as pernas monetárias da operação
 
 ### Requirement: A permissão decide quais ferramentas existem
 

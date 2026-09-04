@@ -50,12 +50,14 @@ import com.neoutils.finsight.mcp.tool.SkipRecurringTool
 import com.neoutils.finsight.mcp.tool.TransferTool
 import com.neoutils.finsight.mcp.tool.UnarchiveEntityTool
 import com.neoutils.finsight.mcp.tool.UpdateAccountTool
+import com.neoutils.finsight.mcp.tool.UpdateAdvanceInvoicePaymentTool
 import com.neoutils.finsight.mcp.tool.UpdateBudgetTool
 import com.neoutils.finsight.mcp.tool.UpdateCardTool
 import com.neoutils.finsight.mcp.tool.UpdateCategoryTool
 import com.neoutils.finsight.mcp.tool.UpdateInstallmentTool
 import com.neoutils.finsight.mcp.tool.UpdateRecurringTool
 import com.neoutils.finsight.mcp.tool.UpdateTransactionTool
+import com.neoutils.finsight.mcp.tool.UpdateTransferTool
 
 /**
  * The tools the running server is given — the single place production assembles them.
@@ -328,9 +330,11 @@ internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
 
     // --- Family 4 — the operations: what moves money or moves a life cycle -----------------
     //
-    // One axis, thirteen tools, and one of them is the reason the surface has a rule about
+    // One axis, fifteen tools, and one of them is the reason the surface has a rule about
     // where a decision lives: `pay_invoice` posts the payment and settles the invoice
-    // together, through the use case that does both.
+    // together, through the use case that does both. The two corrections are here rather
+    // than in the registration family because rewriting the two monetary legs of a transfer
+    // or of a payment moves money exactly as writing them the first time did.
 
     PayInvoiceTool(
         clock = deps.clock,
@@ -345,6 +349,13 @@ internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
         accountRepository = deps.accountRepository,
         calculateInvoice = deps.calculateInvoice,
         advanceInvoicePayment = deps.advanceInvoicePayment,
+    ),
+    UpdateAdvanceInvoicePaymentTool(
+        transactionRepository = deps.transactionRepository,
+        invoiceRepository = deps.invoiceRepository,
+        accountRepository = deps.accountRepository,
+        calculateInvoice = deps.calculateInvoice,
+        updateAdvanceInvoicePayment = deps.updateAdvanceInvoicePayment,
     ),
     CloseInvoiceTool(
         clock = deps.clock,
@@ -379,6 +390,11 @@ internal fun mcpTools(deps: McpToolDependencies): List<McpTool> = listOf(
         clock = deps.clock,
         accountRepository = deps.accountRepository,
         transferBetweenAccounts = deps.transferBetweenAccounts,
+    ),
+    UpdateTransferTool(
+        transactionRepository = deps.transactionRepository,
+        accountRepository = deps.accountRepository,
+        updateTransfer = deps.updateTransfer,
     ),
     SetDefaultAccountTool(
         accountRepository = deps.accountRepository,

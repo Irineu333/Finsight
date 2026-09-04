@@ -4,11 +4,14 @@ import arrow.core.Either
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
+import com.neoutils.finsight.mcp.McpToolName
 import com.neoutils.finsight.mcp.McpToolResult
 import com.neoutils.finsight.mcp.surface.AgentRefusal
 import com.neoutils.finsight.mcp.surface.AgentTransaction
@@ -17,6 +20,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlin.math.abs
 import kotlin.math.roundToLong
 
 /**
@@ -58,14 +62,24 @@ internal inline fun <reified T> applied(
  * [summary] still describes what was attempted, because the refusal is exactly what the user came to
  * the log to understand — "why did the agent say it could not delete that category" is answered by
  * the attempt and the reason side by side, and neither alone.
+ *
+ * [tryInstead] is the alternative only the *tool* can know, and it never overrides the one the
+ * domain's own refusal already named: `AgentRefusal.fromDomain` decides for the refusals that mean
+ * "what was named has to be preserved", and this fills in where it had nothing to say.
  */
-internal fun refusedBy(cause: Throwable, summary: String): McpToolResult =
-    AgentRefusal.fromDomain(cause).let {
+internal fun refusedBy(
+    cause: Throwable,
+    summary: String,
+    tryInstead: String? = null,
+): McpToolResult =
+    AgentRefusal.fromDomain(cause).let { refused ->
+        val refusal = if (refused.tryInstead == null) refused.copy(tryInstead = tryInstead) else refused
+
         McpToolResult(
-            text = agentJson.encodeToString(it),
+            text = agentJson.encodeToString(refusal),
             outcome = AgentActivity.Outcome.REFUSED,
             summary = summary,
-            detail = it.reason,
+            detail = refusal.reason,
         )
     }
 
@@ -148,6 +162,59 @@ internal suspend fun removing(
         summary = summary,
     )
 }
+
+// ----------------------------------------------------------------------------------
+// Which tool corrects an operation
+// ----------------------------------------------------------------------------------
+
+/**
+ * The tool that corrects this operation.
+ *
+ * It follows from what the operation **is** — the nature derived from its legs — and from nothing
+ * else, which is the same rule the app's own detail screen applies when it decides which form to
+ * open (`editFormFor`, in `feature/transactions`). That function cannot be named across the module
+ * boundary, and what is mapped here is a set of *tools* rather than a set of modals, so the reading
+ * is stated once and every tool that has to answer "then what does correct it" reads this one.
+ *
+ * Deciding this is not deciding whether the operation may be corrected: the invoice that refuses a
+ * correction and the archived account that freezes one are the domain's, reached by whichever tool
+ * this names.
+ */
+internal val Transaction.correctionTool: McpToolName
+    get() = when (label) {
+        TransactionLabel.TRANSFER -> McpToolName.UPDATE_TRANSFER
+        TransactionLabel.PAYMENT -> McpToolName.UPDATE_ADVANCE_INVOICE_PAYMENT
+        // An adjustment is corrected by re-adjusting: the same date rewrites the same posting
+        // rather than adding to it, and which of the two applies is what the adjusted leg says.
+        TransactionLabel.ADJUSTMENT ->
+            if (hasLiabilityLeg) McpToolName.ADJUST_INVOICE else McpToolName.ADJUST_BALANCE
+
+        TransactionLabel.EXPENSE, TransactionLabel.INCOME -> McpToolName.UPDATE_TRANSACTION
+    }
+
+/**
+ * The refusal a correction tool gives when the operation it was handed is corrected somewhere else
+ * — and the name of the somewhere else, unless that is the tool that just refused.
+ */
+internal fun Transaction.correctedElsewhere(asked: String): AgentRefusal {
+    val elsewhere = correctionTool.wireName.takeIf { it != asked }
+
+    return AgentRefusal(
+        // The nature is named the way every listing of this surface names it, so the sentence
+        // points at a field the caller has already seen rather than at a word only used here.
+        reason = "`$asked` corrects one kind of operation, and the `nature` of this one is " +
+            "`${label.name.lowercase()}`." +
+            if (elsewhere == null) {
+                " Nothing on this surface corrects it."
+            } else {
+                " Correcting it is `$elsewhere`."
+            },
+        tryInstead = elsewhere,
+    )
+}
+
+/** How much a ledger leg moved, as the surface states an amount: a magnitude in the major unit. */
+internal fun Long.absoluteAmount(): Double = abs(this) / 100.0
 
 /** A reference to what an act produced, so the user reaches the posting from the log. */
 internal fun reference(kind: AgentActivity.Reference.Kind, id: Long) =

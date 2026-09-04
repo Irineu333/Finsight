@@ -28,7 +28,7 @@ import com.neoutils.finsight.domain.usecase.PayInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.RecordingTransactionWriter
 import com.neoutils.finsight.domain.usecase.StoppedClock
 import com.neoutils.finsight.domain.usecase.SuggestCrossCurrencyAmountUseCase
-import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateAdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.ValidateInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.WriteInvoicePaymentUseCase
@@ -214,10 +214,11 @@ class InvoicePaymentOpeningTest {
                 accountRepository = accounts,
             ),
             advanceInvoicePaymentUseCase = AdvanceInvoicePaymentUseCaseImpl(write, validate, accounts),
-            updateAdvanceInvoicePaymentUseCase = UpdateAdvanceInvoicePaymentUseCase(
+            updateAdvanceInvoicePaymentUseCase = UpdateAdvanceInvoicePaymentUseCaseImpl(
                 writeInvoicePayment = write,
                 validateInvoicePayment = validate,
                 transactionRepository = RecordingTransactionWriter(),
+                accountRepository = accounts,
             ),
             calculateInvoiceUseCase = calculate,
             suggestCrossCurrencyAmount = SuggestCrossCurrencyAmountUseCase(NoExchangeRates),

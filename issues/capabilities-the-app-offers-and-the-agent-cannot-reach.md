@@ -36,6 +36,12 @@ inteiras.
 
 As demais já existiam quando a superfície fechou, e ficaram de fora sem que nada as recusasse.
 
+**Três das sete já entraram**: o título da transferência, por
+`a-transfer-the-agent-records-is-born-without-a-title.md` (arquivada), e as duas correções, pelas
+ferramentas `update_transfer` e `update_advance_invoice_payment` — família das operações, eixo
+*operar*, com os dois use cases promovidos às `api` de accounts e de creditcards. O que sobra
+abaixo é o resto.
+
 ## Evidência
 
 ### Operações e leituras que o agente não alcança
@@ -43,12 +49,6 @@ As demais já existiam quando a superfície fechou, e ficaram de fora sem que na
 As que nasceram depois do fechamento — cada linha é um commit sem nenhum arquivo de
 `feature/mcp`:
 
-- **Corrigir uma transferência** — `f0366f3de` (22/08), `UpdateTransferUseCase`
-- **Corrigir um pagamento parcial de fatura** — `ca782deb1` (22/08),
-  `UpdateAdvanceInvoicePaymentUseCase`; `2fa3065e5` (22/08) roteia as duas em `editFormFor()`, e
-  `UpdateTransactionTool` recusa ambas. A recusa está registrada em
-  `the-agent-refuses-an-edit-the-screen-now-offers.md`, que discute as quatro afirmações de KDoc;
-  o que falta ali é a capacidade
 - **As faturas a liquidar do mês** — `073289ced` (21/08),
   `IInvoiceRepository.observeInvoicesToSettle()`, consumida por `DashboardViewModel`.
   `get_card_overview` responde por cartão e `get_pending_recurring` só por templates
@@ -80,9 +80,6 @@ E as que já existiam quando a superfície fechou:
 
 ### Parâmetros que a tela oferece e a ferramenta não aceita
 
-- `TransferTool.inputSchema` — cinco parâmetros, e o título da transferência não é nenhum deles.
-  Nasceu em `c48076142` (22/08), depois do fechamento; registrado em
-  `a-transfer-the-agent-records-is-born-without-a-title.md`
 - `CreateBudgetTool.call()` — fixa `AppIcon.BUDGET.key`, e `UpdateBudgetTool.call()` repassa o
   armazenado, enquanto `CreateBudgetUseCase.invoke()` e `UpdateBudgetUseCase.invoke()` tomam
   `iconKey` e `BudgetFormAction.IconSelected` é a escolha na tela. A exclusão de ícones nomeia
@@ -114,13 +111,11 @@ rather than data"*. As figuras que ela dá por cobertas:
 
 ## Consequência
 
-Um agente responde *"não consigo"* a doze pedidos que a pessoa resolve num toque, e as quatro
-leituras são justamente as que o app calcula porque não são deriváveis de uma listagem sem erro —
+Um agente responde *"não consigo"* às seis operações e leituras acima, que a pessoa resolve num
+toque, e responde pela metade nos cinco schemas que não exprimem o que a tela filtra. Quatro das
+seis são justamente as que o app calcula porque não são deriváveis de uma listagem sem erro —
 um agente que precise delas responde sem elas ou soma linhas à mão, que é o que a família das
 perguntas existe para evitar.
-
-Duas se agravam por combinação: uma transferência que o agente registra nasce sem título, e é a
-mesma superfície que não lhe dá como corrigi-la depois.
 
 E a distância cresce sozinha. Onze dias de desenvolvimento normal produziram sete lacunas; a
 varredura que abriu esta issue as encontrou, e nada impede que a próxima semana produza outras
@@ -133,15 +128,15 @@ Oferecer as capacidades — é o que fecha o invariante, e é decisão de escopo
 parâmetros são acréscimo a schemas existentes; e a exclusão do relatório não é ampliação nenhuma:
 ou ela para de prometer as figuras, ou `get_report_stats` passa a produzi-las.
 
-**Três já estão decididas** por quem é dono da superfície: a correção de uma transferência, a
-correção de um pagamento de fatura e o título da transferência entram. As demais seguem caso a
-caso.
+As três que estavam decididas por quem é dono da superfície já entraram: o título da transferência
+(`a-transfer-the-agent-records-is-born-without-a-title.md`, arquivada), e as duas correções, que
+foram promovidas às `api` das suas features como `UpdateTransferUseCase` e
+`UpdateAdvanceInvoicePaymentUseCase` e viraram `update_transfer` e
+`update_advance_invoice_payment`. As demais seguem caso a caso.
 
-Duas notas para quem for fazer. `mcp-tool-surface` exige que uma operação sem use case seja
-extraída para o módulo dono antes de virar ferramenta — as sete já têm dono, então nenhuma pede
-regra nova. E `UpdateTransferUseCase` e `UpdateAdvanceInvoicePaymentUseCase` vivem nos `impl` das
-suas features, alcançados pelas `Entry`; a superfície consome `api`, e é onde a decisão de promover
-aparece.
+Uma nota para quem for fazer: `mcp-tool-surface` exige que uma operação sem use case seja extraída
+para o módulo dono antes de virar ferramenta — as que sobram já têm dono, então nenhuma pede regra
+nova.
 
 Separadamente, vale decidir o que impede a repetição. Enumerar as capacidades por uma fonte que o
 compilador conheça — os use cases das `api` — e exigir que cada um esteja consumido por uma

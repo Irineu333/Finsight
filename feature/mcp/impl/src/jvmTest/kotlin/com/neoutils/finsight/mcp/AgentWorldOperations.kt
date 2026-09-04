@@ -70,6 +70,8 @@ import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UnarchiveRecurringUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
 import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.monthsUntil
 import com.neoutils.finsight.extension.naturalBalanceOf
@@ -204,23 +206,28 @@ internal class WorldPayInvoicePayment(
     }
 }
 
-/** Paying part of an open cycle: the ceiling is on the card's side, never on the account's. */
-internal class WorldAdvanceInvoicePayment(
-    private val transactionRepository: ITransactionRepository,
+/**
+ * What makes a **partial** payment admissible, stated once for both of the doubles that write one.
+ *
+ * The invoices it accepts are the ones still taking spending, which `Invoice.acceptsPartialPayment`
+ * decides — the predicate itself, read from `core/model`, and not a list of statuses restated here.
+ * The ceiling leaves the rewritten operation's own contribution out, which is what a correction is
+ * judged by.
+ */
+internal class WorldValidateAdvancePayment(
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
     private val calculateInvoice: CalculateInvoiceUseCase,
-    private val harvestExchangeRate: HarvestExchangeRateUseCase,
     private val clock: Clock,
-) : AdvanceInvoicePaymentUseCase {
-
-    override suspend fun invoke(
+) {
+    suspend operator fun invoke(
         invoiceId: Long,
         amount: Double,
         date: LocalDate,
         accountId: Long,
         paidAmount: Double?,
-    ): Either<Throwable, Transaction> = either {
+        excluding: Long? = null,
+    ): Either<Throwable, Pair<Invoice, Account>> = either {
         ensure(amount > 0) { InvoiceException(InvoiceError.NegativeAmount) }
         ensure(paidAmount == null || paidAmount > 0) { InvoiceException(InvoiceError.NegativeAmount) }
 
@@ -231,14 +238,43 @@ internal class WorldAdvanceInvoicePayment(
             AccountException(AccountError.NOT_FOUND)
         }
 
+        ensure(invoice.acceptsPartialPayment) {
+            InvoiceException(InvoiceError.InvoiceNotPartiallyPayable)
+        }
         ensure(date >= invoice.openingDate && date <= invoice.closingDate) {
             InvoiceException(InvoiceError.DateOutsideInvoicePeriod)
         }
         ensure(date <= clock.today()) { InvoiceException(InvoiceError.DateInFuture) }
 
-        val owed = calculateInvoice(invoice)
-        ensure(owed > 0.0) { InvoiceException(InvoiceError.InvoiceNotInDebt) }
-        ensure(amount <= owed) { InvoiceException(InvoiceError.AmountExceedsInvoice) }
+        val ceiling = calculateInvoice(invoice, excluding = excluding)
+        ensure(ceiling > 0.0) { InvoiceException(InvoiceError.InvoiceNotInDebt) }
+        ensure(amount <= ceiling) { InvoiceException(InvoiceError.AmountExceedsInvoice) }
+
+        invoice to account
+    }
+}
+
+/** Paying part of an open cycle: the ceiling is on the card's side, never on the account's. */
+internal class WorldAdvanceInvoicePayment(
+    private val transactionRepository: ITransactionRepository,
+    private val validatePayment: WorldValidateAdvancePayment,
+    private val harvestExchangeRate: HarvestExchangeRateUseCase,
+) : AdvanceInvoicePaymentUseCase {
+
+    override suspend fun invoke(
+        invoiceId: Long,
+        amount: Double,
+        date: LocalDate,
+        accountId: Long,
+        paidAmount: Double?,
+    ): Either<Throwable, Transaction> = either {
+        val (invoice, account) = validatePayment(
+            invoiceId = invoiceId,
+            amount = amount,
+            date = date,
+            accountId = accountId,
+            paidAmount = paidAmount,
+        ).bind()
 
         val leaving = paidAmount ?: amount
 
@@ -247,16 +283,78 @@ internal class WorldAdvanceInvoicePayment(
                 TransactionIntent(
                     title = null,
                     date = date,
-                    legs = listOf(
-                        TransactionLeg(TransactionType.EXPENSE, leaving, account.id),
-                        TransactionLeg(
-                            type = TransactionType.INCOME,
-                            amount = amount,
-                            accountId = invoice.creditCard.accountId,
-                            dimensionId = invoice.dimensionId,
-                        ),
-                    ),
+                    legs = paymentLegs(invoice, account, leaving, amount),
                 ),
+            )
+        }.bind()
+
+        harvest(invoice, account, leaving, amount, date)
+
+        transaction
+    }
+
+    private suspend fun harvest(
+        invoice: Invoice,
+        account: Account,
+        leaving: Double,
+        settling: Double,
+        date: LocalDate,
+    ) {
+        catch {
+            invoice.creditCard.currency?.let { cardCurrency ->
+                harvestExchangeRate(
+                    sourceAmount = leaving,
+                    sourceCurrency = account.currency,
+                    targetAmount = settling,
+                    targetCurrency = cardCurrency,
+                    date = date,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The same operation, rewritten over one that already exists: the legs are replaced, the
+ * transaction keeps its identity, and the title it carries is preserved because the payment form
+ * does not exhibit one.
+ */
+internal class WorldUpdateAdvanceInvoicePayment(
+    private val transactionRepository: ITransactionRepository,
+    private val validatePayment: WorldValidateAdvancePayment,
+    private val harvestExchangeRate: HarvestExchangeRateUseCase,
+) : UpdateAdvanceInvoicePaymentUseCase {
+
+    override suspend fun invoke(
+        transactionId: Long,
+        invoiceId: Long,
+        amount: Double,
+        date: LocalDate,
+        accountId: Long,
+        paidAmount: Double?,
+    ): Either<Throwable, Unit> = either {
+        val (invoice, account) = validatePayment(
+            invoiceId = invoiceId,
+            amount = amount,
+            date = date,
+            accountId = accountId,
+            paidAmount = paidAmount,
+            excluding = transactionId,
+        ).bind()
+
+        val transaction = ensureNotNull(transactionRepository.getTransactionById(transactionId)) {
+            InvoiceException(InvoiceError.NotFound)
+        }
+
+        val leaving = paidAmount ?: amount
+
+        catch {
+            transactionRepository.updateTransaction(
+                id = transactionId,
+                title = transaction.title,
+                date = date,
+                legs = paymentLegs(invoice, account, leaving, amount),
+                contra = null,
             )
         }.bind()
 
@@ -272,9 +370,29 @@ internal class WorldAdvanceInvoicePayment(
             }
         }
 
-        transaction
+        Unit
     }
 }
+
+/**
+ * The shape a payment takes in the ledger: the money leaves the account **undimensioned**, and the
+ * card's `LIABILITY` leg carries the invoice's dimension. Written once, like production's
+ * `WriteInvoicePaymentUseCase`, so registering one and correcting one cannot state it differently.
+ */
+private fun paymentLegs(
+    invoice: Invoice,
+    account: Account,
+    leaving: Double,
+    settling: Double,
+) = listOf(
+    TransactionLeg(TransactionType.EXPENSE, leaving, account.id),
+    TransactionLeg(
+        type = TransactionType.INCOME,
+        amount = settling,
+        accountId = invoice.creditCard.accountId,
+        dimensionId = invoice.dimensionId,
+    ),
+)
 
 /** Closing a cycle: the successor opens, and only an invoice owing nothing is settled by it. */
 internal class WorldCloseInvoice(
@@ -534,27 +652,23 @@ internal class WorldAdjustBalance(
 }
 
 /**
- * Money between two of the user's own accounts, with the rate **harvested** from the two ends.
+ * What makes a transfer admissible, stated once for both of the doubles that write one.
  *
- * No rate is a parameter anywhere on this path, and the harvesting below is the real
- * [HarvestExchangeRateUseCase] rather than a stand-in — which is what makes the assertion that a
- * cross-currency transfer taught the archive a statement about the app.
+ * It is the relation `ValidateTransferUseCase` has with `TransferBetweenAccountsUseCase` and
+ * `UpdateTransferUseCase` in production, and it is here for the same reason: registering a transfer
+ * and correcting one judge it alike, and two copies would drift with nothing to report it.
  */
-internal class WorldTransfer(
-    private val transactionRepository: ITransactionRepository,
+internal class WorldValidateTransfer(
     private val accountRepository: IAccountRepository,
-    private val harvestExchangeRate: HarvestExchangeRateUseCase,
     private val clock: Clock,
-) : TransferBetweenAccountsUseCase {
-
-    override suspend fun invoke(
+) {
+    suspend operator fun invoke(
         sourceAccountId: Long,
         destinationAccountId: Long,
         amount: Double,
         date: LocalDate,
         destinationAmount: Double?,
-        title: String?,
-    ): Either<TransferException, Transaction> = either {
+    ): Either<TransferException, Pair<Account, Account>> = either {
         ensure(amount > 0.0) { TransferException(TransferError.InvalidAmount) }
         ensure(destinationAmount == null || destinationAmount > 0.0) {
             TransferException(TransferError.InvalidAmount)
@@ -568,6 +682,39 @@ internal class WorldTransfer(
         val destination = ensureNotNull(accountRepository.getAccountById(destinationAccountId)) {
             TransferException(TransferError.DestinationAccountNotFound)
         }
+
+        source to destination
+    }
+}
+
+/**
+ * Money between two of the user's own accounts, with the rate **harvested** from the two ends.
+ *
+ * No rate is a parameter anywhere on this path, and the harvesting below is the real
+ * [HarvestExchangeRateUseCase] rather than a stand-in — which is what makes the assertion that a
+ * cross-currency transfer taught the archive a statement about the app.
+ */
+internal class WorldTransfer(
+    private val transactionRepository: ITransactionRepository,
+    private val validateTransfer: WorldValidateTransfer,
+    private val harvestExchangeRate: HarvestExchangeRateUseCase,
+) : TransferBetweenAccountsUseCase {
+
+    override suspend fun invoke(
+        sourceAccountId: Long,
+        destinationAccountId: Long,
+        amount: Double,
+        date: LocalDate,
+        destinationAmount: Double?,
+        title: String?,
+    ): Either<TransferException, Transaction> = either {
+        val (source, destination) = validateTransfer(
+            sourceAccountId = sourceAccountId,
+            destinationAccountId = destinationAccountId,
+            amount = amount,
+            date = date,
+            destinationAmount = destinationAmount,
+        ).bind()
 
         val arriving = destinationAmount ?: amount
 
@@ -595,6 +742,66 @@ internal class WorldTransfer(
         }
 
         transaction
+    }
+}
+
+/**
+ * The same operation, rewritten over one that already exists: the legs are replaced and the
+ * transaction keeps its identity.
+ */
+internal class WorldUpdateTransfer(
+    private val transactionRepository: ITransactionRepository,
+    private val validateTransfer: WorldValidateTransfer,
+    private val harvestExchangeRate: HarvestExchangeRateUseCase,
+) : UpdateTransferUseCase {
+
+    override suspend fun invoke(
+        transactionId: Long,
+        sourceAccountId: Long,
+        destinationAccountId: Long,
+        amount: Double,
+        date: LocalDate,
+        title: String?,
+        destinationAmount: Double?,
+    ): Either<TransferException, Unit> = either {
+        val (source, destination) = validateTransfer(
+            sourceAccountId = sourceAccountId,
+            destinationAccountId = destinationAccountId,
+            amount = amount,
+            date = date,
+            destinationAmount = destinationAmount,
+        ).bind()
+
+        ensureNotNull(transactionRepository.getTransactionById(transactionId)) {
+            TransferException(TransferError.Unknown)
+        }
+
+        val arriving = destinationAmount ?: amount
+
+        catch {
+            transactionRepository.updateTransaction(
+                id = transactionId,
+                title = title,
+                date = date,
+                legs = listOf(
+                    TransactionLeg(TransactionType.EXPENSE, amount, source.id),
+                    TransactionLeg(TransactionType.INCOME, arriving, destination.id),
+                ),
+                contra = null,
+            )
+        }.mapLeft { TransferException(TransferError.Unknown) }.bind()
+
+        catch {
+            harvestExchangeRate(
+                sourceAmount = amount,
+                sourceCurrency = source.currency,
+                targetAmount = arriving,
+                targetCurrency = destination.currency,
+                date = date,
+            )
+        }
+
+        Unit
     }
 }
 

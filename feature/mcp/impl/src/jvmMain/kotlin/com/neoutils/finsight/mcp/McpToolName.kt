@@ -76,12 +76,18 @@ internal enum class McpToolName(
 
     PAY_INVOICE(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     ADVANCE_INVOICE_PAYMENT(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
+    // The two corrections sit beside the operations they correct, and not in the registration
+    // family with `update_transaction`: each rewrites two monetary legs, which is money moving.
+    // The axis follows from that — an agent granted "record and edit" and not "operate" may not
+    // move money by correcting an operation any more than by registering one.
+    UPDATE_ADVANCE_INVOICE_PAYMENT(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     CLOSE_INVOICE(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     OPEN_INVOICE(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     REOPEN_INVOICE(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     ADJUST_INVOICE(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     ADJUST_BALANCE(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     TRANSFER(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
+    UPDATE_TRANSFER(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     SET_DEFAULT_ACCOUNT(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     CONFIRM_RECURRING(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),
     SKIP_RECURRING(McpPermissionAxis.OPERATE, McpToolFamily.OPERATIONS),

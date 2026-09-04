@@ -46,10 +46,12 @@ import kotlin.time.Clock
  * combination the domain does not model — instalments on an account, instalments beside a recurring
  * mark — which the sheet never has to refuse, because its selectors never offered it. Turning away
  * an ill-formed request is not deciding what a well-formed one becomes. The same goes for editing:
- * what the rewrite can express is `Transaction.editObstacle`'s answer, and this surface carries the
+ * what the rewrite can express is `Transaction.editObstacle`'s answer, and this file carries the
  * transaction form alone. That is narrower than what the app lets a person edit — the screen decides
  * by label and opens the transfer and the payment forms, which state two monetary legs each — so the
- * perimeter here is the form's reach and not a permission the domain withholds.
+ * perimeter here is the form's reach and not a permission the domain withholds. The surface carries
+ * those two forms as well, in the operations family, and a refusal here names whichever of them the
+ * posting belongs to.
  */
 
 /** The two directions a posting can be written in from a form. */
@@ -348,9 +350,10 @@ internal class CreateTransactionTool(
  * The rewrite is total: `UpdateTransactionUseCase` deletes the old legs and rebuilds from the edited
  * form, which describes an expense or an income and nothing else. A transfer, a card payment, an
  * adjustment and one share of an instalment plan are refused *there*, in the words of the domain,
- * and nothing of that rule is restated here — it is what this form can express, and this surface
- * has no tool for the two forms that express the rest, which is where the app corrects a transfer
- * and a partial card payment.
+ * and nothing of that rule is restated here — it is what this form can express. What the refusal
+ * gains from being answered by a tool is the way out: `update_transfer` and
+ * `update_advance_invoice_payment` are the two forms that state the rest, and which of them a
+ * posting belongs to is `Transaction.correctionTool`'s reading of what it is.
  *
  * Every field is carried rather than patched: what the call does not name is taken from the posting
  * as the ledger holds it now, so changing only the amount cannot blank the title by omission.
@@ -386,8 +389,11 @@ internal class UpdateTransactionTool(
             "classifies the new direction, or 0 for no category. " +
             "PERIMETER: only a posting with a single monetary leg can be edited, because the " +
             "edit rewrites it from that leg. A transfer and a card payment have two monetary " +
-            "legs and are refused; so are an adjustment (adjust_balance, adjust_invoice) and " +
-            "one share of an instalment plan (update_installment). " +
+            "legs and are refused here — each is corrected by the tool that states two of them, " +
+            "${McpToolName.UPDATE_TRANSFER.wireName} and " +
+            "${McpToolName.UPDATE_ADVANCE_INVOICE_PAYMENT.wireName}. So are an adjustment " +
+            "(adjust_balance, adjust_invoice) and one share of an instalment plan " +
+            "(update_installment). " +
             "An amount must be greater than zero: zero or less is refused, because it is not " +
             "the removal it imitates. Removal is " +
             "delete_transaction, on the ${McpToolName.DELETE_TRANSACTION.axis.capability} " +
@@ -585,7 +591,16 @@ internal class UpdateTransactionTool(
         )
 
         updateTransaction(id, form).fold(
-            ifLeft = { refusedBy(it, summary) },
+            // What the domain refused is its own to say; what it can be done through instead is
+            // this surface's, and it follows from what the operation is — a transfer and a card
+            // payment each have a tool, and where that tool is this one there is nothing to offer.
+            ifLeft = {
+                refusedBy(
+                    cause = it,
+                    summary = summary,
+                    tryInstead = stored.correctionTool.wireName.takeIf { tool -> tool != name },
+                )
+            },
             ifRight = { updated ->
                 val lookup = lookupFor(listOf(updated), categoryRepository, installmentRepository)
                 val posting = updated.toAgentTransaction(lookup = lookup)

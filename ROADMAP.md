@@ -70,10 +70,10 @@ seis do servidor MCP estão em `feature/local-mcp-server`, que já carrega o `ma
 | **Snapshot do banco**           | Capturar, verificar em isolamento e substituir o conteúdo, sem reiniciar o app        | Arquitetura    | —             |
 | **Prelúdio de remoção**         | O razão anuncia a remoção antes das linhas saírem; calar exige `@OptIn`               | Arquitetura    | —             |
 | **Servidor MCP**                | Servidor local no processo do desktop, em loopback, atrás de token e checagem de origem | Funcionalidade | —             |
-| **Superfície de 56 ferramentas** | Perguntas, catálogo, registro e operações — uma tela com um agente no lugar de quem lê | Funcionalidade | —             |
+| **Superfície de 58 ferramentas** | Perguntas, catálogo, registro e operações — uma tela com um agente no lugar de quem lê | Funcionalidade | —             |
 | **Permissões por eixo**         | Ler, registrar, apagar e operar decidem quais ferramentas existem, e o retido é dito   | Funcionalidade | —             |
 | **Registro de atividade**       | O que um agente mudou fica registrado, com retenção declarada e alcance ao lançamento | Funcionalidade | —             |
-| **Use case por id**             | O id carrega a implementação e o agregado delega; 43 use cases chegaram à `api`        | Arquitetura    | —             |
+| **Use case por id**             | O id carrega a implementação e o agregado delega; 45 use cases chegaram à `api`        | Arquitetura    | —             |
 | **Plataforma nos dois sentidos** | O que só funciona no desktop se oculta pelo mesmo eixo do que não funciona nele       | Arquitetura    | —             |
 
 ## Planejado

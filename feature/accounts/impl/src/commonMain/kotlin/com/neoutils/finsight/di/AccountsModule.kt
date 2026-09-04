@@ -29,6 +29,7 @@ import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransferUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransferUseCase
 import com.neoutils.finsight.extension.toYearMonth
@@ -124,8 +125,8 @@ val accountsModule = module {
             validateTransfer = get(),
         )
     }
-    factory {
-        UpdateTransferUseCase(
+    factory<UpdateTransferUseCase> {
+        UpdateTransferUseCaseImpl(
             harvestExchangeRate = get(),
             transactionRepository = get(),
             validateTransfer = get(),

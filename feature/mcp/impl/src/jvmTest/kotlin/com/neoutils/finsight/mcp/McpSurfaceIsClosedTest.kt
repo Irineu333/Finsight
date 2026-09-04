@@ -92,7 +92,7 @@ class McpSurfaceIsClosedTest {
                 McpPermissionAxis.READ to 20,
                 McpPermissionAxis.RECORD to 15,
                 McpPermissionAxis.REMOVE to 8,
-                McpPermissionAxis.OPERATE to 13,
+                McpPermissionAxis.OPERATE to 15,
             ),
             McpToolName.entries.groupingBy { it.axis }.eachCount(),
         )
@@ -184,7 +184,7 @@ class McpSurfaceIsClosedTest {
 
     /**
      * The declaration side, which is airtight because the surface is closed: a tool that wrote a
-     * rate would have to be one of the fifty-six, and none of them is about rates, about the base
+     * rate would have to be one of the fifty-eight, and none of them is about rates, about the base
      * currency, or about the server itself.
      */
     @Test
@@ -272,8 +272,8 @@ class McpSurfaceIsClosedTest {
 
         const val MODULE = "feature/mcp/impl"
 
-        /** Ten questions, ten catalogue reads, twenty-three registrations, thirteen operations. */
-        const val TOOLS_IN_THE_SURFACE = 56
+        /** Ten questions, ten catalogue reads, twenty-three registrations, fifteen operations. */
+        const val TOOLS_IN_THE_SURFACE = 58
 
         /**
          * A type declaring [McpTool] as a **supertype** — which is what a tool is — rather than any

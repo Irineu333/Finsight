@@ -1,16 +1,22 @@
 package com.neoutils.finsight.mcp.tool
 
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
+import com.neoutils.finsight.extension.destinationLeg
+import com.neoutils.finsight.extension.sourceLeg
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.mcp.McpTool
 import com.neoutils.finsight.mcp.McpToolEffect
 import com.neoutils.finsight.mcp.McpToolName
 import com.neoutils.finsight.mcp.surface.AgentAccountWriteAnswer
 import com.neoutils.finsight.mcp.surface.AgentFigure
+import com.neoutils.finsight.mcp.surface.AgentRefusal
 import com.neoutils.finsight.mcp.surface.AgentTransactionWriteAnswer
 import com.neoutils.finsight.mcp.surface.toAgentTransaction
 import com.neoutils.finsight.ui.model.TransactionPerspective
@@ -18,12 +24,13 @@ import kotlinx.serialization.json.JsonObject
 import kotlin.time.Clock
 
 /**
- * The three operations on the user's own accounts: correcting a balance, moving money between two
- * of them, and electing the one the app offers first.
+ * The four operations on the user's own accounts: correcting a balance, moving money between two of
+ * them, correcting a movement already made, and electing the account the app offers first.
  *
- * Two of the three post to the ledger, and neither posts what the caller states. A correction posts
- * the **difference** between what the account holds and what it should hold, and a transfer posts
- * two legs the write boundary balances. What arrives here is the intent; the arithmetic has an owner.
+ * Three of the four post to the ledger, and none posts what the caller states. A correction of a
+ * balance posts the **difference** between what the account holds and what it should hold, and a
+ * transfer posts two legs the write boundary balances — on the way in and, when it is corrected, on
+ * the way in again. What arrives here is the intent; the arithmetic has an owner.
  */
 
 // ----------------------------------------------------------------------------------
@@ -196,6 +203,146 @@ internal class TransferTool(
                 )
             },
             reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, it.id) },
+        )
+    }
+}
+
+// ----------------------------------------------------------------------------------
+// update_transfer
+// ----------------------------------------------------------------------------------
+
+/**
+ * **Corrects a transfer that is already registered, in place.**
+ *
+ * The counterpart of [TransferTool], and the same rules judge it: a correction is a transfer being
+ * restated, not a lesser act. What differs is the write — the legs are rewritten and the operation
+ * keeps its identity, which is what separates this from removing one and registering another.
+ *
+ * **Every field is carried rather than patched.** What the call does not name is taken from the
+ * operation as the ledger holds it now, so correcting only the date cannot move the money by
+ * omission. The one field that is not simply carried is `destination_amount`: it is what the other
+ * end received, and it exists only while the two ends are denominated differently — so it is
+ * carried under exactly that condition, and a correction that brings both ends into one currency
+ * drops it rather than turning a single figure into two.
+ */
+internal class UpdateTransferTool(
+    private val transactionRepository: ITransactionRepository,
+    private val accountRepository: IAccountRepository,
+    private val updateTransfer: UpdateTransferUseCase,
+) : McpTool {
+
+    override val name: String = McpToolName.UPDATE_TRANSFER.wireName
+
+    override val effect = McpToolEffect.CHANGES
+
+    override val description: String =
+        "Correct a transfer that was already recorded — its two accounts, its amount, its date " +
+            "or its title. What is not given keeps the value it already has, and the operation " +
+            "keeps its identity: the legs are rewritten, so this is not the same as removing it " +
+            "and recording another. " +
+            "An empty title erases the one it has, leaving the posting named by its form alone. " +
+            "PERIMETER: only a transfer is corrected here — both ends are the user's own " +
+            "accounts, so the correction is still neither income nor spending and no month's " +
+            "totals move. An expense or an income is update_transaction and a card payment is " +
+            "${McpToolName.UPDATE_ADVANCE_INVOICE_PAYMENT.wireName}. " +
+            "When the two accounts are denominated differently, destination_amount is what " +
+            "arrives; there is no rate to give, and the app derives and records it from the two " +
+            "ends this correction states. Correcting a crossing while naming only one of the two " +
+            "ends leaves the other as it was, and the rate between them changes accordingly."
+
+    override val inputSchema = schema(
+        "id" to number("The transfer to correct, from list_transactions."),
+        "from_account_id" to number("Move the outgoing end to this account, from list_accounts."),
+        "to_account_id" to number("Move the incoming end to this account, from list_accounts."),
+        "amount" to amount("The new amount leaving the source, in the source account's own currency."),
+        "destination_amount" to amount(
+            "The new amount arriving, in the destination account's own currency — only when the " +
+                "two currencies differ.",
+        ),
+        "date" to text("The new day, as `2026-03-14`. Never in the future."),
+        "title" to text(
+            "The new title. Keeps the one the transfer has when not given; pass an empty string " +
+                "to erase it.",
+        ),
+        required = listOf("id"),
+    )
+
+    override suspend fun call(arguments: JsonObject?) = writing {
+        val id = arguments.requiredLong("id")
+
+        val stored = transactionRepository.getTransactionById(id)
+            ?: return@writing refusedWith(
+                AgentRefusal.notFound("transaction", id),
+                summary = "correct transfer $id",
+            )
+
+        val summary = "transfer ${stored.amount}, ${stored.date}"
+
+        // What the operation *is* decides which form corrects it, and the answer has one owner.
+        if (stored.label != TransactionLabel.TRANSFER) {
+            return@writing refusedWith(stored.correctedElsewhere(name), summary)
+        }
+
+        val storedSource = stored.entries.sourceLeg()
+        val storedDestination = stored.entries.destinationLeg()
+
+        if (storedSource == null || storedDestination == null) {
+            return@writing refusedWith(
+                AgentRefusal(
+                    reason = "This transfer does not state both of its ends, so there is nothing " +
+                        "to correct it from.",
+                ),
+                summary = summary,
+            )
+        }
+
+        val source = arguments.long("from_account_id")?.let { accountRepository.require(it) }
+            ?: storedSource.account
+        val destination = arguments.long("to_account_id")?.let { accountRepository.require(it) }
+            ?: storedDestination.account
+
+        val amount = arguments.money("amount") ?: storedSource.amount.absoluteAmount()
+
+        // Absent means "as it arrived", and only while there are two figures to state. Where the
+        // correction leaves both ends in one currency there is no second figure at all, and
+        // carrying the old one would state a crossing the operation no longer is.
+        val arriving = arguments.money("destination_amount")
+            ?: storedDestination.amount.absoluteAmount()
+                .takeIf { source.currency != destination.currency }
+
+        updateTransfer(
+            transactionId = id,
+            sourceAccountId = source.id,
+            destinationAccountId = destination.id,
+            amount = amount,
+            date = arguments.date("date") ?: stored.date,
+            title = arguments.stringOr("title", stored.title),
+            destinationAmount = arriving,
+        ).reported(
+            summary = "$amount from ${source.name} to ${destination.name}",
+            payload = {
+                // Read back rather than echoed: the corrected operation is the ledger's answer,
+                // and the crossing it may have become is only visible there.
+                val posting = transactionRepository.getTransactionById(id)?.toAgentTransaction(
+                    perspective = TransactionPerspective(source.id),
+                )
+                AgentTransactionWriteAnswer(
+                    transaction = posting,
+                    note = noteFor(
+                        posting = posting,
+                        done = "Corrected, and it is still the same operation. Everything the " +
+                            "call did not name kept the value it had." +
+                            if (arriving == null) {
+                                ""
+                            } else {
+                                " $amount leaves ${source.name} and $arriving arrives in " +
+                                    "${destination.name}; the rate between them was derived from " +
+                                    "those two figures and recorded."
+                            },
+                    ),
+                )
+            },
+            reference = { reference(AgentActivity.Reference.Kind.TRANSACTION, id) },
         )
     }
 }

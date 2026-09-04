@@ -48,6 +48,11 @@ kotlin {
             implementation(libs.mcp.kotlin.sdk.server)
             implementation(libs.ktor.server.cio)
 
+            // The client half of the same SDK, here for the same reason and not for a
+            // remote one: the bridge from a stdio session to the server the open window
+            // already holds is a client of this app's own loopback endpoint (design D8).
+            implementation(libs.mcp.kotlin.sdk.client)
+
             // What the user chose about the server outlives the process, and this is the
             // mechanism the app already keeps preferences in (design D11).
             implementation(libs.multiplatform.settings)
@@ -92,6 +97,12 @@ kotlin {
             // the server on and mint tokens, and doing that to the machine's real
             // preferences would leave a secret behind and decide the next run's outcome.
             implementation(libs.multiplatform.settings.test)
+
+            // The engine the SDK's client needs under it. It is the JVM engine the app
+            // already uses elsewhere (`feature/settings/impl`), and it is declared here
+            // rather than in `jvmMain` because nothing in production yet opens a client:
+            // the module that will is the bridge, and it brings its own.
+            implementation(libs.ktor.client.okhttp)
         }
     }
 }

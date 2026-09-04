@@ -107,6 +107,11 @@ ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 
 mcp-kotlin-sdk-server = { module = "io.modelcontextprotocol:kotlin-sdk-server", version.ref = "mcp-kotlin-sdk" }
 
+# The same SDK from the other end of the wire, at the same version because it is the same
+# release: the app speaks the protocol to itself, a session lit by one process forwarding to
+# the server the window already holds.
+mcp-kotlin-sdk-client = { module = "io.modelcontextprotocol:kotlin-sdk-client", version.ref = "mcp-kotlin-sdk" }
+
 compose-material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "composeMaterial3Adaptive" }
 
 compose-settings-ui-tiles = { module = "com.github.alorma.compose-settings:ui-tiles", version.ref = "compose-settings" }

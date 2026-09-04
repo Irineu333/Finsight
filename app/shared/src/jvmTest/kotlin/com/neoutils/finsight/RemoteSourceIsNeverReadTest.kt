@@ -116,16 +116,22 @@ class RemoteSourceIsNeverReadTest {
      * so that "only one module may reach the network" would be a fact about the module
      * graph rather than a matter of discipline (design D11). This is that fact, checked.
      *
-     * Ktor is named by two modules, at opposite ends of the wire, and the ends are not
-     * interchangeable. A **client** anywhere but the rate source is a figure that can be made
-     * to wait on a host, which is the whole risk. A **server** is the app being reached on
-     * the loopback interface of the machine it already runs on: it calls nothing and waits
-     * on nothing, so it carries none of that risk — and it earns no licence to hold a
-     * client. Each end has exactly one owner, and the owners are different modules.
+     * Ktor is named by two modules and no others, which is the fact this rests on. What each
+     * may do with it is not the same, because the risk is not the library — it is **who the
+     * client is talking to**. A client aimed at a host on the internet is a figure that can be
+     * made to wait on someone else's server, and only the rate source may hold one. A client
+     * aimed at `127.0.0.1` is this app talking to itself: the stdio session forwarding to the
+     * server the open window is already holding (design D8), the same process pair, no host to
+     * be unreachable. So the mcp feature owns both ends of its own loopback conversation, and
+     * the rate source owns the only client that leaves the machine.
+     *
+     * The half that carries the guarantee is the server: it stays with the mcp feature alone,
+     * because the app listens in one place and that place is the feature the user switches on.
+     * That the remote source is reachable from nowhere else is pinned above, by name.
      */
     @Test
-    fun `the Ktor client and the Ktor server each live in one module, and not the same one`() {
-        val clientOwner = "feature/settings/impl/build.gradle.kts"
+    fun `only the rate source and the mcp feature name Ktor, and only one of them listens`() {
+        val remoteClientOwner = "feature/settings/impl/build.gradle.kts"
         val serverOwner = "feature/mcp/impl/build.gradle.kts"
 
         val declaringKtor = repoRoot.walkTopDown()
@@ -135,21 +141,22 @@ class RemoteSourceIsNeverReadTest {
             .filterValues { Regex("""ktor""", RegexOption.IGNORE_CASE).containsMatchIn(it) }
 
         assertEquals(
-            setOf(clientOwner, serverOwner),
+            setOf(remoteClientOwner, serverOwner),
             declaringKtor.keys,
             "Ktor left the two modules that may hold it.\n" +
-                (declaringKtor.keys - setOf(clientOwner, serverOwner))
+                (declaringKtor.keys - setOf(remoteClientOwner, serverOwner))
                     .joinToString("\n") { "  NEW: $it" },
         )
 
         assertEquals(
-            setOf(clientOwner),
+            setOf(remoteClientOwner, serverOwner),
             declaringKtor.filterValues {
                 Regex("""ktor[.-]client""", RegexOption.IGNORE_CASE).containsMatchIn(it)
             }.keys,
-            "A second module holds a Ktor client. The restriction is the module graph, not " +
-                "discipline: a client outside the rate source is an invitation for a figure " +
-                "to wait on a host.",
+            "A third module holds a Ktor client. The restriction is the module graph, not " +
+                "discipline: the two that may are the rate source, whose client is the only " +
+                "one that leaves the machine, and the mcp feature, whose client only ever " +
+                "dials this app's own loopback endpoint.",
         )
 
         assertEquals(

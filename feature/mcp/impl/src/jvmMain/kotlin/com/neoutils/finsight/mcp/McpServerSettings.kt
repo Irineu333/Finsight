@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.security.SecureRandom
+import java.util.prefs.Preferences
 
 /**
  * What the user decided about the server, kept where the app already keeps preferences.
@@ -28,12 +29,32 @@ import java.security.SecureRandom
  * **Construction only reads.** Minting a token is a write, and it waits for the first moment there
  * is a server to connect to — resolving the controller in a test, or on a platform that never
  * listens, must not leave a secret behind on the machine.
+ *
+ * **The choice crosses to another process the moment it is made.** Reading is what construction
+ * does, once, and the flows answer from there on: this object is the process's view of the choice,
+ * not a window onto the file. That is enough because the process that has to read a fresh choice —
+ * the stdio one an agent's client launches — builds the whole of itself at every launch, seconds
+ * after the user may have moved a switch. What it must not find is the previous answer, so [store]
+ * is re-read before each of those reads and written through after every write (design D7).
  */
 internal class McpServerSettings(
     private val settings: Settings,
+    /**
+     * The `java.util.prefs` node [settings] is held in, or `null` where it is held in something
+     * with no disk behind it — the `Settings` a test states, and any store that is not this one.
+     *
+     * It is a second parameter because `Settings` has no `flush` and no `sync`: those belong to
+     * `java.util.prefs`, and `PreferencesSettings` neither calls them nor hands out the node it
+     * writes to. Without them, when a choice becomes visible to another process is the
+     * implementation's to decide: the JVM's file-backed store commits on a timer of up to 30 s, so
+     * a process launched in between reads the answer before the last one. Where the platform's own
+     * daemon hands a write straight to the next reader — macOS does — the calls cost a syscall and
+     * change nothing, which is the price of the requirement holding everywhere.
+     */
+    private val store: Preferences? = null,
 ) {
 
-    private val _isEnabled = MutableStateFlow(settings.getBoolean(KEY_ENABLED, false))
+    private val _isEnabled = MutableStateFlow(read { settings.getBoolean(KEY_ENABLED, false) })
 
     /**
      * `false` where nothing was ever persisted, which is the state of an app that just gained the
@@ -41,11 +62,11 @@ internal class McpServerSettings(
      */
     val isEnabled: StateFlow<Boolean> = _isEnabled.asStateFlow()
 
-    private val _port = MutableStateFlow(settings.getInt(KEY_PORT, McpServerController.DEFAULT_PORT))
+    private val _port = MutableStateFlow(read { settings.getInt(KEY_PORT, McpServerController.DEFAULT_PORT) })
 
     val port: StateFlow<Int> = _port.asStateFlow()
 
-    private val _token = MutableStateFlow(settings.getStringOrNull(KEY_TOKEN))
+    private val _token = MutableStateFlow(read { settings.getStringOrNull(KEY_TOKEN) })
 
     val token: StateFlow<String?> = _token.asStateFlow()
 
@@ -60,12 +81,12 @@ internal class McpServerSettings(
      */
     val permissions: StateFlow<Set<McpPermissionAxis>> = _permissions.asStateFlow()
 
-    fun setEnabled(enabled: Boolean) {
+    fun setEnabled(enabled: Boolean) = write {
         settings.putBoolean(KEY_ENABLED, enabled)
         _isEnabled.value = enabled
     }
 
-    fun setPort(port: Int) {
+    fun setPort(port: Int) = write {
         settings.putInt(KEY_PORT, port)
         _port.value = port
     }
@@ -76,13 +97,33 @@ internal class McpServerSettings(
      * One axis per call is the independence of the four expressed in the signature: there is no
      * shape here that could grant a second one along the way.
      */
-    fun setPermission(axis: McpPermissionAxis, granted: Boolean) {
+    fun setPermission(axis: McpPermissionAxis, granted: Boolean) = write {
         settings.putBoolean(axis.settingsKey, granted)
         _permissions.value = storedPermissions()
     }
 
-    private fun storedPermissions(): Set<McpPermissionAxis> = McpPermissionAxis.entries
-        .filterTo(mutableSetOf()) { settings.getBoolean(it.settingsKey, it in McpPermissionAxis.INITIAL) }
+    private fun storedPermissions(): Set<McpPermissionAxis> = read {
+        McpPermissionAxis.entries
+            .filterTo(mutableSetOf()) { settings.getBoolean(it.settingsKey, it in McpPermissionAxis.INITIAL) }
+    }
+
+    /**
+     * Answers from the store as another process left it: [Preferences.sync] pulls in what was
+     * committed elsewhere before the value is read.
+     */
+    private fun <T> read(value: () -> T): T {
+        store?.sync()
+        return value()
+    }
+
+    /**
+     * Applies a change and commits it: [Preferences.flush] pushes it out where a process starting
+     * now will find it, rather than whenever the JDK's own timer next fires.
+     */
+    private fun write(change: () -> Unit) {
+        change()
+        store?.flush()
+    }
 
     /**
      * The token to authorise against, minting and persisting one the first time there is a server
@@ -96,8 +137,10 @@ internal class McpServerSettings(
     private fun mint(): String {
         val bytes = ByteArray(TOKEN_BYTES).also(RANDOM::nextBytes)
         val token = bytes.joinToString(separator = "") { byte -> HEX[byte.toInt() and 0xFF] }
-        settings.putString(KEY_TOKEN, token)
-        _token.value = token
+        write {
+            settings.putString(KEY_TOKEN, token)
+            _token.value = token
+        }
         return token
     }
 

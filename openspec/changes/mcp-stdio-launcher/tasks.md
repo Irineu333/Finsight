@@ -12,10 +12,10 @@
 > `flush()`. O que resta aqui é pôr a dependência no build e transformar as premissas em testes.
 
 - [x] 1.1 Verificado antes da implementação: `io.modelcontextprotocol:kotlin-sdk-client:0.14.0` existe no Maven Central e depende de `kotlin-sdk-core:0.14.0`, `ktor-client-core:3.4.3`, `kotlin-stdlib:2.3.21` e `kotlin-logging:8.0.4`, todos já trazidos pelo servidor. Nenhuma versão do app sobe.
-- [ ] 1.2 Adicionar o artefato ao catálogo e ao `jvmMain` de `feature/mcp/impl`; `./gradlew :feature:mcp:impl:dependencies --configuration jvmRuntimeClasspath` confirma que nada foi elevado.
-- [ ] 1.3 Exercitar em teste, contra o `McpServerHarness` existente, um `Client` do SDK com `StreamableHttpClientTransport` apresentando o token: `initialize` → `tools/list` → `tools/call` e a recepção de `notifications/tools/list_changed`.
-- [ ] 1.4 Provar em teste que `startKoin { modules(appModules) }` seguido da resolução de `McpToolDependencies`, `McpServerSettings` e `AgentActivityJournal` não carrega classe alguma de Compose nem inicializa Firebase (D5).
-- [ ] 1.5 `McpServerSettings` chama `Preferences.userRoot().flush()` depois de cada escrita e `sync()` antes de cada leitura (D7). Teste em dois processos JVM: um grava a escolha, o outro a lê na hora.
+- [x] 1.2 Adicionar o artefato ao catálogo e ao `jvmMain` de `feature/mcp/impl`; `./gradlew :feature:mcp:impl:dependencies --configuration jvmRuntimeClasspath` confirma que nada foi elevado.
+- [x] 1.3 Exercitar em teste, contra o `McpServerHarness` existente, um `Client` do SDK com `StreamableHttpClientTransport` apresentando o token: `initialize` → `tools/list` → `tools/call` e a recepção de `notifications/tools/list_changed`.
+- [x] 1.4 Provar em teste que `startKoin { modules(appModules) }` seguido da resolução de `McpToolDependencies`, `McpServerSettings` e `AgentActivityJournal` não carrega classe alguma de Compose nem inicializa Firebase (D5).
+- [x] 1.5 `McpServerSettings` chama `Preferences.userRoot().flush()` depois de cada escrita e `sync()` antes de cada leitura (D7). Teste em dois processos JVM: um grava a escolha, o outro a lê na hora.
 
 ## 2. Posse do banco (`mcp-stdio-mode`: "Há no máximo um dono do banco por vez")
 

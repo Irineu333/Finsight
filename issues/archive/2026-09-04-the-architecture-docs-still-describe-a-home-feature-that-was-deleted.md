@@ -2,6 +2,7 @@
 area: transversal
 severity: low
 type: data
+verdict: fixed
 ---
 
 # `CLAUDE.md` e `feature/README.md` ainda descrevem a feature `home`, apagada há sete meses
@@ -71,3 +72,25 @@ e não só nome: o quarto tipo de acesso cross-feature (`register()`) hoje não 
 ocorrência — ou volta a ser hipotético, como a spec de navegação o mantém, ou sai; o exemplo de
 `homeGraph()` vira o `AppNavHost` real; e o papel do `:app:shared` passa a bater com o que
 `CLAUDE.md:69` já diz corretamente. Não vinculante.
+
+## Desfecho
+
+**Causa real** — o defeito era de duas idades. O `feature/README.md` foi reescrito por uma
+mudança posterior ao registro (fala do `home` só no passado, ao explicar de onde veio o
+mecanismo que hoje o `mcp` usa), e o quarto tipo de acesso cross-feature deixou de ser letra
+morta: `context(NavGraphBuilder) fun register()` tem 9 ocorrências hoje, e `McpEntry` é uma
+delas. O que sobrou vivo até o fim foi só o `CLAUDE.md`, em duas linhas.
+
+**Mudança** — `CLAUDE.md` deixou de listar `home` entre as features e passou a listar `shell`
+com os símbolos reais (`NavCatalog`, `NavDestination`, `Chrome`, `ChromeHost`,
+`FeaturePlatform`) — os três que o texto citava não existiam: `HomeGraph` e `HomeChromeHost` em
+lugar nenhum, e `NavigationItem` só dentro de `NavDestination.kt`. E `App` passou a ser descrito
+invocando `ChromeHost`, que é o que ele invoca (`app/shared/.../ui/App.kt:155`). Na mesma
+passagem o documento ganhou a feature `mcp`, que não estava em nenhuma das duas listas.
+
+**Prova** — nenhuma: é documentação, e o `AgentInstructionsTest` só resolve caminhos. Cada
+símbolo escrito foi conferido por `grep` contra o disco antes de entrar, que é o que a
+correção anterior não fez.
+
+**Commit** — `Chore(Docs): describe a surface with two modes and one owner of the archive`
+(`90467df54`) e o ajuste final do `ChromeHost`.

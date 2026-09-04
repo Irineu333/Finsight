@@ -2,6 +2,7 @@
 area: transversal
 severity: medium
 type: test
+verdict: fixed
 ---
 
 # O comando de teste documentado não alcança o módulo desktop
@@ -55,3 +56,28 @@ entregar nada, e nada na árvore sinaliza a diferença.
 Ou corrigir a documentação para `./gradlew jvmTest :app:desktop:test`, ou dar ao
 `:app:desktop` um alias `jvmTest` que dependa de `test`, para que o nome documentado passe
 a alcançá-lo sem que ninguém precise lembrar. Não vinculante.
+
+## Desfecho
+
+**Causa real** — a que o arquivo já nomeava: `kotlin("jvm")` chama a tarefa de `test`, e o
+comando documentado procura por `jvmTest`. Foi atacada pelo segundo caminho da sugestão — o
+alias no módulo, e não a correção da documentação —, porque o nome documentado passa então a
+alcançar o módulo sem que ninguém precise lembrar de acrescentar um alvo.
+
+**Mudança** — `app/desktop/build.gradle.kts` registra `jvmTest` dependendo de `test`, com o
+comentário dizendo por que existe. Não veio de uma passagem pelo backlog: entrou junto do
+commit que deu módulo próprio ao servidor MCP, cuja guarda de distribuição
+(`McpServerReachesTheDistributionTest`) vive exatamente neste módulo e ficaria fora da
+verificação sem o alias. O comentário no build mostra que a lacuna foi vista e atacada de
+propósito, e não fechada por acaso.
+
+**Prova** — `./gradlew jvmTest --dry-run | grep ":app:desktop:test"` devolve a tarefa, contra
+as zero linhas registradas na `## Evidência`. Os testes do módulo somam **19 casos** hoje, e
+entram na contagem do comando documentado.
+
+**Commit** — `Feat(Mcp): give the server a module, a contract, and a seat in the distribution`
+(`e97be703e`)
+
+**O invariante fecha para este módulo, e há um vizinho que ele não cobre.** Nenhum comando
+documentado executa o target Android, e o teste que só falha lá está registrado à parte, em
+`a-shared-ui-test-passes-on-the-jvm-and-dies-on-the-android-target`.

@@ -68,7 +68,7 @@ enforced mechanically by convention plugins in `build-logic`
   any `feature:*:api` and `:core:*`.
 - **`app/`** — the app, split by responsibility:
   - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
-    `impl`s): `App` (theme, `LocalNavController`, `ModalManagerHost`, invokes `HomeChromeHost`),
+    `impl`s): `App` (theme, `LocalNavController`, `ModalManagerHost`, invokes `ChromeHost`),
     `AppNavHost` (only `<name>Graph()` calls), Koin aggregation (`appModules`). Declares no
     route, no `Scaffold`, no chrome. Under the `finsight.app.shared` convention plugin.
   - **`:app:android`** — `com.android.application` (non-KMP): `MainActivity`, `AndroidApp`

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -570,19 +571,33 @@ private fun CodeBlock(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerHighest),
             ) {
-                SelectionContainer {
-                    Text(
-                        text = shown,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            // The end padding is the copy button's room: the block scrolls under a
-                            // button that does not, so without it the longest line ends beneath the
-                            // icon.
-                            .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 48.dp)
-                            .testTag(testTag),
-                        style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                    )
+                Box(
+                    // As tall as the copy button at the least, and the text centred in whatever
+                    // height that leaves. One line of code plus its padding measures under the
+                    // 48.dp an icon button reserves for its touch target, so without the floor the
+                    // button would stand taller than the block it sits in; without the centring it
+                    // would then sit low against a line pinned to the top. The room is made here
+                    // rather than by shrinking the button, because a touch target is the one size
+                    // that whoever depends on it needs whole.
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    SelectionContainer {
+                        Text(
+                            text = shown,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                // The end padding is the copy button's room: the block scrolls
+                                // under a button that does not, so without it the longest line ends
+                                // beneath the icon.
+                                .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 48.dp)
+                                .testTag(testTag),
+                            style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        )
+                    }
                 }
             }
 

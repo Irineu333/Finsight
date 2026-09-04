@@ -5,8 +5,21 @@
 > a distribuição fecham a mudança.
 
 > **Linha de base da suíte**, medida sobre `ccfddddd5` com a árvore limpa, antes do grupo 1:
-> **2973 casos, 0 falhas**. É contra ela que 8.4 confere o total. Depois dos grupos 1 e 2 são 2988
-> (10 da posse do banco, 5 das premissas).
+> `./gradlew jvmTest` — **2485 casos, 0 falhas**. É contra ela que 8.4 confere o total.
+>
+> **Como contar, porque o jeito óbvio erra.** Somar todo `TEST-*.xml` sob `build/test-results/`
+> conta também `testDebugUnitTest`, que `./gradlew jvmTest` **não executa** — são resultados de
+> execuções antigas em disco, e a soma passa a misturar o que rodou agora com o que rodou um dia.
+> Conte `build/test-results/jvmTest/` mais o `build/test-results/test/` de `:app:desktop`, que é
+> `kotlin("jvm")` e nomeia a sua tarefa `test` (o alias em `app/desktop/build.gradle.kts:77-79` é
+> o que a traz para dentro do comando).
+>
+> **A suíte Android já estava vermelha antes desta mudança, e não é dela.**
+> `core/designsystem` — `FloatingActionMenuTest` falha nos seus 4 casos em `testDebugUnitTest`,
+> com `android.os.Build.FINGERPRINT is null`. Verificado num worktree de `ccfddddd5`, sem uma linha
+> desta change: mesma classe, mesmas 4 falhas. Nenhum commit daqui toca `core/designsystem`.
+> `./gradlew testDebugUnitTest` não é comando desta mudança e não vira verde por causa dela — fica
+> registrado para virar issue própria.
 
 ## 1. Dependência e premissas
 
@@ -101,16 +114,16 @@
 
 ## 7. Seção de configurações (`mcp-server`: "A configuração ensina a conectar")
 
-- [ ] 7.1 `McpUiState` ganha o bloco `command` + `args` e a linha `claude mcp add`, ambos copiáveis; o bloco HTTP com endereço e token passa para um caminho avançado recolhido, mantendo a máscara do token.
-- [ ] 7.2 A seção diz que o comando funciona com o app aberto ou fechado; a frase "só responde com o app aberto" sai. Strings novas e alteradas em `values/strings.xml` e `values-en/strings.xml` no mesmo passo. São **duas** as frases que a mudança torna falsas, e as tarefas só nomeavam a primeira: `mcp_app_open_note` ("o servidor só existe com o app aberto") e `mcp_instructions_stdio_note` ("clientes que só falam stdio precisam de um adaptador de terceiros"), que é justamente o que deixa de ser preciso. `StringTranslationParityTest` (`:app:shared`) segura o par pt/en.
-- [ ] 7.3 `McpViewModelTest` cobre o comando, o recolhimento do caminho avançado e a ausência das duas frases antigas. Não existe `McpUiStateTest`: o estado é exercitado dentro daquele arquivo, pelo helper `subscribe()` — ou os testes novos entram ali, ou o arquivo próprio nasce nesta tarefa, e a escolha é declarada no relatório.
+- [x] 7.1 `McpUiState` recebe `launchCommand` e deriva dele `launch`: o bloco `command` + `args` e a linha `claude mcp add finsight -- "<caminho>" --mcp`, ambos copiáveis; o bloco HTTP com endereço e token passa para trás de `showsAdvanced`, com a máscara do token intacta (desdobrar o caminho avançado não revela o token). **O caminho entra no bloco como texto JSON, não como texto**: o executável do Windows mora atrás de contrabarras, e `C:\Users\…` copiado como está não é uma string JSON — o cliente recusa o arquivo inteiro, e o usuário vê um servidor que nunca sobe. **Com `launchCommand` nulo o caminho avançado deixa de ser avançado**: "avançado" só descreve um caminho enquanto há outro acima dele, então o endereço aparece aberto em vez de dobrado sobre o nada. Um `CodeBlock` só desenha os três blocos, e o argumento vem de `McpLaunchCommand.STDIO_ARGUMENT` — a seção não o soletra. A armadilha da nota sob 6.3 fica como está: **nada na tela tenta detectar "estou em dev"**, a seção mostra o que o controlador responde, e num `./gradlew :app:desktop:run` isso é o binário `java`.
+- [x] 7.2 A seção diz que o comando funciona com o app aberto ou fechado (`mcp_command_note`), e as duas frases que a mudança torna falsas saíram das duas línguas: `mcp_app_open_note` e `mcp_instructions_stdio_note`. A primeira não sumiu do card "sobre" — virou `mcp_about_reach_note` dizendo o contrário, porque *um agente alcança seus dados com o app fechado* é o que o usuário precisa ler antes de ligar o interruptor, e nenhuma outra tela diz isso. Reescritas também `mcp_about_body`, `mcp_instructions_body`, `mcp_instructions_json_note` e `mcp_unavailable_description`, que descreviam a conexão pelo endereço; entraram `mcp_command_label`, `mcp_command_copy`, `mcp_command_claude_label`, `mcp_command_claude_copy`, `mcp_advanced_title` e `mcp_advanced_body`. Toda chave nas duas línguas no mesmo passo (`StringTranslationParityTest` e `StringResourceParityTest` verdes).
+- [x] 7.3 Os seis casos entraram em `McpViewModelTest` (nenhum arquivo novo nasceu): o bloco trazendo o caminho absoluto desta instalação — **parseado como JSON, não casado como texto**, porque um bloco que o usuário cola só é instrução se abrir —, a linha de uma linha só, o caminho do Windows sobrevivendo à volta pelo JSON, o recolhimento do caminho avançado com o token ainda mascarado, o caso sem comando, e o servidor desligado não pedindo decisão alguma nem com um comando a mostrar. Dois deles leem `values/strings.xml` e `values-en/strings.xml` direto do disco: a ausência das duas frases antigas e a presença da nova não são estado de ViewModel, e nada mais na suíte pegaria uma frase que o app continuasse dizendo depois de deixar de ser verdade. Provado por sabotagem que dois falham sem o código: sem o escape do JSON e com o caminho avançado sempre aberto.
 
 ## 8. Distribuição e verificação (design D11)
 
 - [x] 8.1 `McpServerReachesTheDistributionTest` passa a exigir também `io.modelcontextprotocol:kotlin-sdk-client` na distribuição — e o motor do cliente que 5.1 declarar, porque um cliente empacotado sem motor sobre o qual falar é uma ponte que só falha na máquina do usuário. O motor é `io.ktor:ktor-client-okhttp` (`McpBridge.kt:76`, `HttpClient(OkHttp)`); o manifesto de `writeDistributionManifest` traz `io.modelcontextprotocol:kotlin-sdk-client-jvm:0.14.0` e `io.ktor:ktor-client-okhttp-jvm:3.4.3`.
 - [ ] 8.2 Tarefa Gradle `verifyMcpLauncher` em `:app:desktop`, dependente de `createDistributable`: lança o launcher empacotado com `--mcp`, completa `initialize` → `tools/list` pelo stdio, confere que `stderr` recebeu a linha de abertura e que `jpackage.app-path` está definido. Fora de `jvmTest`, executada à mão como a suíte Maestro.
 - [ ] 8.3 Executar `verifyMcpLauncher` neste macOS e registrar no relatório da mudança em que SO rodou, o tempo até `initialize` e a memória do processo.
-- [ ] 8.4 `./gradlew jvmTest` verde, com a contagem de testes conferida contra os **2973 casos** da linha de base do cabeçalho: o total final é ela mais os testes que cada grupo acrescentou, e uma diferença que não se explique assim é um teste que sumiu.
+- [ ] 8.4 `./gradlew jvmTest` verde, com a contagem conferida contra os **2485 casos** da linha de base do cabeçalho e pelo método que ela descreve: o total final é ela mais o que cada grupo acrescentou, e uma diferença que não se explique assim é um teste que sumiu. Conferido depois do grupo 7: **2541 = 2485 + 56**, e os 56 se distribuem 10 (grupo 2) + 5 (grupo 1) + 10 (grupo 4) + 15 (grupo 5) + 10 (grupo 6) + 6 (grupo 7), fechando com o que cada relatório declarou.
 
 ## 9. Documentação e registro
 

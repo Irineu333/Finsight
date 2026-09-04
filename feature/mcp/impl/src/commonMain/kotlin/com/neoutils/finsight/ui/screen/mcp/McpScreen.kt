@@ -23,6 +23,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
@@ -58,10 +60,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.mcp_about_body
+import com.neoutils.finsight.resources.mcp_about_reach_note
 import com.neoutils.finsight.resources.mcp_activity_see_all
 import com.neoutils.finsight.resources.mcp_activity_title
 import com.neoutils.finsight.resources.mcp_address_label
-import com.neoutils.finsight.resources.mcp_app_open_note
+import com.neoutils.finsight.resources.mcp_advanced_body
+import com.neoutils.finsight.resources.mcp_advanced_title
+import com.neoutils.finsight.resources.mcp_command_claude_copy
+import com.neoutils.finsight.resources.mcp_command_claude_label
+import com.neoutils.finsight.resources.mcp_command_copy
+import com.neoutils.finsight.resources.mcp_command_label
+import com.neoutils.finsight.resources.mcp_command_note
 import com.neoutils.finsight.resources.mcp_copy
 import com.neoutils.finsight.resources.mcp_disconnect_sessions
 import com.neoutils.finsight.resources.mcp_enable_description
@@ -69,7 +78,6 @@ import com.neoutils.finsight.resources.mcp_enable_title
 import com.neoutils.finsight.resources.mcp_instructions_body
 import com.neoutils.finsight.resources.mcp_instructions_copy
 import com.neoutils.finsight.resources.mcp_instructions_json_note
-import com.neoutils.finsight.resources.mcp_instructions_stdio_note
 import com.neoutils.finsight.resources.mcp_instructions_title
 import com.neoutils.finsight.resources.mcp_permission_granted_count
 import com.neoutils.finsight.resources.mcp_permission_operate_description
@@ -235,8 +243,9 @@ private fun UnavailableCard(
 }
 
 /**
- * What the server is, and the one thing about it that no configuration can change: it is this
- * process. Close the app and the surface is not merely unreachable — it does not exist.
+ * What the server is, and the one thing about it the user has to know before switching it on: an
+ * agent reaches this data whether or not the window is open, and nothing but what is granted here
+ * is ever offered to it.
  */
 @Composable
 private fun AboutCard(
@@ -248,8 +257,8 @@ private fun AboutCard(
         color = colorScheme.onSurfaceVariant,
     )
     Text(
-        text = stringResource(Res.string.mcp_app_open_note),
-        modifier = Modifier.testTag("mcp_app_open_note"),
+        text = stringResource(Res.string.mcp_about_reach_note),
+        modifier = Modifier.testTag("mcp_about_reach_note"),
         style = typography.bodyMedium,
         color = colorScheme.onSurface,
     )
@@ -319,11 +328,17 @@ private fun StatusCard(
 }
 
 /**
- * The port, the address, the token and how to point a client at them.
+ * How a client is pointed at this app: the command it launches, and — folded away — the address and
+ * the token behind it.
+ *
+ * The command comes first because it is the instruction that holds either way: the client starts
+ * the app itself when the window is closed, and reaches the open window through it when it is not.
+ * The address answers only while the window is up, so it is what the section offers second, to the
+ * client that wants a `url`.
  *
  * The instructions name no client on purpose: the server speaks the protocol, and whatever speaks
- * it connects. The one thing worth warning about is the transport — this is HTTP on loopback, so a
- * client that only speaks stdio needs an adapter of its own.
+ * it connects. The one line that does name one is labelled as that client's own shorthand for the
+ * block above it.
  */
 @Composable
 private fun ConnectionCard(
@@ -340,65 +355,150 @@ private fun ConnectionCard(
         color = colorScheme.onSurfaceVariant,
     )
 
-    AddressRow(uiState = uiState, onAction = onAction)
+    val launch = uiState.launch
 
-    TokenRow(uiState = uiState, onAction = onAction)
+    if (launch != null) {
+        CodeBlock(
+            shown = launch.snippet,
+            copied = launch.snippet,
+            copyDescription = stringResource(Res.string.mcp_command_copy),
+            testTag = "mcp_command",
+            label = stringResource(Res.string.mcp_command_label),
+        )
 
-    Text(
-        text = stringResource(Res.string.mcp_instructions_stdio_note),
-        modifier = Modifier.testTag("mcp_stdio_note"),
-        style = typography.bodySmall,
-        color = colorScheme.onSurfaceVariant,
+        CodeBlock(
+            shown = launch.claudeCodeLine,
+            copied = launch.claudeCodeLine,
+            copyDescription = stringResource(Res.string.mcp_command_claude_copy),
+            testTag = "mcp_command_claude",
+            label = stringResource(Res.string.mcp_command_claude_label),
+        )
+
+        Text(
+            text = stringResource(Res.string.mcp_command_note),
+            modifier = Modifier.testTag("mcp_command_note"),
+            style = typography.bodySmall,
+            color = colorScheme.onSurfaceVariant,
+        )
+
+        AdvancedToggle(
+            expanded = uiState.isAdvancedExpanded,
+            onClick = { onAction(McpAction.ToggleAdvanced) },
+        )
+    }
+
+    if (uiState.showsAdvanced) {
+        Text(
+            text = stringResource(Res.string.mcp_advanced_body),
+            style = typography.bodyMedium,
+            color = colorScheme.onSurfaceVariant,
+        )
+
+        AddressRow(uiState = uiState, onAction = onAction)
+
+        TokenRow(uiState = uiState, onAction = onAction)
+
+        Text(
+            text = stringResource(Res.string.mcp_instructions_json_note),
+            modifier = Modifier.testTag("mcp_instructions_json_note"),
+            style = typography.bodySmall,
+            color = colorScheme.onSurfaceVariant,
+        )
+
+        CodeBlock(
+            // The token is masked here until it is revealed, and copying reaches the real one: what
+            // a screenshot of the section carries is what the row above it carries.
+            shown = uiState.displayedConnectionSnippet,
+            copied = uiState.connectionSnippet,
+            copyDescription = stringResource(Res.string.mcp_instructions_copy),
+            testTag = "mcp_instructions_json",
+        )
+    }
+}
+
+/** The way into the address and the token, and out of them again. */
+@Composable
+private fun AdvancedToggle(
+    expanded: Boolean,
+    onClick: () -> Unit,
+) = TextButton(
+    onClick = onClick,
+    modifier = Modifier.testTag("mcp_advanced_toggle"),
+) {
+    Text(text = stringResource(Res.string.mcp_advanced_title))
+
+    Spacer(modifier = Modifier.width(4.dp))
+
+    Icon(
+        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+        contentDescription = null,
+        modifier = Modifier.size(20.dp),
     )
+}
 
+/**
+ * A block of configuration, shown and not merely copyable.
+ *
+ * A block the user can read is one they can adapt when their client words things differently, and
+ * selectable for the same reason: copying the whole of it is the common case and not the only one.
+ * [shown] and [copied] are separate because what belongs on a screen and what a client has to
+ * authenticate with are not always the same string.
+ */
+@Composable
+private fun CodeBlock(
+    shown: String,
+    copied: String,
+    copyDescription: String,
+    testTag: String,
+    label: String? = null,
+) {
     val copy = rememberCopy()
 
-    Text(
-        text = stringResource(Res.string.mcp_instructions_json_note),
-        modifier = Modifier.testTag("mcp_instructions_json_note"),
-        style = typography.bodySmall,
-        color = colorScheme.onSurfaceVariant,
-    )
-
-    // Shown and not merely copyable: a block the user can read is one they can adapt when their
-    // client words the transport differently, and the values above are what they adapt it from.
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerHighest),
-        ) {
-            // Selectable, because copying the whole block is the common case and not the only
-            // one: a user pointing a client that words the transport differently needs the url
-            // out of here on its own. The token is masked here until it is revealed, so what
-            // selecting reaches is whatever the row above is showing.
-            SelectionContainer {
-                Text(
-                    text = uiState.displayedConnectionSnippet,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        // The end padding is the copy button's room: the block scrolls under a
-                        // button that does not, so without it the longest line ends beneath the
-                        // icon.
-                        .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 48.dp)
-                        .testTag("mcp_instructions_json"),
-                    style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                )
-            }
+    // A column of its own so the label sits on the block it names, rather than at the distance the
+    // section puts between one thing and the next.
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (label != null) {
+            Text(
+                text = label,
+                style = typography.labelMedium,
+                color = colorScheme.onSurfaceVariant,
+            )
         }
 
-        IconButton(
-            onClick = { copy(uiState.connectionSnippet) },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .testTag("mcp_copy_instructions"),
-        ) {
-            Icon(
-                imageVector = Icons.Default.ContentCopy,
-                contentDescription = stringResource(Res.string.mcp_instructions_copy),
-                modifier = Modifier.size(20.dp),
-            )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerHighest),
+            ) {
+                SelectionContainer {
+                    Text(
+                        text = shown,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            // The end padding is the copy button's room: the block scrolls under a
+                            // button that does not, so without it the longest line ends beneath the
+                            // icon.
+                            .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 48.dp)
+                            .testTag(testTag),
+                        style = typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = { copy(copied) },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .testTag("${testTag}_copy"),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = copyDescription,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }

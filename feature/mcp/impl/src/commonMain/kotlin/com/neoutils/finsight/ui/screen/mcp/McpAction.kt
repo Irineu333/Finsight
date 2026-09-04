@@ -26,6 +26,14 @@ sealed interface McpAction {
     /** Shows the token, or hides it again. It is masked until this is asked for. */
     data object ToggleTokenVisibility : McpAction
 
+    /**
+     * Unfolds the address and the token, or folds them back.
+     *
+     * They are folded to begin with: what a client needs is the command above them, and the HTTP
+     * path is for the client that cannot launch one.
+     */
+    data object ToggleAdvanced : McpAction
+
     /** Mints a new token; the previous one stops being accepted. */
     data object RegenerateToken : McpAction
 

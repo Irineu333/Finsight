@@ -1044,12 +1044,12 @@
     <string name="mcp_settings_subtitle">Let an AI agent read and post in the app</string>
 
     <string name="mcp_screen_title">MCP server</string>
-    <string name="mcp_about_body">A local MCP server lets an AI agent running on this machine read your finances and post for you, with the tools you grant it. It listens on 127.0.0.1 only and demands a token.</string>
-    <string name="mcp_app_open_note">The server exists only while the app is open: close Finsight and nothing is listening, so no agent reaches your data.</string>
+    <string name="mcp_about_body">A local MCP server lets an AI agent running on this machine read your finances and post for you, with the tools you grant it. Nothing leaves this machine: the client either launches the app itself or speaks to it on 127.0.0.1, presenting a token.</string>
+    <string name="mcp_about_reach_note">The agent reaches your data whether the app is open or closed — closed, the client launches Finsight itself to speak to it. Either way, only what you grant here is offered.</string>
     <string name="mcp_enable_title">Enable the server</string>
     <string name="mcp_enable_description">The choice holds for the next launches of the app — you enable it once.</string>
     <string name="mcp_unavailable_title">Not available on this platform</string>
-    <string name="mcp_unavailable_description">The MCP server needs a process holding a local socket, which only the desktop app has.</string>
+    <string name="mcp_unavailable_description">The MCP server needs an executable a client can launch and a process holding a local socket — things only the desktop app has.</string>
 
     <string name="mcp_status_stopped">Off</string>
     <string name="mcp_status_running">Up on 127.0.0.1:%1$d</string>
@@ -1069,7 +1069,7 @@
     <string name="mcp_token_label">Token</string>
     <string name="mcp_token_reveal">Show the token</string>
     <string name="mcp_token_hide">Hide the token</string>
-    <string name="mcp_instructions_json_note">Most clients accept the configuration below. The format is their convention, not the protocol's — if yours uses another, build it from the address and token above.</string>
+    <string name="mcp_instructions_json_note">The format below is the clients' convention, not the protocol's — if yours uses another, build it from the address and token above.</string>
     <string name="mcp_port_title">Change the port</string>
     <string name="mcp_token_regenerate">Mint a new token</string>
     <string name="mcp_token_regenerate_title">Mint a new token?</string>
@@ -1079,8 +1079,14 @@
     <string name="mcp_copy">Copy</string>
 
     <string name="mcp_instructions_title">How to connect a client</string>
-    <string name="mcp_instructions_body">Any client that speaks the MCP protocol connects — there is no official one. Point it at the address below, over HTTP (streamable) transport, and have it send the token in the Authorization header.</string>
-    <string name="mcp_instructions_stdio_note">Clients that only speak stdio need a third-party adapter: the transport here is HTTP on the loopback interface, not standard input and output.</string>
+    <string name="mcp_instructions_body">Any client that speaks the MCP protocol connects — there is no official one. Most take the configuration below: the client launches the app in server mode and speaks to it over standard input and output.</string>
+    <string name="mcp_command_label">Command for the client</string>
+    <string name="mcp_command_copy">Copy the command</string>
+    <string name="mcp_command_claude_label">Claude Code, in one line</string>
+    <string name="mcp_command_claude_copy">Copy the Claude Code line</string>
+    <string name="mcp_command_note">It works whether the app is open or closed: the client launches the app when it needs it, and while the window is open it is the window that answers.</string>
+    <string name="mcp_advanced_title">Advanced: HTTP address and token</string>
+    <string name="mcp_advanced_body">For clients that prefer a url, and only while the app is open: point it at the address below, over HTTP (streamable) transport, and have it send the token in the Authorization header.</string>
     <string name="mcp_instructions_copy">Copy the instructions</string>
 
     <string name="mcp_permissions_title">What the agent may do</string>

@@ -20,7 +20,8 @@ import kotlinx.coroutines.launch
 
 /**
  * The MCP server section: the switch, what the socket is actually doing, the four permission axes,
- * the address and token a client is configured with, and what an agent has been doing.
+ * the command a client launches — with the address and the token behind it — and what an agent has
+ * been doing.
  *
  * **The state is collected, never inferred.** Everything about the socket comes from
  * [McpServerController.state] for as long as the screen is subscribed, which is what lets the
@@ -41,12 +42,15 @@ class McpViewModel(
 
     private val isTokenRevealed = MutableStateFlow(false)
 
+    private val isAdvancedExpanded = MutableStateFlow(false)
+
     private val fieldState = combine(
         controller.port,
         controller.token,
         isTokenRevealed,
-    ) { port, token, revealed ->
-        FieldState(port = port, token = token, revealed = revealed)
+        isAdvancedExpanded,
+    ) { port, token, revealed, advanced ->
+        FieldState(port = port, token = token, revealed = revealed, advanced = advanced)
     }
 
     private val recentActivity = activityRepository
@@ -67,6 +71,11 @@ class McpViewModel(
             port = fields.port,
             token = fields.token,
             isTokenRevealed = fields.revealed,
+            // What the process was launched from cannot change while it runs, so it is read from
+            // the controller rather than collected — and it is the controller's to answer, beside
+            // the port and the token, so that no screen goes looking for it in the system.
+            launchCommand = controller.launchCommand,
+            isAdvancedExpanded = fields.advanced,
             permissions = McpPermissionAxis.entries.map { axis ->
                 McpPermissionUi(
                     axis = axis,
@@ -102,6 +111,8 @@ class McpViewModel(
 
             McpAction.ToggleTokenVisibility -> isTokenRevealed.value = !isTokenRevealed.value
 
+            McpAction.ToggleAdvanced -> isAdvancedExpanded.value = !isAdvancedExpanded.value
+
             McpAction.RegenerateToken -> viewModelScope.launch { controller.regenerateToken() }
 
             McpAction.DisconnectSessions -> viewModelScope.launch { controller.disconnectSessions() }
@@ -114,6 +125,7 @@ class McpViewModel(
         val port: Int,
         val token: String?,
         val revealed: Boolean,
+        val advanced: Boolean,
     )
 
     companion object {

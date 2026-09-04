@@ -6,6 +6,7 @@ import com.neoutils.finsight.feature.categories.api.CategoriesRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
+import com.neoutils.finsight.feature.mcp.api.McpLaunchCommand
 import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.feature.mcp.api.McpServerController
 import com.neoutils.finsight.feature.mcp.api.McpServerState
@@ -28,6 +29,11 @@ import kotlin.time.Instant
  * **What is shown about the socket is a fact about the socket.** [server] is collected from the
  * controller for as long as the screen is open, so a bind that fails after the app started reads as
  * failed here too; nothing on this screen is derived from the switch being on.
+ *
+ * **The command is the instruction, and the address is the alternative to it.** A client that
+ * launches [launchCommand] is answered whether or not the window is open, so that is what the
+ * section leads with; the address and the token answer only while the window is up, and are folded
+ * away behind [isAdvancedExpanded] for the clients that want them.
  */
 data class McpUiState(
     /**
@@ -41,6 +47,12 @@ data class McpUiState(
     val port: Int = McpServerController.DEFAULT_PORT,
     val token: String? = null,
     val isTokenRevealed: Boolean = false,
+    /**
+     * What a client is told to launch, or `null` where this process cannot say what started it —
+     * which is every target without a process to launch.
+     */
+    val launchCommand: McpLaunchCommand? = null,
+    val isAdvancedExpanded: Boolean = false,
     val permissions: List<McpPermissionUi> = emptyList(),
     val recentActivity: List<McpActivityUi> = emptyList(),
 ) {
@@ -57,6 +69,26 @@ data class McpUiState(
     val sessions: Int get() = (server as? McpServerState.Running)?.sessions ?: 0
 
     val hasConnectedClient: Boolean get() = sessions > 0
+
+    /**
+     * How a client is told to launch the app, in the two shapes it is copied in — or nothing, where
+     * there is no process to launch and the address is the only way in.
+     */
+    val launch: McpLaunchUi?
+        get() = launchCommand?.let { command ->
+            McpLaunchUi(
+                snippet = launchSnippet(command),
+                claudeCodeLine = claudeCodeLine(command),
+            )
+        }
+
+    /**
+     * Whether the address and the token are on screen.
+     *
+     * They are folded away only because there is a better instruction above them. Where there is no
+     * command to launch, "advanced" would be describing the only path there is, so it is unfolded.
+     */
+    val showsAdvanced: Boolean get() = isAdvancedExpanded || launch == null
 
     /** The address a client is configured with, which outlives a bind that failed. */
     val address: String get() = "http://$LOOPBACK_HOST:$port$MCP_PATH"
@@ -89,6 +121,42 @@ data class McpUiState(
      * Copying is what configuring a client takes, and a client authenticates with the token itself.
      */
     val connectionSnippet: String get() = connectionSnippet(token)
+
+    /**
+     * What a client is configured with to launch the app itself: the executable and what it is
+     * given, in the `command` + `args` shape a client's configuration file has.
+     *
+     * It names no address and carries no token because there is neither: the client starts the
+     * program and speaks to it over standard input and output, which is why this is the instruction
+     * that holds with the window closed.
+     */
+    private fun launchSnippet(command: McpLaunchCommand): String = """
+        {
+          "mcpServers": {
+            "finsight": {
+              "command": "${command.command.asJsonText()}",
+              "args": [${command.args.joinToString(", ") { "\"${it.asJsonText()}\"" }}]
+            }
+          }
+        }
+    """.trimIndent()
+
+    /** The same instruction as one line, for the client that takes it that way. */
+    private fun claudeCodeLine(command: McpLaunchCommand): String = buildString {
+        append("claude mcp add finsight -- \"")
+        append(command.command)
+        append('"')
+        command.args.forEach { argument -> append(' ').append(argument) }
+    }
+
+    /**
+     * A path as a JSON string.
+     *
+     * A Windows executable lives behind backslashes, and a block the user pastes into a client's
+     * configuration has to parse: `C:\Users\...` copied verbatim is not a JSON string, and the
+     * client rejects the file rather than the path.
+     */
+    private fun String.asJsonText(): String = replace("\\", "\\\\").replace("\"", "\\\"")
 
     /**
      * What a client has to be told, in the vocabulary of the protocol rather than of one client.
@@ -133,6 +201,18 @@ data class McpUiState(
         const val MASK = "••••••••••••••••"
     }
 }
+
+/**
+ * The launch instruction in the two shapes the section offers it: the block a client's configuration
+ * file takes, and the single line one client takes instead.
+ *
+ * Both or neither, because both are the same command written twice: a section offering one of them
+ * would be saying that the app half knows what it was launched from.
+ */
+data class McpLaunchUi(
+    val snippet: String,
+    val claudeCodeLine: String,
+)
 
 /**
  * One permission axis as the section states it: the switch, and **what flipping it does**.

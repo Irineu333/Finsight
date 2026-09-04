@@ -34,6 +34,11 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -52,6 +57,10 @@ import kotlin.time.Instant
  * before the switch, because a server that is off has no address to point anything at. It never
  * reads a socket off the switch, so a bind that failed is shown as failed. And the port's refusal
  * lands on the port's own field, because that is where the user can do something about it.
+ *
+ * Two of them read the shipped strings instead of the state, because what the section *says* is
+ * also what it shows: a sentence the app kept saying after it stopped being true would be caught by
+ * nothing else in the suite.
  */
 class McpViewModelTest {
 
@@ -67,14 +76,15 @@ class McpViewModelTest {
 
     @Test
     fun `with the server off there is nothing else to decide`() = runTest {
-        val controller = FakeController()
+        // With a command to show, so that having one is not what puts a decision before the switch.
+        val controller = FakeController(launchCommand = installedAt(MACOS))
         val viewModel = viewModelOf(controller)
         val state = subscribe(viewModel)
 
         assertFalse(
             state().showsDetails,
-            "the section offered the address, the token or the permissions before there was a " +
-                "server to connect to",
+            "the section offered the command, the address, the token or the permissions before " +
+                "there was a server to connect to",
         )
 
         viewModel.onAction(McpAction.SetEnabled(true))
@@ -309,6 +319,168 @@ class McpViewModelTest {
     }
 
     // ------------------------------------------------------------------------------
+    // The instruction is the command, and the address is behind it
+    // ------------------------------------------------------------------------------
+
+    @Test
+    fun `the block a client is configured with names the executable of this installation`() = runTest {
+        val controller = FakeController(enabled = true, launchCommand = installedAt(MACOS))
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        val launch = assertNotNull(state().launch, "the section had no command to hand a client")
+
+        // Parsed rather than matched: a block the user pastes into a client's configuration is
+        // only an instruction if it parses, and what the client reads out of it is these two keys.
+        val server = Json.parseToJsonElement(launch.snippet)
+            .jsonObject.getValue("mcpServers")
+            .jsonObject.getValue("finsight")
+            .jsonObject
+
+        assertEquals(
+            MACOS,
+            server.getValue("command").jsonPrimitive.content,
+            "the block did not carry the absolute path of the executable that is running",
+        )
+        assertEquals(
+            listOf(McpLaunchCommand.STDIO_ARGUMENT),
+            server.getValue("args").jsonArray.map { it.jsonPrimitive.content },
+            "the block would launch the window instead of the protocol",
+        )
+        assertEquals(
+            """claude mcp add finsight -- "$MACOS" ${McpLaunchCommand.STDIO_ARGUMENT}""",
+            launch.claudeCodeLine,
+            "the one-line form is not the same command as the block",
+        )
+    }
+
+    /**
+     * The path is a value the app read from the system, and the block is JSON.
+     *
+     * On Windows the executable lives behind backslashes, and `C:\Users\...` copied verbatim into a
+     * client's configuration file is not a JSON string: the client rejects the whole file, and what
+     * the user sees is a server that never starts.
+     */
+    @Test
+    fun `a path with backslashes is still a JSON string`() = runTest {
+        val controller = FakeController(enabled = true, launchCommand = installedAt(WINDOWS))
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        val launch = assertNotNull(state().launch)
+        val server = Json.parseToJsonElement(launch.snippet)
+            .jsonObject.getValue("mcpServers")
+            .jsonObject.getValue("finsight")
+            .jsonObject
+
+        assertEquals(
+            WINDOWS,
+            server.getValue("command").jsonPrimitive.content,
+            "the path came back out of the block as something else than it went in",
+        )
+        assertTrue(
+            launch.claudeCodeLine.contains(WINDOWS),
+            "the one-line form is a shell command, and the path goes into it as it is",
+        )
+    }
+
+    @Test
+    fun `the address is folded away until it is asked for, and unfolding it reveals no token`() = runTest {
+        val controller = FakeController(
+            enabled = true,
+            token = "abcdef0123456789",
+            launchCommand = installedAt(MACOS),
+        )
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        assertFalse(
+            state().showsAdvanced,
+            "the address and the token were on screen above the instruction that replaced them",
+        )
+
+        viewModel.onAction(McpAction.ToggleAdvanced)
+
+        assertTrue(state().showsAdvanced, "asking for the advanced path showed nothing")
+        assertEquals("http://127.0.0.1:8477/mcp", state().address, "the address is not copyable")
+        assertEquals("abcdef0123456789", state().token, "copying has to reach the real token")
+        assertTrue(
+            state().connectionSnippet.contains("\"Authorization\": \"Bearer abcdef0123456789\""),
+            "the block under the advanced path stopped being copyable",
+        )
+        assertFalse(
+            state().displayedToken.orEmpty().contains("abcdef"),
+            "unfolding the advanced path put the token on screen without it being asked for",
+        )
+
+        viewModel.onAction(McpAction.ToggleAdvanced)
+
+        assertFalse(state().showsAdvanced, "the advanced path could not be folded back")
+    }
+
+    /**
+     * A path is only "advanced" while there is a plainer one above it.
+     *
+     * Where the process cannot say what it was launched from there is no command to show, and the
+     * address is not the alternative — it is the way in. Folding it away would leave the section
+     * offering nothing.
+     */
+    @Test
+    fun `with no command to launch, the address is not folded away`() = runTest {
+        val controller = FakeController(enabled = true, launchCommand = null)
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        assertNull(state().launch)
+        assertTrue(state().showsAdvanced, "the only way to connect was folded away")
+    }
+
+    // ------------------------------------------------------------------------------
+    // What the section stopped saying
+    // ------------------------------------------------------------------------------
+
+    /**
+     * Two sentences the section used to say are false from here on: that the server exists only
+     * while the app is open, and that a client speaking only stdio needs an adapter of its own —
+     * which is precisely what the app now is. A string left behind is not a stale comment: it is
+     * the app telling the user something untrue, in whichever of the two languages it survives in.
+     */
+    @Test
+    fun `the section no longer says the surface needs an open window`() {
+        listOf("values", "values-en").forEach { language ->
+            val strings = stringsOf(language)
+
+            listOf("mcp_app_open_note", "mcp_instructions_stdio_note").forEach { key ->
+                assertFalse(
+                    strings.containsKey(key),
+                    "$language/strings.xml still declares $key, which the stdio mode made false",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `the connection instructions say the command works with the app closed`() {
+        mapOf(
+            "values" to listOf("aberto", "fechado"),
+            "values-en" to listOf("open", "closed"),
+        ).forEach { (language, states) ->
+            val note = assertNotNull(
+                stringsOf(language)["mcp_command_note"],
+                "$language/strings.xml does not say what the command does",
+            )
+
+            states.forEach { state ->
+                assertTrue(
+                    note.contains(state, ignoreCase = true),
+                    "the instructions in $language do not say the command works with the app " +
+                        "$state: \"$note\"",
+                )
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------------
     // 13.2d — the log, and what it reaches
     // ------------------------------------------------------------------------------
 
@@ -452,11 +624,29 @@ class McpViewModelTest {
 
     private fun reference(kind: Kind, id: Long) = AgentActivity.Reference(kind = kind, id = id)
 
+    /** The command the entry point recognises, pointed at the executable installed at [path]. */
+    private fun installedAt(path: String) = McpLaunchCommand(
+        command = path,
+        args = listOf(McpLaunchCommand.STDIO_ARGUMENT),
+    )
+
+    /** What the app ships as text in one language, read from the file that ships it. */
+    private fun stringsOf(language: String): Map<String, String> {
+        val repoRoot = generateSequence(File("").absoluteFile) { it.parentFile }
+            .first { File(it, "settings.gradle.kts").exists() }
+        val strings = File(repoRoot, "core/resources/src/commonMain/composeResources/$language/strings.xml")
+
+        return STRING_ENTRY.findAll(strings.readText())
+            .associate { it.groupValues[1] to it.groupValues[2] }
+    }
+
     private class FakeController(
         enabled: Boolean = false,
         port: Int = McpServerController.DEFAULT_PORT,
         token: String? = null,
         permissions: Set<McpPermissionAxis> = McpPermissionAxis.INITIAL,
+        /** Absent on every target without a process a client could launch. */
+        override val launchCommand: McpLaunchCommand? = null,
     ) : McpServerController {
 
         val calls = mutableListOf<String>()
@@ -482,8 +672,6 @@ class McpViewModelTest {
             McpPermissionAxis.REMOVE to 8,
             McpPermissionAxis.OPERATE to 13,
         )
-
-        override val launchCommand: McpLaunchCommand? = null
 
         override suspend fun start() = Unit
 
@@ -585,3 +773,11 @@ class McpViewModelTest {
 }
 
 private typealias Kind = AgentActivity.Reference.Kind
+
+/** Where the packaged launcher lives on macOS: the path `jpackage.app-path` reports there. */
+private const val MACOS = "/Applications/Finsight.app/Contents/MacOS/Finsight"
+
+/** And on Windows, where the separator is the character JSON escapes. */
+private const val WINDOWS = """C:\Users\ana\AppData\Local\Finsight\Finsight.exe"""
+
+private val STRING_ENTRY = Regex("""<string name="([^"]+)">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)

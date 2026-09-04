@@ -22,12 +22,19 @@ chamada por `AgentActivityJournal`, que grava o registro de atividade.
   são no-op (`NoOpAnalytics`, `NoOpCrashlytics`, `NoOpAuthService`). O Firebase só é exigido
   pelo repositório de suporte (`SupportModule.jvm.kt:9`), que nenhuma ferramenta resolve.
 - As preferências no JVM são `PreferencesSettings(Preferences.userRoot())` — `java.util.prefs`,
-  legível por qualquer processo do usuário, com sincronização preguiçosa entre processos.
-- O launcher gerado por `createDistributable` contém `ArgOptions` e define a propriedade
-  `jpackage.app-path`; a documentação do jpackage diz que `--arguments` são apenas valores padrão,
-  substituídos pelo que vier na linha de comando. Argumentos chegam ao `main`.
-- `kotlin-sdk-server:0.14.0`, já no projeto, traz `StdioServerTransport`; o artefato irmão
-  `kotlin-sdk-client` traz `StreamableHttpClientTransport`.
+  legível por qualquer processo do usuário. `PreferencesSettings` **não** chama `flush()` ao
+  escrever, e o JDK grava em disco por conta própria: no macOS por um timer de até 60 s após a
+  escrita (`java.util.prefs.flushDelay`, mínimo 5) e num shutdown hook; no Linux a cada 30 s
+  (`java.util.prefs.syncInterval`) e num shutdown hook; no Windows o registro é escrito na hora
+  (`WindowsPreferences.putSpi`). Um processo novo lê o que está no disco naquele instante.
+- O launcher gerado por `createDistributable` foi sondado com uma classe principal inexistente e
+  `-XshowSettings:properties`: imprimiu `jpackage.app-path` apontando para o binário dentro do
+  `.app` e `sun.java.command = <classe> --mcp --probe-arg`. A propriedade existe e os argumentos
+  chegam ao `main`. O runtime empacotado é Java 17.
+- `kotlin-sdk-server:0.14.0`, já no projeto, traz `StdioServerTransport`. O artefato irmão
+  `kotlin-sdk-client:0.14.0` existe no Maven Central e depende de `kotlin-sdk-core:0.14.0`,
+  `ktor-client-core:3.4.3` e `kotlin-stdlib:2.3.21` — os mesmos que o servidor já traz — e de
+  `kotlin-logging:8.0.4`, que também já vem com ele. Nada sobe de versão.
 - O banco é `~/.finance/finsight.db`, aberto por `getDatabaseBuilder()` em `:core:database`,
   com a cópia pré-migração decidida por `PreMigrationCopyTarget` (`BackupModule.kt:158`).
 
@@ -150,15 +157,24 @@ mudança própria.
 
 ### D7 — A autoridade do app vale igual no modo stdio
 
-O processo `--mcp` lê `McpServerSettings` da mesma persistência que a janela (`java.util.prefs`,
-com `sync()` antes da leitura), uma vez, ao iniciar. Com o servidor **desabilitado**, o processo
-ainda fala o protocolo — para que o cliente e o agente leiam um motivo em vez de um processo que
-morreu — mas não anuncia ferramenta alguma e recusa qualquer chamada dizendo que o servidor está
-desligado nas configurações do app. As permissões por eixo filtram o `tools/list` e recusam a
-chamada exatamente como em `DesktopMcpServerController`, pelo mesmo código (D8).
+O processo `--mcp` lê `McpServerSettings` da mesma persistência que a janela. Com o servidor
+**desabilitado**, o processo ainda fala o protocolo — para que o cliente e o agente leiam um
+motivo em vez de um processo que morreu — mas não anuncia ferramenta alguma e recusa qualquer
+chamada dizendo que o servidor está desligado nas configurações do app. As permissões por eixo
+filtram o `tools/list` e recusam a chamada exatamente como em `DesktopMcpServerController`, pelo
+mesmo código (D8).
 
-Ler uma vez basta: enquanto a janela está fechada ninguém altera a escolha, e enquanto está
-aberta a chamada vai pela ponte e é a janela que aplica a escolha viva.
+**A posse tem precedência sobre a preferência.** Se a janela é dona do banco (D4), a chamada vai
+pela ponte e é a janela que aplica a escolha viva; o que o processo `--mcp` leu do disco não
+decide nada nesse caso. A preferência só governa a execução local, com a janela fechada — e aí
+ninguém a altera enquanto o processo vive.
+
+**A janela grava na hora.** `PreferencesSettings` não faz `flush()`, e no macOS e no Linux o JDK
+levaria até 60 s para pôr a escolha no disco. `McpServerSettings` passa a chamar
+`Preferences.userRoot().flush()` depois de cada escrita, e o processo `--mcp` chama `sync()` antes
+de cada leitura. Sem isso, "liguei o servidor e lancei o cliente" poderia encontrar um disco com
+"desligado" — e, pela precedência acima, isso só importaria com a janela fechada, mas o custo é
+uma linha e o defeito seria invisível.
 
 ### D8 — A montagem do servidor é uma, e a ponte encaminha o protocolo, não as ferramentas
 
@@ -196,8 +212,10 @@ sistema; é o mesmo padrão pelo qual ela lê a porta e o token dele.
 - A janela espera o lock por até 10 s, em tentativas curtas, e depois abre de qualquer forma:
   uma chamada local mais longa que isso não é um caso real, e recusar abrir o app por causa de um
   lock seria pior que um `Flow` que perde uma atualização.
-- A ponte, ao encontrar o lock tomado e a porta ainda fechada (janela abrindo), tenta conectar por
-  até 5 s antes de responder ao cliente que o app está iniciando e a chamada deve ser repetida.
+- A ponte, ao encontrar o lock tomado e a porta fechada, distingue dois casos pela preferência
+  lida com `sync()`: servidor **desabilitado** → recusa na hora dizendo que está desligado no app;
+  **habilitado** (janela abrindo) → tenta conectar por até 5 s antes de responder ao cliente que o
+  app está iniciando e a chamada deve ser repetida.
 - Com a janela fechada no meio da sessão, a chamada que estava em voo pela ponte volta como erro
   ao cliente; a seguinte já é local.
 
@@ -217,10 +235,8 @@ sistema; é o mesmo padrão pelo qual ela lê a porta e o token dele.
 
 ## Risks / Trade-offs
 
-- **`kotlin-sdk-client:0.14.0` pode não fechar com o pino do projeto** → o primeiro passo é um
-  spike de dependência; se o artefato exigir outra versão de Ktor ou stdlib, a ponte cai para um
-  cliente HTTP mínimo sobre `ktor-client-core` (já no projeto) falando Streamable HTTP à mão, o
-  que é viável porque só encaminha `tools/list`, `tools/call` e uma notificação.
+- **Uma escolha feita na janela demora a chegar ao disco** → D7: `flush()` após cada escrita e
+  `sync()` antes de cada leitura, com teste que grava num processo e lê noutro.
 - **Um `println` corrompe a sessão** → D6, mais um teste que escreve em `System.out` durante uma
   sessão e prova que o protocolo continua íntegro.
 - **Corrida de migração após atualização** (dois clientes iniciando juntos com a janela fechada)
@@ -234,8 +250,8 @@ sistema; é o mesmo padrão pelo qual ela lê a porta e o token dele.
 - **Janela abre em desenvolvimento e o cliente lançou o binário instalado** (versões diferentes)
   → a ponte fala o protocolo, não classes; a versão que responde é a da janela, e a linha de
   abertura em `stderr` diz qual é.
-- **`jpackage.app-path` não é documentada no man page** → há fallback, e o teste de distribuição
-  prova que o valor existe no binário gerado.
+- **`jpackage.app-path` não é documentada no man page** → verificada na sonda do binário gerado
+  (Context); há fallback, e o teste de distribuição prova que o valor continua existindo.
 - **Um `Flow` pode perder uma escrita local feita no exato instante em que a janela abre** →
   D4 fecha a janela de tempo com o lock; o que resta é o limite de 10 s de D10, que não é um caso
   real.
@@ -251,6 +267,8 @@ Nenhuma migração de banco. A mudança é aditiva no código e nas specs:
 
 ## Open Questions
 
-Nenhuma bloqueante. As duas decisões que estavam abertas foram tomadas: o HTTP fica como caminho
-avançado (D9), e o diagnóstico é `stderr` sem arquivo (D6). O spike de dependência (primeira
-tarefa) é o único ponto que pode mudar a forma da ponte, e o desvio está descrito em Riscos.
+Nenhuma. As duas decisões que estavam abertas foram tomadas: o HTTP fica como caminho avançado
+(D9), e o diagnóstico é `stderr` sem arquivo (D6). Os três pontos que estavam para o spike foram
+verificados antes da implementação e estão em Context: o artefato cliente fecha com os pinos do
+projeto, o launcher define `jpackage.app-path` e repassa `--mcp`, e a persistência das
+preferências exige o `flush()` de D7.

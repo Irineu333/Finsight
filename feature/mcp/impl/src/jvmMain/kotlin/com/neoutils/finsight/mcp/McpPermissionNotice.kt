@@ -31,6 +31,22 @@ import com.neoutils.finsight.mcp.tool.agentJson
 internal object McpPermissionNotice {
 
     /**
+     * What the app is, in the words every notice opens with.
+     *
+     * Written once because every notice starts by saying it: the one about a withheld capability,
+     * and the one a process whose server is switched off greets the agent with.
+     */
+    const val WHAT_THIS_IS: String = "This is the user's own finance app, running on their machine."
+
+    /**
+     * Where the user decides all of this — the switch, the axes, the token.
+     *
+     * One place, named once. Two wordings would be two places to send the user, one edit from
+     * disagreeing about which screen holds the answer.
+     */
+    const val THE_SECTION: String = "the app's own settings under the MCP server section"
+
+    /**
      * Where a withheld capability is granted — the one sentence, used by the handshake and by every
      * refusal alike.
      *
@@ -39,8 +55,7 @@ internal object McpPermissionNotice {
      * disagreeing.
      */
     const val WHERE_TO_GRANT: String =
-        "this user switched it off, and only they can switch it back on, in the app's own settings " +
-            "under the MCP server section"
+        "this user switched it off, and only they can switch it back on, in $THE_SECTION"
 
     /** What the agent may do now, and what it may not, as the session's opening instructions. */
     fun instructions(granted: Set<McpPermissionAxis>): String {
@@ -106,8 +121,8 @@ internal object McpPermissionNotice {
      * nothing.
      */
     private const val PREAMBLE: String =
-        "This is the user's own finance app, running on their machine. Every figure you read here " +
-            "is the app's own calculation — take it as given rather than recomputing it from parts."
+        "$WHAT_THIS_IS Every figure you read here is the app's own calculation — take it as " +
+            "given rather than recomputing it from parts."
 
     /** What to answer when the user asks for something a withheld capability covers. */
     private const val WITHHELD_MEANS: String =

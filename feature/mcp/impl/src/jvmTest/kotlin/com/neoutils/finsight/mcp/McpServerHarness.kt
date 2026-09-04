@@ -49,6 +49,12 @@ internal class McpServerHarness(
     private val file: File = File.createTempFile("finsight-mcp", ".db")
         .also { it.delete(); it.deleteOnExit() }
 
+    /**
+     * Where this harness's archive lives — what a headless session derives its ownership file
+     * from, so a test never claims anything beside the developer's own database.
+     */
+    val databasePath: String get() = file.absolutePath
+
     val database: AppDatabase = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
@@ -66,15 +72,23 @@ internal class McpServerHarness(
      */
     val tools: MutableList<McpTool> = tools.toMutableList()
 
-    private val serverSettings = McpServerSettings(settings).also { stored ->
+    /**
+     * The choices, reachable because the stdio session is built from them directly: it has no
+     * socket to bring up, so switching the server on for it is a write here and not a call on the
+     * controller.
+     */
+    val serverSettings = McpServerSettings(settings).also { stored ->
         permissions?.let { granted ->
             McpPermissionAxis.entries.forEach { stored.setPermission(it, it in granted) }
         }
     }
 
+    /** The one door every call goes through, whichever transport carried it. */
+    val journal = AgentActivityJournal(activity)
+
     val controller = DesktopMcpServerController(
         settings = serverSettings,
-        journal = AgentActivityJournal(activity),
+        journal = journal,
         tools = this.tools,
     )
 

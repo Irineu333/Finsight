@@ -1,8 +1,11 @@
 package com.neoutils.finsight.di
 
+import com.neoutils.finsight.database.DatabaseOwnership
 import com.neoutils.finsight.feature.mcp.api.McpServerController
+import com.neoutils.finsight.feature.mcp.api.McpStdioSession
 import com.neoutils.finsight.mcp.AgentActivityJournal
 import com.neoutils.finsight.mcp.DesktopMcpServerController
+import com.neoutils.finsight.mcp.DesktopMcpStdioSession
 import com.neoutils.finsight.mcp.McpServerSettings
 import com.neoutils.finsight.mcp.McpToolDependencies
 import com.neoutils.finsight.mcp.mcpTools
@@ -95,6 +98,19 @@ actual val mcpPlatformModule: Module = module {
             settings = get(),
             journal = get(),
             tools = mcpTools(get()),
+        )
+    }
+
+    // The headless half of the same surface. The ownership is built here rather than bound as a
+    // singleton of its own because this is the only thing in the app that asks for it a call at a
+    // time: the window takes it in `main`, before there is a graph to take it from, and a binding
+    // reachable from anywhere would invite a third holder nobody reasoned about (design D4).
+    single<McpStdioSession> {
+        DesktopMcpStdioSession(
+            settings = get(),
+            journal = get(),
+            tools = mcpTools(get()),
+            ownership = DatabaseOwnership(),
         )
     }
 }

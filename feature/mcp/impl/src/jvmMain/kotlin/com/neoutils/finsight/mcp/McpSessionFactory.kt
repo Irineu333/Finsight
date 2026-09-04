@@ -45,6 +45,12 @@ internal class McpSessionFactory(
      * still speaks the protocol, and answers `tools/list` with the truth about itself.
      */
     private val tools: List<McpTool> = emptyList(),
+    /**
+     * Where a call is carried out. [McpCallSite.Here] is this process, which is the only answer a
+     * server its own app is holding open ever has; a headless session asks the question of every
+     * call, because whether it may touch the database is a fact about the instant (design D3).
+     */
+    private val calls: McpCallSite = McpCallSite.Here,
 ) {
 
     /**
@@ -116,14 +122,17 @@ internal class McpSessionFactory(
         description = tool.description,
         inputSchema = tool.inputSchema,
     ) { request ->
-        // Not announced is not the same as not enforced. A tool called by name without its
-        // permission is refused here, before anything of it runs, and the refusal says the operation
-        // *exists and is not authorised* — an agent told the name is unknown reports back that the
-        // app cannot do the thing, which is false and hides the switch that would fix it.
-        val result = if (tool.axis in settings.permissions.value) {
-            journal.execute(tool, request.arguments)
-        } else {
-            journal.refuse(tool, McpPermissionNotice.refusal(tool))
+        val result = calls.answer(tool, request.arguments) {
+            // Not announced is not the same as not enforced. A tool called by name without its
+            // permission is refused here, before anything of it runs, and the refusal says the
+            // operation *exists and is not authorised* — an agent told the name is unknown reports
+            // back that the app cannot do the thing, which is false and hides the switch that would
+            // fix it.
+            if (tool.axis in settings.permissions.value) {
+                journal.execute(tool, request.arguments)
+            } else {
+                journal.refuse(tool, McpPermissionNotice.refusal(tool))
+            }
         }
 
         CallToolResult(
@@ -134,8 +143,12 @@ internal class McpSessionFactory(
         )
     }
 
-    private companion object {
+    companion object {
 
+        /**
+         * What the client sees on the other end, and the same in both modes: one server, whether a
+         * socket or a pipe carried the handshake.
+         */
         const val SERVER_NAME = "finsight"
 
         const val SERVER_VERSION = "1"

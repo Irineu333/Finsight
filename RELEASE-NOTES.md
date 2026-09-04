@@ -37,11 +37,32 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
   devolvida antes de o processo sair, para que uma reabertura não corra contra o socket que ela
   mesma deixou. Viver no processo do app é o que faz uma escrita do agente acordar o `Flow` que uma
   tela aberta está coletando: o que o agente lança aparece na tela, sem que nada seja recarregado.
+- **Um executável, dois modos — e o agente alcança as finanças com o app fechado.** Lançado com
+  `--mcp`, o mesmo programa que abre a janela não abre janela nenhuma: fala o protocolo pela entrada
+  e pela saída padrão do processo que o cliente criou, e termina quando o cliente fecha a conversa.
+  Não há segundo instalável, serviço em segundo plano nem item de login — nada fica residente, então
+  "sobreviver a fechar o app" e "sobreviver a um reboot" são verdade por não haver o que sobreviver,
+  e o que a seção manda o cliente lançar é o executável desta instalação. É também o que faz um
+  cliente que só fala stdio — o Claude Desktop entre eles — conectar sem adaptador de terceiros.
+- **Há um dono do banco por vez, e enquanto a janela está aberta o dono é ela.** Com o app aberto, o
+  processo que o cliente lançou não escreve: ele encaminha a chamada para a janela, que é quem
+  executa — e é isso que mantém a escrita do agente aparecendo na tela sem recarregar nada. Com o
+  app fechado, ele executa sozinho, no mesmo banco, pelas mesmas ferramentas e com o mesmo registro
+  de atividade. A troca de dono acontece no meio de uma conversa sem que o cliente perceba: quem
+  responde muda, a sessão não. Quem impõe a exclusão é o sistema operacional, e não um acordo entre
+  os dois processos, porque a janela já está coletando `Flow`s antes de haver porta que sondar.
+- **O interruptor continua sendo do app, também com ele fechado.** O processo lançado pelo cliente lê
+  a escolha gravada e a relê a cada pedido, de modo que ligar ou desligar o servidor alcança quem já
+  está no meio de uma conversa. Desligado, ele ainda fala o protocolo — mas não anuncia ferramenta
+  alguma e recusa qualquer chamada dizendo que o servidor está desligado nas configurações do app.
+  Um processo que simplesmente morresse seria lido como um app quebrado, e não como um app que o
+  dono desligou.
 - **Só no desktop, e pelo eixo de plataforma.** Um servidor local é alcançado por um cliente na
-  mesma máquina, e Android e iOS não têm nem esse cliente nem um processo que o usuário deixe
-  escutando — então a porta de entrada não é oferecida lá, e o controlador resolve para o que nunca
-  afirma estar no ar. O eixo de plataforma, que até aqui só nomeava o que **não** funciona no
-  desktop, passou a ter as duas direções, com o requisito escrito nos dois sentidos.
+  mesma máquina, e Android e iOS não têm nem esse cliente, nem um processo que o usuário deixe
+  escutando, nem um executável que um cliente possa lançar — então a porta de entrada não é
+  oferecida lá, e o controlador resolve para o que nunca afirma estar no ar. O eixo de plataforma,
+  que até aqui só nomeava o que **não** funciona no desktop, passou a ter as duas direções, com o
+  requisito escrito nos dois sentidos.
 - **O perímetro é esta máquina, em três camadas.** O socket é ligado a `127.0.0.1` — o endereço, e
   nunca `localhost`, que resolveria pela configuração da máquina e poderia pôr o servidor numa
   interface que ninguém pediu. Todo request apresenta o token, conferido antes do roteamento e
@@ -62,12 +83,18 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
 - **A seção ensina a conectar, e a ordem dela é requisito.** Com o servidor desligado existem apenas
   o que ele é e o interruptor: endereço, token, permissões e instruções só significam alguma coisa
   depois que há a que se conectar, e ligá-lo não pode ser precedido de nenhuma outra decisão. Ligado,
-  ela mostra o bloco de configuração que a maior parte dos clientes cola — dito como convenção e não
-  como contrato, porque o servidor fala o protocolo e cada cliente guarda esses valores onde quiser —,
-  o endereço, o token oculto até ser pedido, quantos clientes estão conectados **agora**, e o botão
-  que os desconecta sem baixar o servidor. O bloco esconde o token sob a mesma máscara da linha acima
-  dele, e o copia inteiro: uma captura de tela não pode revelar o que a máscara logo acima protege, e
-  configurar um cliente pede o token de verdade.
+  ela mostra **o comando**: o caminho absoluto deste executável com `--mcp`, no bloco `command` +
+  `args` que a maior parte dos clientes cola e também numa linha só, para quem configura por linha
+  de comando — dito como convenção e não como contrato, porque o servidor fala o protocolo e cada
+  cliente guarda esses valores onde quiser —, e a frase de que ele funciona com o app aberto ou
+  fechado. O caminho entra no bloco como texto JSON: o executável do Windows mora atrás de
+  contrabarras, e copiado como está faria o cliente recusar o arquivo inteiro em vez da linha. O
+  endereço e o token, que só respondem com a janela aberta, ficam recolhidos sob "avançado", para o
+  cliente que prefere uma `url` — e desdobrá-los não revela o token: o bloco os esconde sob a mesma
+  máscara da linha acima dele e copia o segredo inteiro, porque uma captura de tela não pode revelar
+  o que a máscara logo acima protege e configurar um cliente pede o token de verdade. Quantos
+  clientes estão conectados **agora** e o botão que os desconecta sem baixar o servidor continuam à
+  vista.
 - A seção **é um grafo dentro do de Ajustes**, como o backup: estar sob Ajustes e ser alcançada por
   Ajustes passam a ser o mesmo fato, que é o que mantém Ajustes selecionado na cromagem enquanto ela
   e o histórico de atividade estão abertos.
@@ -337,11 +364,18 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
 - **`:feature:backup`**, api e impl, com o domínio do cofre e os serviços de arquivo de cada
   plataforma. Ajustes hospeda as suas telas vendo apenas o `api`: o registro é pedido ao entry
   point, e o `impl` do backup continua invisível para todo mundo menos a casca.
-- **`:feature:mcp`**, api e impl, sob a mesma regra: o `api` declara o controlador do servidor, os
-  eixos de permissão, o registro de atividade e o entry point; o `impl` guarda as telas, as 56
-  ferramentas e o transporte, e o `jvmMain` é onde o servidor de fato existe — nas outras
-  plataformas o controlador resolve para o que nunca sobe nada. Ajustes hospeda a seção vendo apenas
-  o `api`.
+- **`:feature:mcp`**, api e impl, sob a mesma regra: o `api` declara o controlador do servidor, a
+  sessão stdio, os eixos de permissão, o registro de atividade e o entry point; o `impl` guarda as
+  telas, as 58 ferramentas e os dois transportes, e o `jvmMain` é onde o servidor de fato existe —
+  nas outras plataformas o controlador e a sessão resolvem para o que nunca sobe nada. Ajustes
+  hospeda a seção vendo apenas o `api`. A montagem de uma sessão — as ferramentas registradas, o
+  filtro por eixo, o registro de atividade, as instruções do aperto de mão — não nomeia porta
+  nenhuma, então é uma só e vale para os dois transportes.
+- **`:core:database` ganhou a posse do banco**: um lock exclusivo do sistema operacional num arquivo
+  ao lado do acervo, tomado pela janela antes de o grafo existir e pelo processo headless a cada
+  chamada. Ele não depende do MCP nem da UI — é a resposta a "qual processo abre este arquivo", e é
+  do kernel justamente porque um acordo entre processos teria um intervalo em que ninguém saberia
+  responder.
 - **Uma migração, 14 → 15**, a menor do projeto: o registro de atividade vira tabela. Um
   `CREATE TABLE`, um índice, e nenhuma instrução que leia ou escreva o que já existia — a tabela
   nasce vazia e só enche quando um agente age, então um aparelho que nunca liga o servidor carrega

@@ -3,16 +3,24 @@ package com.neoutils.finsight.feature.mcp.api
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * The app's control over its own MCP server: it brings it up and down, holds what the user chose
- * about it, and reports what it is doing.
+ * The app's control over the MCP server it holds open: it brings it up and down, holds what the user
+ * chose about it, and reports what it is doing.
  *
  * The contract names only types the whole app can name, so the process that owns the server's
  * lifetime — the desktop app — never sees the transport that implements it. Swapping the
  * transport is then a change inside one module.
  *
- * Only the desktop target has a process the user leaves running with a socket bound to it.
- * On the other targets the controller resolves to an implementation that opens nothing and
- * stays [McpServerState.Stopped].
+ * **The socket is one of the two shapes the same surface takes.** This one is an address a client is
+ * configured with, and it lasts as long as the window holding it; [McpStdioSession] is the other, a
+ * conversation on the standard streams of a process a client launched, and it is what answers with
+ * the window closed — [launchCommand] being what a client is told to launch for it. What is held
+ * here belongs to neither in particular: the switch, the port, the token and the permission axes are
+ * the app's authority over both modes, read from this same persistence by whichever one is
+ * answering, so a capability withheld here is withheld wherever the agent arrives.
+ *
+ * Only the desktop target has a process the user leaves running with a socket bound to it, and only
+ * it has an executable a client can launch. On the other targets both resolve to implementations
+ * that open nothing, and this one stays [McpServerState.Stopped].
  *
  * **Nothing here is reachable by an agent.** Switching the server on or off, moving its port and
  * minting its token are the app's side of the wire; a client able to widen its own permissions has

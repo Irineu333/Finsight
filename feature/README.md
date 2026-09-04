@@ -24,7 +24,7 @@ feature/
 
 Features: `shell` (a casca — catálogo de navegação e contrato de chrome), `dashboard`,
 `transactions`, `accounts`, `creditcards`, `categories`, `budgets`, `recurring`, `report`,
-`settings` (moeda base e acervo de taxas de câmbio), `mcp` (o servidor MCP local, hospedado por
+`settings` (moeda base e acervo de taxas de câmbio), `mcp` (a superfície MCP local, hospedada por
 `settings`) e `support`.
 
 **Critério de triagem:** só entra na `api` o que **outro módulo consome**. Tudo o mais é detalhe de implementação e vive no `impl`. Na dúvida, comece no `impl` — promover para a `api` depois é barato; o inverso quebra consumidores.
@@ -272,8 +272,40 @@ As assinaturas dos entry points só referenciam tipos do core (`:core:model`,
 - Todos os módulos de feature declaram os targets KMP (Android, iOS, Desktop), mas a
   regra é código `commonMain` puro. Source sets de plataforma no `impl` são exceção
   justificada (ex.: `report:impl`, com serviços nativos de print/share).
+- **Source set de plataforma numa `api` é exceção mais estreita, e vale por um motivo só:** o tipo é
+  consumido por um módulo `app/` que **não enxerga `impl`** e implementado por um `impl` — e a `api`
+  é o único lugar que os dois enxergam. `:app:shared` publica cada `api` com `api(...)` e cada
+  `impl` com `implementation(...)` (`app/shared/build.gradle.kts`), então um `impl` não está no
+  compile classpath de `:app:desktop`; e um `:core:*` não serve de casa alternativa, porque nenhum
+  core pode nomear uma feature. É o caso do `mcp:api` (`jvmMain`): `McpStdout`, que o ponto de
+  entrada `--mcp` reivindica antes de existir grafo e o `impl` lê para escrever o protocolo, e
+  `McpLaunchCommand.ofThisProcess()`, que resolve o executável desta instalação. Fora desse desenho,
+  o lugar continua sendo o `impl`.
 - No framework iOS (configurado no `:app:ios`), apenas `:core:*` e `feature:*:api`
   são exportados (`export()`); os `impl` são linkados via `:app:shared`, mas invisíveis ao Swift.
+
+### A superfície MCP: dois modos e um dono do banco
+
+O `mcp` é servido por **dois transportes**, e os dois montam a mesma sessão — as ferramentas
+registradas, o filtro por eixo de permissão, o registro de atividade e as instruções do aperto de
+mão não nomeiam porta nenhuma, então a montagem (`McpSessionFactory`, no `jvmMain` do `impl`) é uma
+só e os dois modos não têm como responder diferente:
+
+| Modo | Contrato na `api` | Quem o inicia | Dura enquanto |
+|---|---|---|---|
+| **Servidor HTTP** em loopback | `McpServerController` | a janela, no `main` do `:app:desktop` | a janela estiver aberta |
+| **Sessão stdio** | `McpStdioSession` | o cliente, lançando o executável com `--mcp` | o cliente mantiver a conversa |
+
+**Há no máximo um dono do banco por vez, e enquanto a janela está aberta o dono é ela.** A posse é
+um lock exclusivo do sistema operacional sobre um arquivo ao lado do acervo (`DatabaseOwnership`,
+`:core:database`/`jvmMain`, que não depende do `mcp`): a janela a toma antes de montar o grafo Koin
+e a segura até sair; o processo stdio a toma por chamada e a devolve ao terminar. Quem não é dono
+**não executa** — encaminha para quem é, para que a escrita aconteça no processo que tem os `Flow`s.
+A exclusão é do kernel e não um acordo entre os processos: a janela já coleta `Flow`s antes de
+vincular a porta, e uma sondagem de porta teria um intervalo em que nenhuma resposta seria correta.
+
+`:app:desktop` nomeia os dois contratos e nenhuma implementação: a janela pede o `McpServerController`
+ao Koin e o ponto de entrada `--mcp` pede a `McpStdioSession`.
 
 ---
 

@@ -42,9 +42,9 @@
 
 ## 3. Montador comum do servidor (design D8)
 
-- [ ] 3.1 Extrair de `DesktopMcpServerController` a montagem do `Server` por sessão — `newServer()`, `register(tool)`, `grantedToolList()`, o `instructionsProvider` — para `McpSessionFactory` (`jvmMain`), recebendo journal, settings e a lista de ferramentas.
-- [ ] 3.2 `DesktopMcpServerController` passa a consumir o montador; comportamento do HTTP inalterado, provado pela suíte existente de `feature/mcp/impl` sem alteração de um teste sequer.
-- [ ] 3.3 `McpSurfaceIsClosedTest` e os testes de protocolo passam a montar pelo mesmo montador, para que valham para os dois transportes.
+- [x] 3.1 Extrair de `DesktopMcpServerController` a montagem do `Server` por sessão — `newServer()`, `register(tool)`, `grantedToolList()`, o `instructionsProvider` — para `McpSessionFactory` (`jvmMain`), recebendo journal, settings e a lista de ferramentas.
+- [x] 3.2 `DesktopMcpServerController` passa a consumir o montador; comportamento do HTTP inalterado, provado pela suíte existente de `feature/mcp/impl` sem alteração de um teste sequer.
+- [x] 3.3 `McpSurfaceIsClosedTest` e os testes de protocolo passam a montar pelo mesmo montador, para que valham para os dois transportes. Consequência de 3.2, sem edição de teste: os testes de protocolo chegam ao montador pelo `DesktopMcpServerController` que o `McpServerHarness` constrói, e `McpSurfaceIsClosedTest` não monta servidor algum — compara o registro (`AgentWorld().tools()`) com `McpSurface.offered`.
 
 ## 4. Sessão stdio headless (`mcp-stdio-mode`)
 

@@ -44,6 +44,11 @@ executável faz.
   são. Um servidor desabilitado faz o modo `--mcp` recusar cada chamada dizendo o motivo, e não
   anunciar ferramenta alguma. "O app sobe e derruba" vira autoridade sobre o que o servidor pode
   fazer, não sobre quem dispara o processo.
+- **As escolhas da seção passam a ser gravadas em disco na hora.** Hoje `PreferencesSettings`
+  delega a `java.util.prefs` sem `flush()`, e no macOS e no Linux o JDK leva até 60 s para
+  gravar. Um processo `--mcp` lançado logo depois de o usuário ligar o servidor leria "desligado".
+  A janela passa a fazer `flush()` a cada escrita e o modo stdio a fazer `sync()` a cada leitura;
+  e, com a janela aberta, a posse do banco tem precedência sobre o que foi lido do disco.
 - **As instruções de conexão passam a ser o comando.** A seção mostra o caminho absoluto do
   executável instalado com `--mcp`, no formato que os clientes usam (`command` + `args`), copiável,
   e diz que ele funciona com o app aberto ou fechado. O HTTP em loopback continua existindo como

@@ -114,6 +114,11 @@ anunciar ferramenta alguma e SHALL recusar toda chamada dizendo que o servidor e
 configurações do app. O processo MUST NOT oferecer meio de o agente alterar nenhuma dessas
 escolhas.
 
+Uma escolha feita na seção SHALL estar gravada no disco ao término da ação, para que um processo
+`--mcp` lançado em seguida a leia. Enquanto a janela é dona do banco, a posse SHALL ter
+precedência sobre o que o processo leu do disco: a chamada é encaminhada e a janela aplica a
+escolha viva.
+
 #### Scenario: Servidor desabilitado
 - **WHEN** o servidor está desabilitado nas configurações e um cliente lança `--mcp`
 - **THEN** `tools/list` volta vazio e qualquer `tools/call` é recusado dizendo que o servidor está desligado no app
@@ -125,6 +130,14 @@ escolhas.
 #### Scenario: Registro compartilhado
 - **WHEN** um agente escreve pelo stdio com a janela fechada e o usuário depois abre o app
 - **THEN** a escrita aparece no registro de atividade da seção, com horário, operação e referência
+
+#### Scenario: Escolha recém-feita
+- **WHEN** o usuário liga o servidor na seção, encerra o app e um cliente lança `--mcp` em seguida
+- **THEN** o processo lê o servidor como ligado e anuncia as ferramentas concedidas
+
+#### Scenario: Servidor desabilitado com a janela aberta
+- **WHEN** a janela está aberta com o servidor desabilitado e uma chamada chega pelo stdio
+- **THEN** a chamada é recusada na hora dizendo que o servidor está desligado no app, sem esperar pela janela
 
 ### Requirement: `stdout` pertence ao protocolo
 

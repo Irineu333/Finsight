@@ -1086,8 +1086,10 @@
     <string name="mcp_command_body">O cliente lança o app em modo servidor e conversa com ele pela entrada e saída padrão.</string>
     <string name="mcp_command_label">Comando para o cliente</string>
     <string name="mcp_command_copy">Copiar o comando</string>
-    <string name="mcp_command_claude_label">Claude Code, em uma linha</string>
-    <string name="mcp_command_claude_copy">Copiar a linha do Claude Code</string>
+    <!-- Completes a sentence the client's name opens: "Claude Code, em uma linha" -->
+    <string name="mcp_command_line_label">, em uma linha</string>
+    <string name="mcp_command_line_copy">Copiar a linha</string>
+    <string name="mcp_command_line_target">Escolher o cliente</string>
     <string name="mcp_command_note">Funciona com o app aberto ou fechado: o cliente lança o app quando precisa dele, e com a janela aberta é ela quem responde.</string>
     <string name="mcp_address_body">Para clientes que preferem url: aponte-o para o endereço abaixo, com transporte HTTP (streamable), e faça-o enviar o token no cabeçalho Authorization.</string>
     <string name="mcp_address_note">Só funciona com o app aberto: quem atende neste endereço é a janela, e com ela fechada não há nada escutando.</string>

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -23,12 +24,16 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -50,8 +55,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -71,8 +80,9 @@ import com.neoutils.finsight.resources.mcp_address_body
 import com.neoutils.finsight.resources.mcp_address_label
 import com.neoutils.finsight.resources.mcp_address_note
 import com.neoutils.finsight.resources.mcp_command_body
-import com.neoutils.finsight.resources.mcp_command_claude_copy
-import com.neoutils.finsight.resources.mcp_command_claude_label
+import com.neoutils.finsight.resources.mcp_command_line_copy
+import com.neoutils.finsight.resources.mcp_command_line_label
+import com.neoutils.finsight.resources.mcp_command_line_target
 import com.neoutils.finsight.resources.mcp_command_copy
 import com.neoutils.finsight.resources.mcp_command_label
 import com.neoutils.finsight.resources.mcp_command_note
@@ -346,8 +356,8 @@ private fun StatusCard(
  * the one that works in both cases.
  *
  * The instructions name no client on purpose: the server speaks the protocol, and whatever speaks
- * it connects. The one line that does name one is labelled as that client's own shorthand for the
- * block above it.
+ * it connects. The one-line form is the exception that proves it — it is one client's shorthand
+ * for the block above, and which client is the user's to choose.
  */
 @Composable
 private fun ConnectionCard(
@@ -374,7 +384,10 @@ private fun ConnectionCard(
     val launch = uiState.launch
 
     if (uiState.showsCommand && launch != null) {
-        CommandPanel(launch = launch)
+        CommandPanel(
+            launch = launch,
+            onSelectTarget = { onAction(McpAction.SelectCommandTarget(it)) },
+        )
     }
 
     if (uiState.showsAddress) {
@@ -436,7 +449,10 @@ private fun ConnectionTabs(
 /** What the command tab names: how the client uses it, the two shapes it is copied in, and when it
  * answers. */
 @Composable
-private fun CommandPanel(launch: McpLaunchUi) = ConnectionPanel {
+private fun CommandPanel(
+    launch: McpLaunchUi,
+    onSelectTarget: (McpCommandTarget) -> Unit,
+) = ConnectionPanel {
     Text(
         text = stringResource(Res.string.mcp_command_body),
         style = typography.bodyMedium,
@@ -452,11 +468,19 @@ private fun CommandPanel(launch: McpLaunchUi) = ConnectionPanel {
     )
 
     CodeBlock(
-        shown = launch.claudeCodeLine,
-        copied = launch.claudeCodeLine,
-        copyDescription = stringResource(Res.string.mcp_command_claude_copy),
-        testTag = "mcp_command_claude",
-        label = stringResource(Res.string.mcp_command_claude_label),
+        shown = launch.line,
+        copied = launch.line,
+        copyDescription = stringResource(Res.string.mcp_command_line_copy),
+        testTag = "mcp_command_line",
+        label = stringResource(Res.string.mcp_command_line_label),
+        // The client's name is the first word of the label, and choosing another one rewrites
+        // the line under it. The block above is the same for everybody, and names nobody.
+        labelTerm = {
+            CommandTargetSelector(
+                selected = launch.target,
+                onSelect = onSelectTarget,
+            )
+        },
     )
 
     Text(
@@ -465,6 +489,72 @@ private fun CommandPanel(launch: McpLaunchUi) = ConnectionPanel {
         style = typography.bodySmall,
         color = colorScheme.onSurfaceVariant,
     )
+}
+
+/**
+ * Which client's command line the one-line form is written for.
+ *
+ * **It sits on the label because it qualifies the label.** The block above is the same instruction
+ * for everybody; only this line is spelled in one client's words, and a section that named a single
+ * client in fixed text was telling every user of the other two to translate it themselves.
+ *
+ * Whether the menu is open is nobody's business but this row's, so it is remembered here rather
+ * than carried through the state: reopening the section on the client the user last picked is worth
+ * keeping, a menu left open is not.
+ */
+@Composable
+private fun CommandTargetSelector(
+    selected: McpCommandTarget,
+    onSelect: (McpCommandTarget) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        // A word of the sentence, clickable — not a button standing in one. A `TextButton` brings a
+        // shape, a padding and a ripple sized for a button, and all three break the line they sit
+        // in: the term stops reading as text and the comma after it is pushed away.
+        //
+        // So the press is the term's own. The clip comes **before** the click, which is what bounds
+        // the indication: it is drawn inside these corners and over exactly what was pressed — the
+        // name and its arrow — instead of a button's worth of room around them. There is no padding
+        // for the same reason; the word is the target and the target is the word.
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .clickable { expanded = true }
+                .testTag("mcp_command_line_target"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = selected.label,
+                // The type of the label it stands in, and the colour that says it answers to a
+                // click. Nothing else about it is a control.
+                style = typography.labelMedium,
+                color = colorScheme.primary,
+            )
+            Icon(
+                // Which way the menu will go, so the arrow is a statement about now rather than
+                // decoration.
+                imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                contentDescription = stringResource(Res.string.mcp_command_line_target),
+                modifier = Modifier.size(18.dp),
+                tint = colorScheme.primary,
+            )
+        }
+
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            McpCommandTarget.entries.forEach { target ->
+                DropdownMenuItem(
+                    text = { Text(target.label) },
+                    modifier = Modifier.testTag("mcp_command_line_target_${target.key}"),
+                    onClick = {
+                        expanded = false
+                        onSelect(target)
+                    },
+                )
+            }
+        }
+    }
 }
 
 /** What the address tab names: how the client is pointed at it, the address and the token
@@ -551,18 +641,32 @@ private fun CodeBlock(
     copyDescription: String,
     testTag: String,
     label: String? = null,
+    /**
+     * The word the label's sentence opens with, when that word is a choice rather than a fact —
+     * drawn before [label], which reads as the rest of the same sentence.
+     */
+    labelTerm: (@Composable () -> Unit)? = null,
 ) {
     val copy = rememberCopy()
 
     // A column of its own so the label sits on the block it names, rather than at the distance the
     // section puts between one thing and the next.
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (label != null) {
-            Text(
-                text = label,
-                style = typography.labelMedium,
-                color = colorScheme.onSurfaceVariant,
-            )
+        if (label != null || labelTerm != null) {
+            // One line of text with a word of it clickable: the term comes first and the label
+            // completes the sentence around it, so what the user reads is a phrase and not a
+            // control beside a caption.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                labelTerm?.invoke()
+
+                if (label != null) {
+                    Text(
+                        text = label,
+                        style = typography.labelMedium,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
 
         Box(modifier = Modifier.fillMaxWidth()) {

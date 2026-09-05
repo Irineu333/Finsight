@@ -44,13 +44,22 @@ class McpViewModel(
 
     private val connectionTab = MutableStateFlow(McpConnectionTab.COMMAND)
 
+    private val commandTarget = MutableStateFlow(McpCommandTarget.CLAUDE_CODE)
+
     private val fieldState = combine(
         controller.port,
         controller.token,
         isTokenRevealed,
         connectionTab,
-    ) { port, token, revealed, tab ->
-        FieldState(port = port, token = token, revealed = revealed, connectionTab = tab)
+        commandTarget,
+    ) { port, token, revealed, tab, target ->
+        FieldState(
+            port = port,
+            token = token,
+            revealed = revealed,
+            connectionTab = tab,
+            commandTarget = target,
+        )
     }
 
     private val recentActivity = activityRepository
@@ -76,6 +85,7 @@ class McpViewModel(
             // the port and the token, so that no screen goes looking for it in the system.
             launchCommand = controller.launchCommand,
             connectionTab = fields.connectionTab,
+            commandTarget = fields.commandTarget,
             permissions = McpPermissionAxis.entries.map { axis ->
                 McpPermissionUi(
                     axis = axis,
@@ -113,6 +123,8 @@ class McpViewModel(
 
             is McpAction.SelectConnectionTab -> connectionTab.value = action.tab
 
+            is McpAction.SelectCommandTarget -> commandTarget.value = action.target
+
             McpAction.RegenerateToken -> viewModelScope.launch { controller.regenerateToken() }
 
             McpAction.DisconnectSessions -> viewModelScope.launch { controller.disconnectSessions() }
@@ -126,6 +138,7 @@ class McpViewModel(
         val token: String?,
         val revealed: Boolean,
         val connectionTab: McpConnectionTab,
+        val commandTarget: McpCommandTarget,
     )
 
     companion object {

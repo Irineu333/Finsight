@@ -54,6 +54,8 @@ data class McpUiState(
     val launchCommand: McpLaunchCommand? = null,
     /** The way in the user asked to see. What is actually drawn is [selectedConnectionTab]. */
     val connectionTab: McpConnectionTab = McpConnectionTab.COMMAND,
+    /** Whose command line the one-line form is written for. */
+    val commandTarget: McpCommandTarget = McpCommandTarget.CLAUDE_CODE,
     val permissions: List<McpPermissionUi> = emptyList(),
     val recentActivity: List<McpActivityUi> = emptyList(),
 ) {
@@ -79,7 +81,8 @@ data class McpUiState(
         get() = launchCommand?.let { command ->
             McpLaunchUi(
                 snippet = launchSnippet(command),
-                claudeCodeLine = claudeCodeLine(command),
+                line = commandLine(command, commandTarget),
+                target = commandTarget,
             )
         }
 
@@ -158,12 +161,34 @@ data class McpUiState(
         }
     """.trimIndent()
 
-    /** The same instruction as one line, for the client that takes it that way. */
-    private fun claudeCodeLine(command: McpLaunchCommand): String = buildString {
-        append("claude mcp add finsight -- \"")
-        append(command.command)
-        append('"')
-        command.args.forEach { argument -> append(' ').append(argument) }
+    /**
+     * The same instruction as one line, in the words of the client the user picked.
+     *
+     * **The block above is the instruction; this is a convenience.** What every client needs is the
+     * executable and its argument, and the block states them in the shape a configuration file
+     * takes. Some clients also accept a server in a single command, and each spells that command
+     * its own way — which is worth offering, and never worth turning into a requirement: a client
+     * missing from this list connects through the block like any other.
+     *
+     * An exhaustive `when`, so a target added to the enum has to be given its line here rather than
+     * silently falling back to somebody else's syntax.
+     */
+    private fun commandLine(command: McpLaunchCommand, target: McpCommandTarget): String {
+        val path = command.command
+        val args = command.args
+
+        return when (target) {
+            // `--` first, so an argument of the server is never read as one of the CLI's own.
+            McpCommandTarget.CLAUDE_CODE ->
+                "claude mcp add finsight -- \"$path\"" + args.joinToString("") { " $it" }
+
+            // Takes the command and its arguments positionally, with no separator.
+            McpCommandTarget.GEMINI_CLI ->
+                "gemini mcp add finsight \"$path\"" + args.joinToString("") { " $it" }
+
+            McpCommandTarget.CODEX_CLI ->
+                "codex mcp add finsight -- \"$path\"" + args.joinToString("") { " $it" }
+        }
     }
 
     /**
@@ -241,15 +266,40 @@ enum class McpConnectionTab {
 
 /**
  * The launch instruction in the two shapes the section offers it: the block a client's configuration
- * file takes, and the single line one client takes instead.
+ * file takes, and the single command some clients take instead.
  *
  * Both or neither, because both are the same command written twice: a section offering one of them
  * would be saying that the app half knows what it was launched from.
  */
 data class McpLaunchUi(
     val snippet: String,
-    val claudeCodeLine: String,
+    /** The one-line form, in the words of [target]. */
+    val line: String,
+    /** Whose words [line] is written in. */
+    val target: McpCommandTarget,
 )
+
+/**
+ * The clients that take a server as a single command, and how each of them is named.
+ *
+ * **A list of conveniences, not of supported clients.** Any client that speaks the protocol connects
+ * through the block above; these are the ones whose command line takes an executable and its
+ * arguments the way this one-liner writes them, and offering them saves the user assembling it by
+ * hand. A client absent from here is not absent from the app — including one whose CLI takes the
+ * whole configuration as an escaped JSON argument instead, which is a line that would have to be
+ * quoted differently for each shell it is pasted into, and therefore is not one line.
+ *
+ * The names are the products' own and are not translated — they are what the user types.
+ */
+enum class McpCommandTarget(val label: String) {
+
+    CLAUDE_CODE("Claude Code"),
+    GEMINI_CLI("Gemini CLI"),
+    CODEX_CLI("Codex CLI");
+
+    /** A stable name for the target, for the test tag that reaches it. */
+    val key: String = name.lowercase()
+}
 
 /**
  * One permission axis as the section states it: the switch, and **what flipping it does**.

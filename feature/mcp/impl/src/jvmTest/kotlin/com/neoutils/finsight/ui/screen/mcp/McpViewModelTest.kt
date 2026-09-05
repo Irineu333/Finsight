@@ -349,8 +349,13 @@ class McpViewModelTest {
         )
         assertEquals(
             """claude mcp add finsight -- "$MACOS" ${McpLaunchCommand.STDIO_ARGUMENT}""",
-            launch.claudeCodeLine,
+            launch.line,
             "the one-line form is not the same command as the block",
+        )
+        assertEquals(
+            McpCommandTarget.CLAUDE_CODE,
+            launch.target,
+            "the section opened on a client other than the one it is written for by default",
         )
     }
 
@@ -379,9 +384,76 @@ class McpViewModelTest {
             "the path came back out of the block as something else than it went in",
         )
         assertTrue(
-            launch.claudeCodeLine.contains(WINDOWS),
+            launch.line.contains(WINDOWS),
             "the one-line form is a shell command, and the path goes into it as it is",
         )
+    }
+
+    /**
+     * The one-line form is one client's shorthand, and the user says which client.
+     *
+     * Three CLIs take a server as a single command, and each spells it its own way: two put the
+     * executable behind `--`, one takes it positionally. What must not vary is what is being said —
+     * the same executable, with the same argument — because the line is the block above written
+     * another way, not a second configuration.
+     */
+    @Test
+    fun `the one-line form is written in the words of the client the user picked`() = runTest {
+        val controller = FakeController(enabled = true, launchCommand = installedAt(MACOS))
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        val expected = mapOf(
+            McpCommandTarget.CLAUDE_CODE to """claude mcp add finsight -- "$MACOS" --mcp""",
+            McpCommandTarget.GEMINI_CLI to """gemini mcp add finsight "$MACOS" --mcp""",
+            McpCommandTarget.CODEX_CLI to """codex mcp add finsight -- "$MACOS" --mcp""",
+        )
+
+        assertEquals(
+            McpCommandTarget.entries.toSet(),
+            expected.keys,
+            "a client was offered in the section without a line of its own being asserted here",
+        )
+
+        expected.forEach { (target, line) ->
+            viewModel.onAction(McpAction.SelectCommandTarget(target))
+
+            val launch = assertNotNull(state().launch)
+            assertEquals(line, launch.line, "the line for ${target.label} is not what it takes")
+            assertEquals(target, launch.target, "the section did not move to ${target.label}")
+        }
+    }
+
+    /**
+     * And whichever client is picked, the line launches this app and nothing else.
+     *
+     * The path and the argument are the two things a wrong line would get wrong quietly: a server
+     * that opens the window instead of speaking the protocol looks, from the client's side, like an
+     * app that hangs.
+     */
+    @Test
+    fun `every one-line form carries this installation's executable and the stdio argument`() = runTest {
+        val controller = FakeController(enabled = true, launchCommand = installedAt(WINDOWS))
+        val viewModel = viewModelOf(controller)
+        val state = subscribe(viewModel)
+
+        McpCommandTarget.entries.forEach { target ->
+            viewModel.onAction(McpAction.SelectCommandTarget(target))
+
+            val line = assertNotNull(state().launch).line
+            assertTrue(
+                line.contains(WINDOWS),
+                "the line for ${target.label} does not name this installation's executable: $line",
+            )
+            assertTrue(
+                line.trimEnd().endsWith(McpLaunchCommand.STDIO_ARGUMENT),
+                "the line for ${target.label} would launch the window instead of the protocol: $line",
+            )
+            assertTrue(
+                line.contains("finsight"),
+                "the line for ${target.label} does not name the server it is adding: $line",
+            )
+        }
     }
 
     /**
@@ -583,6 +655,29 @@ class McpViewModelTest {
             assertTrue(
                 note.contains(open, ignoreCase = true),
                 "the address tab in $language does not say it needs the app open: \"$note\"",
+            )
+        }
+    }
+
+    /**
+     * The label of the one-line form is half a sentence, and the client's name is the other half.
+     *
+     * It reads "Claude Code, in one line", with the name a menu that rewrites the line under it. So
+     * the string is a fragment on purpose, and one tidied into a whole sentence would leave the
+     * section saying the name twice — or saying it once, in a place that no longer chooses anything.
+     */
+    @Test
+    fun `the label of the one-line form continues the sentence the client's name opens`() {
+        listOf("values", "values-en").forEach { language ->
+            val label = assertNotNull(
+                stringsOf(language)["mcp_command_line_label"],
+                "$language/strings.xml declares no label for the one-line form",
+            )
+
+            assertTrue(
+                label.startsWith(","),
+                "$language/strings.xml made the label a sentence of its own: \"$label\". The " +
+                    "client's name is drawn before it and completes it.",
             )
         }
     }

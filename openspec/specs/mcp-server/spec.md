@@ -149,7 +149,10 @@ caminho a oferecer — quando o processo não sabe dizer o que o lançou, e não
 MUST NOT apresentar abas: uma aba só não é escolha alguma, e o endereço é exibido direto.
 
 As instruções MUST NOT ser específicas de um cliente: o servidor fala o protocolo, e qualquer
-cliente que o fale conecta.
+cliente que o fale conecta. A aba do comando PODE oferecer, além do bloco, o mesmo comando em uma
+linha para os clientes cuja linha de comando aceita um executável e seus argumentos; qual deles
+SHALL ser escolha do usuário, e nenhum deles MUST ser condição para conectar — um cliente ausente
+dessa lista conecta pelo bloco como qualquer outro.
 
 #### Scenario: Encontrar a configuração
 - **WHEN** o usuário abre as configurações do app
@@ -174,6 +177,10 @@ cliente que o fale conecta.
 #### Scenario: A seção diz que funciona fechado
 - **WHEN** o usuário lê as instruções de conexão
 - **THEN** elas dizem que o comando funciona com o app aberto ou fechado
+
+#### Scenario: A linha é escrita para o cliente escolhido
+- **WHEN** o usuário escolhe outro cliente na aba do comando
+- **THEN** a linha passa a ser a que aquele cliente aceita, com o mesmo executável e o mesmo argumento do bloco
 
 #### Scenario: A aba do endereço continua copiável
 - **WHEN** o usuário escolhe a aba do endereço HTTP

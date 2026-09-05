@@ -35,6 +35,14 @@ sealed interface McpAction {
      */
     data class SelectConnectionTab(val tab: McpConnectionTab) : McpAction
 
+    /**
+     * Writes the one-line form for another client's command line.
+     *
+     * It changes nothing about the server and nothing about what the app offers: the same
+     * executable and the same argument, spelled the way that client's CLI takes them.
+     */
+    data class SelectCommandTarget(val target: McpCommandTarget) : McpAction
+
     /** Mints a new token; the previous one stops being accepted. */
     data object RegenerateToken : McpAction
 

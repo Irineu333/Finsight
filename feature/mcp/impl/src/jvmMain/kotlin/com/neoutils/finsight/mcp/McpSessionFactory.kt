@@ -37,9 +37,11 @@ import java.util.concurrent.ConcurrentHashMap
  * **The permission is applied twice, deliberately.** `tools/list` answers with the tools of the
  * granted axes alone, and a call on any other is refused before the tool is reached: the
  * announcement is a consequence of the permission, not its only application (design D5). Both read
- * the same set at the instant of the request, so there is no registry to keep in step with the
- * switches. What is withheld is still declared in the handshake, because a filtered list alone makes
- * a withheld capability look like one the app does not have (design D13).
+ * the same set from the store at the instant of the request, so there is no registry to keep in
+ * step with the switches — and a headless process, which is not the one the user moves them in,
+ * answers with the grants as they stand and not as it found them when it started (design D7). What
+ * is withheld is still declared in the handshake, because a filtered list alone makes a withheld
+ * capability look like one the app does not have (design D13).
  */
 internal class McpSessionFactory(
     private val settings: McpServerSettings,
@@ -116,7 +118,7 @@ internal class McpSessionFactory(
             // before its first question, which is what makes it the place a withheld capability can
             // be declared at all (design D13).
             instructionsProvider = {
-                calls.instructions { McpPermissionNotice.instructions(settings.permissions.value) }
+                calls.instructions { McpPermissionNotice.instructions(settings.currentPermissions()) }
             },
         )
 
@@ -155,7 +157,7 @@ internal class McpSessionFactory(
      * has to be listed from there too.
      */
     private fun grantedToolList(): ListToolsResult {
-        val granted = settings.permissions.value
+        val granted = settings.currentPermissions()
         return ListToolsResult(
             tools = tools
                 .filter { it.axis in granted }
@@ -184,7 +186,7 @@ internal class McpSessionFactory(
             // fix it.
             when (val tool = tools.firstOrNull { it.name == request.name }) {
                 null -> unknown(request.name)
-                else -> if (tool.axis in settings.permissions.value) {
+                else -> if (tool.axis in settings.currentPermissions()) {
                     journal.execute(tool, request.arguments)
                 } else {
                     journal.refuse(tool, McpPermissionNotice.refusal(tool))

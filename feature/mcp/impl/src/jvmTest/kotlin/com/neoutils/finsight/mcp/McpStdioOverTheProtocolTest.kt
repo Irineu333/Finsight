@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
+import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.feature.mcp.api.McpStdout
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
@@ -299,6 +300,55 @@ class McpStdioOverTheProtocolTest {
                     client.callTool(tool.name, emptyMap()).text(),
                     "The user switched the server on and the call was still refused.",
                 )
+            }
+        }
+    }
+
+    /**
+     * An axis is withheld **by the window**, and this session obeys it without having been there.
+     *
+     * The switch above is moved on this process's own settings; a grant is not. Only the window
+     * writes one, and a headless session outlives an app that was opened and closed again — so the
+     * choice is made in a second [McpServerSettings] over the same store, which is what "another
+     * process moved it" is here. What is being asserted is that the session reads the grants of the
+     * moment and not the ones it found at start-up: it must stop announcing the tool, and refuse a
+     * call on it by name saying the operation exists (design D7).
+     */
+    @Test
+    fun `an axis the window withheld is withheld here too, in the same session`() = runBlocking {
+        val removal = SpyTool(
+            name = McpToolName.DELETE_TRANSACTION.wireName,
+            effect = McpToolEffect.CHANGES,
+        )
+
+        McpServerHarness(tools = listOf(removal)).use { harness ->
+            harness.serverSettings.setEnabled(true)
+
+            harness.stdioSession().servedOverStdio { client ->
+                assertEquals(
+                    listOf(removal.name),
+                    client.listTools().tools.map { it.name },
+                    "The session did not announce a tool the user had granted.",
+                )
+
+                // The window: the process the user moves a permission in, writing where this one
+                // reads.
+                McpServerSettings(harness.settings)
+                    .setPermission(McpPermissionAxis.REMOVE, granted = false)
+
+                assertTrue(
+                    client.listTools().tools.isEmpty(),
+                    "The session went on announcing a tool whose axis the user has withheld.",
+                )
+
+                val refused = client.callTool(removal.name, emptyMap())
+                assertTrue(refused.isError ?: false, "The refusal did not arrive as one.")
+                assertContains(
+                    refused.text(),
+                    McpPermissionNotice.THE_SECTION,
+                    message = "The refusal did not say where the user grants the operation.",
+                )
+                assertEquals(0, removal.calls, "The tool ran under a grant the user had withdrawn.")
             }
         }
     }

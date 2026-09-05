@@ -70,7 +70,7 @@ internal class McpServerSettings(
 
     val token: StateFlow<String?> = _token.asStateFlow()
 
-    private val _permissions = MutableStateFlow(storedPermissions())
+    private val _permissions = MutableStateFlow(currentPermissions())
 
     /**
      * What the user has granted, `read` alone until they say otherwise.
@@ -78,6 +78,9 @@ internal class McpServerSettings(
      * The default is per axis and not per set, so an app that ever gains a fifth axis gains it
      * withheld on every installation that already exists, rather than granted because nothing was
      * written for it yet.
+     *
+     * It is what the section draws and what the window compares against to decide there is a change
+     * worth announcing. What decides a request is [currentPermissions].
      */
     val permissions: StateFlow<Set<McpPermissionAxis>> = _permissions.asStateFlow()
 
@@ -99,10 +102,23 @@ internal class McpServerSettings(
      */
     fun setPermission(axis: McpPermissionAxis, granted: Boolean) = write {
         settings.putBoolean(axis.settingsKey, granted)
-        _permissions.value = storedPermissions()
+        _permissions.value = currentPermissions()
     }
 
-    private fun storedPermissions(): Set<McpPermissionAxis> = read {
+    /**
+     * What the user has granted **at this instant**, as the store holds it.
+     *
+     * The same question as [currentChoice] asks of the switch, and asked for the same reason: only
+     * the window writes a grant, and a headless session outlives an app that was opened and closed
+     * again. A session that answered from what it read at start-up would announce — and run — an
+     * operation its owner has since withheld, which is the one thing the axes exist to prevent
+     * (design D7).
+     *
+     * In the window it answers what [permissions] holds, because that process is the writer; the
+     * cost of reading it from the store there is a syscall on a request an agent made, and one
+     * reading path is worth more than saving it.
+     */
+    fun currentPermissions(): Set<McpPermissionAxis> = read {
         McpPermissionAxis.entries
             .filterTo(mutableSetOf()) { settings.getBoolean(it.settingsKey, it in McpPermissionAxis.INITIAL) }
     }

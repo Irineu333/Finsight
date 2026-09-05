@@ -143,8 +143,14 @@ escolha viva.
 
 No modo `--mcp`, o `stdout` do processo SHALL carregar exclusivamente as mensagens do protocolo.
 Qualquer outra saída do processo, inclusive a de bibliotecas, SHALL ir para `stderr`. O
-diagnóstico do processo — versão, modo, se encontrou a janela aberta, se o servidor está
-habilitado — SHALL ser escrito em `stderr`, porque é o que os clientes exibem.
+diagnóstico do processo — versão, modo, se o servidor está habilitado — SHALL ser escrito em
+`stderr`, porque é o que os clientes exibem.
+
+A linha MUST NOT dizer se encontrou a janela aberta. Quem executa uma chamada é decidido a cada
+chamada e não no arranque, então a afirmação valeria por um instante e ficaria no log como se
+valesse pela sessão inteira; e obtê-la custaria disputar a posse do banco a cada lançamento,
+para uma resposta negativa que significa tanto *a janela é dona* quanto *não há lock neste
+sistema de arquivos*.
 
 #### Scenario: Uma biblioteca escreve em `stdout`
 - **WHEN** qualquer código do processo escreve em `System.out` durante uma sessão

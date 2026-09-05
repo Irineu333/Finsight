@@ -63,17 +63,9 @@ estão no `main`, escritas e testadas, e não saíram em release nenhuma.
 | **Listas em linha**             | Recorrentes e Orçamentos trocam a ficha pela linha: de ~180 e ~232dp para 64 e ~62dp  | Funcionalidade | 1.10.0        |
 | **Ajuste no detalhe único**     | Um ajuste abre o mesmo detalhe de qualquer operação, nomeado pelo alvo que corrige    | Funcionalidade | 1.10.0        |
 | **Telemetria de arquivar**      | Arquivar deixou de ser reportado como apagar, e reabrir deixou de não ser reportado   | Arquitetura    | 1.10.0        |
-| **Backup local**                | Exportar e restaurar o acervo num arquivo, com o backup automático da plataforma desligado | Funcionalidade | —             |
-| **Cofre de backups**            | O app guarda cópias sozinho por três gatilhos, com retenção e histórico no destino    | Funcionalidade | —             |
+| **Backup**                      | Exportar e restaurar o acervo à mão, e cópias automáticas por três gatilhos           | Funcionalidade | —             |
 | **Botão de ação único**         | Um FAB para o app: a tela publica as ações, a casca decide a forma e a posição        | Funcionalidade | —             |
-| **Snapshot do banco**           | Capturar, verificar em isolamento e substituir o conteúdo, sem reiniciar o app        | Arquitetura    | —             |
-| **Prelúdio de remoção**         | O razão anuncia a remoção antes das linhas saírem; calar exige `@OptIn`               | Arquitetura    | —             |
-| **Servidor MCP**                | Servidor local atrás de token, no socket da janela e por stdio com ela aberta ou não  | Funcionalidade | —             |
-| **Superfície de 58 ferramentas** | Perguntas, catálogo, registro e operações — uma tela com um agente no lugar de quem lê | Funcionalidade | —             |
-| **Permissões por eixo**         | Ler, registrar, apagar e operar decidem quais ferramentas existem, e o retido é dito   | Funcionalidade | —             |
-| **Registro de atividade**       | O que um agente mudou fica registrado, com retenção declarada e alcance ao lançamento | Funcionalidade | —             |
-| **Use case por id**             | O id carrega a implementação e o agregado delega; 45 use cases chegaram à `api`        | Arquitetura    | —             |
-| **Plataforma nos dois sentidos** | O que só funciona no desktop se oculta pelo mesmo eixo do que não funciona nele       | Arquitetura    | —             |
+| **Servidor MCP**                | Ferramentas para um agente num servidor local (permissão por eixo, registro, stdio)   | Funcionalidade | —             |
 
 ## Planejado
 

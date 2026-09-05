@@ -1,0 +1,520 @@
+<title>Vitrine de Widgets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f3f5f8;
+    --paper: #ffffff;
+    --ink: #1b2430;
+    --muted: #5b6674;
+    --line: #d6dce4;
+    --line-soft: #e6eaf0;
+    --petrol: #1d6a85;        /* a dashboard */
+    --petrol-soft: #dcecf2;
+    --ochre: #a67c14;         /* a vitrine, a fonte */
+    --ochre-soft: #f5ead0;
+    --open: #8a4b6b;          /* em aberto */
+    --open-soft: #f1e1ea;
+    --code-bg: #eaeef3;
+    --ghost: #7c8794;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12171d;
+      --paper: #1a2129;
+      --ink: #e6eaf0;
+      --muted: #97a3b2;
+      --line: #2c3743;
+      --line-soft: #232d38;
+      --petrol: #5fb0cf;
+      --petrol-soft: #16303b;
+      --ochre: #d9ab3f;
+      --ochre-soft: #34290f;
+      --open: #d08bb0;
+      --open-soft: #35202c;
+      --code-bg: #0f141a;
+      --ghost: #8391a0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12171d;
+    --paper: #1a2129;
+    --ink: #e6eaf0;
+    --muted: #97a3b2;
+    --line: #2c3743;
+    --line-soft: #232d38;
+    --petrol: #5fb0cf;
+    --petrol-soft: #16303b;
+    --ochre: #d9ab3f;
+    --ochre-soft: #34290f;
+    --open: #d08bb0;
+    --open-soft: #35202c;
+    --code-bg: #0f141a;
+    --ghost: #8391a0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", "Segoe UI", Roboto, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 880px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1, h2, h3 {
+    font-family: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 { font-size: clamp(38px, 6vw, 56px); line-height: 1.02; font-variation-settings: "opsz" 96; }
+  h2 { font-size: 26px; line-height: 1.15; margin-top: 72px; }
+  h3 { font-size: 18px; line-height: 1.25; margin-top: 32px; font-weight: 700; }
+  p, li { max-width: 68ch; }
+  p { margin: 14px 0; }
+  ul, ol { padding-left: 22px; margin: 12px 0; }
+  li { margin: 6px 0; }
+  li::marker { color: var(--muted); }
+  a { color: var(--petrol); }
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.86em;
+  }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  .ref { color: var(--muted); font-size: 13px; }
+  .ref code { font-size: 12px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    font-weight: 600;
+  }
+  .lede { font-size: 19px; color: var(--ink); max-width: 60ch; margin-top: 18px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 22px; color: var(--muted); font-size: 14px; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  header { padding-bottom: 32px; border-bottom: 1px solid var(--line); }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 2px 9px; border-radius: 999px; white-space: nowrap; line-height: 1.6;
+  }
+  .chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .chip.done { color: var(--petrol); background: var(--petrol-soft); }
+  .chip.prop { color: var(--ochre); background: var(--ochre-soft); }
+  .chip.open { color: var(--open); background: var(--open-soft); }
+  .chip.out { color: var(--muted); background: var(--line-soft); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 28px 0 8px; font-size: 14px; color: var(--muted); align-items: center; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 15px; }
+  .tablewrap { overflow-x: auto; }
+  th { text-align: left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 10px 12px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 12px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  td:last-child { white-space: nowrap; }
+  tr.changed td:first-child::after { content: "rev. 3"; display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ochre); vertical-align: middle; }
+
+  .callout {
+    border-left: 3px solid var(--petrol); background: var(--paper);
+    padding: 14px 18px; margin: 22px 0; border-radius: 0 8px 8px 0;
+  }
+  .callout.ochre { border-left-color: var(--ochre); }
+  .callout p { margin: 6px 0; }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .pair > div { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .pair .eyebrow { margin-bottom: 8px; display: block; }
+  .pair pre { margin: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; line-height: 1.6; white-space: pre; overflow-x: auto; }
+  @media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+
+  pre.block {
+    background: var(--code-bg); border-radius: 10px; padding: 16px 18px; overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; line-height: 1.6; margin: 18px 0;
+  }
+  .k-pet { color: var(--petrol); font-weight: 500; }
+  .k-och { color: var(--ochre); font-weight: 500; }
+  .k-mut { color: var(--muted); }
+
+  /* ---------- mockups ---------- */
+  .stage {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+    padding: 26px 22px 18px; margin: 22px 0;
+  }
+  .stage .cap { font-size: 13px; color: var(--muted); margin: 14px 0 0; text-align: center; max-width: none; }
+  .phones { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; align-items: flex-start; }
+  .phonecol { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .phonecol .lab { font-size: 13px; font-weight: 600; }
+  .phonecol .sub { font-size: 12px; color: var(--muted); text-align: center; max-width: 200px; line-height: 1.4; margin: 0; }
+  .phone {
+    width: 200px; height: 350px; border: 2px solid var(--line); border-radius: 24px;
+    background: var(--bg); position: relative; overflow: hidden; display: flex; flex-direction: column;
+  }
+  .bar { display: flex; justify-content: space-between; padding: 12px 12px 6px; font-size: 9px; color: var(--muted); }
+  .bar b { color: var(--ink); font-weight: 600; }
+  .list { flex: 1; padding: 4px 10px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .w {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 8px; height: 40px;
+    padding: 6px 8px; font-size: 9px; color: var(--ink); position: relative; flex: none;
+  }
+  .w::after { content: "≡"; position: absolute; right: 8px; top: 4px; color: var(--muted); font-size: 11px; }
+  .w i { display: block; height: 4px; width: 55%; background: var(--line); border-radius: 2px; margin-top: 8px; }
+  .w.new { border-color: var(--petrol); box-shadow: 0 0 0 2px var(--petrol-soft); }
+  .w.tall { height: 52px; }
+  .w.dim { opacity: 0.45; }
+  .w .tag { position: absolute; right: 22px; top: 5px; font-size: 7px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .slot {
+    border: 1.5px dashed var(--ghost); border-radius: 8px; height: 40px; flex: none;
+    display: flex; align-items: center; justify-content: center; color: var(--ghost); font-size: 9px;
+  }
+  .ghostcard {
+    position: absolute; left: 26px; width: 150px; height: 40px; border-radius: 8px;
+    background: var(--paper); border: 1px solid var(--ochre); box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    transform: rotate(-2deg); padding: 6px 8px; font-size: 9px; z-index: 3;
+  }
+  .ghostcard i { display: block; height: 4px; width: 55%; background: var(--ochre-soft); border-radius: 2px; margin-top: 8px; }
+  .finger { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--ochre); opacity: 0.55; z-index: 4; }
+  .sheet {
+    background: var(--paper); border-top: 1px solid var(--line); border-radius: 14px 14px 0 0;
+    padding: 6px 10px 10px; flex: none; display: flex; flex-direction: column; gap: 6px; position: relative;
+  }
+  .sheet::before { content: ""; width: 26px; height: 3px; border-radius: 2px; background: var(--line); margin: 0 auto 2px; display: block; }
+  .sheet .t { font-size: 9px; font-weight: 600; color: var(--ochre); letter-spacing: 0.06em; text-transform: uppercase; }
+  .sheet .w { border-color: var(--ochre-soft); background: var(--bg); }
+  .sheet .w i { background: var(--ochre-soft); }
+  .sheet.peek { padding-bottom: 8px; }
+  .sheet.peek .t { text-align: center; }
+  .sheet.drop { border-top: 1.5px dashed var(--ochre); background: var(--ochre-soft); }
+  .sheet.drop .t { color: var(--ochre); }
+  .autoscroll {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 26px;
+    background: linear-gradient(to bottom, transparent, var(--petrol-soft)); pointer-events: none;
+  }
+  .autoscroll span { position: absolute; right: 8px; bottom: 4px; font-size: 8px; color: var(--petrol); font-weight: 600; }
+
+  .desk { width: 100%; max-width: 560px; margin: 0 auto; height: 300px; border: 2px solid var(--line); border-radius: 12px; background: var(--bg); display: flex; overflow: hidden; }
+  .rail { width: 34px; border-right: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 10px; padding: 14px 0; align-items: center; }
+  .rail i { width: 12px; height: 12px; border-radius: 3px; background: var(--line); }
+  .rail i:first-child { background: var(--petrol); }
+  .content { flex: 1; display: flex; flex-direction: column; }
+  .content .list { padding: 4px 16px; }
+  .content .w { height: 44px; }
+  .pane { width: 150px; border-left: 1px solid var(--line); background: var(--paper); padding: 10px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .pane .t { font-size: 9px; font-weight: 600; color: var(--ochre); letter-spacing: 0.06em; text-transform: uppercase; display: flex; justify-content: space-between; }
+  .pane .t span:last-child { color: var(--muted); }
+  .pane .w { border-color: var(--ochre-soft); background: var(--bg); }
+  .pane .w i { background: var(--ochre-soft); }
+  .pane .lifted { opacity: 0.35; border-style: dashed; }
+  .arrow { position: absolute; left: -200px; top: 92px; width: 200px; height: 2px; }
+  .arrow::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, var(--ochre) 0 6px, transparent 6px 11px); }
+  .arrow::after { content: ""; position: absolute; left: -2px; top: -5px; border: 6px solid transparent; border-right: 9px solid var(--ochre); }
+
+  .gestures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+  .gestures > div { border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .gestures .g { font-family: "IBM Plex Mono", monospace; font-size: 13px; display: block; margin-bottom: 6px; }
+  .gestures .g .pet { color: var(--petrol); font-weight: 500; }
+  .gestures .g .och { color: var(--ochre); font-weight: 500; }
+  @media (max-width: 640px) { .gestures { grid-template-columns: 1fr; } }
+
+  .chain { list-style: none; padding: 0; margin: 14px 0; border-left: 2px solid var(--line); }
+  .chain li { padding: 4px 0 4px 16px; margin: 0; font-size: 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+  .chain li b { font-weight: 600; min-width: 110px; }
+  .chain li .ref { margin-left: auto; }
+
+  .q { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin: 14px 0; }
+  .q .qh { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+  .q h3 { margin: 0; font-size: 17px; }
+  .q p { margin: 8px 0 0; font-size: 15px; }
+  .q .rec { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line-soft); font-size: 15px; }
+  .q .rec b { color: var(--ochre); font-weight: 600; }
+
+  .modules { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .modules > div { border: 1px solid var(--line-soft); border-radius: 10px; padding: 14px 16px; font-size: 14.5px; }
+  .modules .eyebrow { display: block; margin-bottom: 6px; }
+  .modules ul { margin: 6px 0 0; padding-left: 18px; }
+  .modules li { margin: 4px 0; }
+  @media (max-width: 640px) { .modules { grid-template-columns: 1fr; } }
+
+  .later { background: var(--paper); border: 1px dashed var(--line); border-radius: 12px; padding: 18px 20px; margin-top: 18px; }
+  .later h3 { margin: 0 0 6px; }
+  .later p { font-size: 15px; }
+
+  .size { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 14.5px; margin: 12px 0; }
+  .size b { font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 13px; white-space: nowrap; }
+
+  footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+  @media (prefers-reduced-motion: no-preference) { .ghostcard { transition: transform .2s; } }
+</style>
+
+<div class="page">
+<header>
+  <div class="eyebrow">Dashboard · modo de edição · exploração para alinhar</div>
+  <h1 style="margin-top:14px">Vitrine de Widgets</h1>
+  <p class="lede">Separar <em>ordenar</em> de <em>adicionar</em>, oferecer os widgets numa vitrine à parte, e mover tudo por arrasto — a mesma experiência no celular e no desktop, com um só motor de gesto.</p>
+  <div class="meta">
+    <span>Base: <b>main</b> em 2026-09-05</span>
+    <span>Tela: <b>feature/dashboard/impl</b></span>
+    <span>Revisão: <b>3 — tudo fechado</b></span>
+    <span>Estado: <b>nada implementado</b></span>
+  </div>
+</header>
+
+<div class="legend">
+  <span class="chip done">decidido</span><span>o que você disse, ou delegou e eu escolhi</span>
+  <span class="chip out">fora desta change</span>
+</div>
+
+<h2 style="margin-top:28px">Em uma tela</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Assunto</th><th>Como fica</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>Interação</td><td>Drag and drop para adicionar, remover e reordenar. Nada de "escolher e aparece".</td><td><span class="chip done">decidido</span></td></tr>
+    <tr><td>Vitrine no celular</td><td><code>BottomSheetScaffold</code> na mesma árvore da tela — meia altura em repouso, recua ao peek durante o arrasto.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr><td>Vitrine no desktop</td><td>No painel lateral (<code>DetailPane</code>), como um <code>AdaptivePane</code>.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr><td>Configurações</td><td>Abrem numa modal do <code>ModalManager</code>, deixando o painel para a vitrine.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr><td>Card da vitrine</td><td>O widget verdadeiro com dados fictícios, sem ação — o <code>Preview</code> que já existe.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr><td>Motor de arrasto</td><td>Próprio, num módulo à parte. A <code>reorderable</code> sai.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr class="changed"><td>Onde mora o motor</td><td><code>core/dragdrop</code>.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr><td>Widgets de outro modo de janela</td><td>Aparecem apagados em modo edição — na vitrine e na lista.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr class="changed"><td>Ações em massa</td><td>"Adicionar todos" e "Remover todos" saem. Cada widget entra e sai pelo arrasto.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr class="changed"><td>Widget já na dashboard</td><td>Some da vitrine enquanto estiver ativo; volta quando removido. Escolha delegada — o porquê está no fim.</td><td><span class="chip done">decidido</span></td></tr>
+    <tr><td>Mesmo widget duas vezes</td><td>Não nesta change. A chave continua sendo a do tipo; o que isso vai custar está registrado no fim.</td><td><span class="chip out">fora desta change</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Por que mexer</h2>
+<p>Hoje o editor é <strong>uma</strong> <code>LazyColumn</code> com <strong>um</strong> estado da <code>reorderable 3.0.0</code>: os ativos em cima, um cabeçalho "Disponíveis" no meio e os desativados embaixo a 60% de opacidade. Ativar e desativar <em>são</em> reordenar — arrastar para baixo do cabeçalho desativa. O cabeçalho e os dois vazios existem como chaves-sentinela só para servirem de alvo de drop.</p>
+<ul>
+  <li>Toda a aritmética mora em <code>DashboardEditLayout.move(fromKey, toKey)</code>: cinco ramos, três sentinelas, um <code>activeCount</code> como fronteira. <span class="ref"><code>DashboardEditLayout.kt:22-63</code></span></li>
+  <li>Catorze tipos de widget, cada um renderizado em tamanho real na lista — a tela fica longa, e metade dela é o que <em>não</em> está na dashboard.</li>
+  <li>A <code>reorderable</code> é usada só nesta tela. Nenhum outro arrasto existe no projeto.</li>
+</ul>
+<div class="callout">
+  <p><strong>A restrição que decide tudo.</strong> Um <code>ModalBottomSheet</code> do Material 3 é outra raiz de composição — o próprio código paga esse preço com <code>Modifier.exposeTestTags()</code> em cada sheet, "a sheet is its own composition root" (<code>ModalManager.kt:159</code>). O ponteiro não cruza essa fronteira em plataforma nenhuma. Se o arrasto tem de entrar e sair da vitrine, <strong>a vitrine não pode ser modal</strong>. No desktop isso já é verdade de graça: o <code>DetailPane</code> é irmão do conteúdo no mesmo <code>Row</code> (<code>ChromeHost.kt:273, 345</code>).</p>
+</div>
+
+<h2>A ideia</h2>
+<p>Três gestos, uma metáfora: a vitrine é a <span class="k-och">fonte</span>, a lista é a <span class="k-pet">dashboard</span>. Arrastar de uma para a outra adiciona; no sentido contrário, remove; dentro da lista, reordena. O código já chama a vitrine pelo nome — <em>showcase</em> (<code>DashboardComponentType.kt:10</code>).</p>
+
+<div class="stage">
+  <div class="phones">
+    <div class="phonecol">
+      <div class="lab">Repouso</div>
+      <div class="phone">
+        <div class="bar"><span>Cancelar</span><b>Editar</b><span>Salvar</span></div>
+        <div class="list">
+          <div class="w">Saldo total<i></i></div>
+          <div class="w">Cartões<i></i></div>
+          <div class="w">Recentes<i></i></div>
+        </div>
+        <div class="sheet" style="height:172px">
+          <div class="t">Widgets</div>
+          <div class="w tall">Orçamentos<i></i></div>
+          <div class="w tall">Recorrentes<i></i></div>
+          <div class="w tall">Gastos por categoria<i></i></div>
+        </div>
+      </div>
+      <p class="sub">Sheet a meia altura, previews verticais em largura total, rolável. Só o que não está na dashboard.</p>
+    </div>
+    <div class="phonecol">
+      <div class="lab">Levantou um card</div>
+      <div class="phone">
+        <div class="bar"><span>Cancelar</span><b>Editar</b><span>Salvar</span></div>
+        <div class="list">
+          <div class="w">Saldo total<i></i></div>
+          <div class="w">Cartões<i></i></div>
+          <div class="slot">o slot abre aqui</div>
+          <div class="w">Recentes<i></i></div>
+          <div class="autoscroll"><span>autoscroll</span></div>
+        </div>
+        <div class="ghostcard" style="top:118px">Orçamentos<i></i></div>
+        <div class="finger" style="left:96px;top:130px"></div>
+        <div class="sheet peek drop" style="height:44px">
+          <div class="t">soltar aqui = remover</div>
+        </div>
+      </div>
+      <p class="sub">A sheet recua ao peek. A lista inteira aparece; o peek vira a zona de remover.</p>
+    </div>
+    <div class="phonecol">
+      <div class="lab">Soltou</div>
+      <div class="phone">
+        <div class="bar"><span>Cancelar</span><b>Editar</b><span>Salvar</span></div>
+        <div class="list">
+          <div class="w">Saldo total<i></i></div>
+          <div class="w">Cartões<i></i></div>
+          <div class="w new">Orçamentos<i></i></div>
+          <div class="w">Recentes<i></i></div>
+        </div>
+        <div class="sheet" style="height:132px">
+          <div class="t">Widgets</div>
+          <div class="w tall">Recorrentes<i></i></div>
+          <div class="w tall">Gastos por categoria<i></i></div>
+        </div>
+      </div>
+      <p class="sub">O widget entra na posição do slot e sai da vitrine. Removido, volta para ela.</p>
+    </div>
+  </div>
+  <p class="cap">Celular: <code>BottomSheetScaffold</code> composto dentro da própria tela de edição, na mesma árvore da lista.</p>
+</div>
+
+<div class="stage">
+  <div class="desk">
+    <div class="rail"><i></i><i></i><i></i><i></i></div>
+    <div class="content">
+      <div class="bar"><span>Cancelar</span><b>Editar</b><span>Salvar</span></div>
+      <div class="list">
+        <div class="w">Saldo total<i></i></div>
+        <div class="w">Cartões<i></i></div>
+        <div class="slot">o slot abre aqui</div>
+        <div class="w">Recentes<i></i></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="t"><span>Widgets</span><span>×</span></div>
+      <div class="w lifted">Orçamentos<i></i></div>
+      <div class="w">Recorrentes<i></i></div>
+      <div class="w dim">Ações rápidas<span class="tag">só no celular</span><i></i></div>
+      <div class="w">Contas<i></i></div>
+      <div class="arrow"></div>
+    </div>
+  </div>
+  <p class="cap">Desktop: a vitrine é um <code>AdaptivePane</code> no <code>DetailPane</code> de 400dp. Aberta em <code>EnterEditMode</code>, fechada ao sair. O painel inteiro é a zona de remover.</p>
+</div>
+
+<div class="gestures">
+  <div><span class="g"><span class="och">vitrine</span> → <span class="pet">lista</span></span>Adiciona o widget com o <code>defaultConfig</code> do tipo, na posição do slot. O card sai da vitrine.</div>
+  <div><span class="g"><span class="pet">lista</span> → <span class="och">vitrine</span></span>Remove — a config vai junto. <em>Cancelar</em> restaura tudo. O card volta à vitrine.</div>
+  <div><span class="g"><span class="pet">lista</span> → <span class="pet">lista</span></span>Reordena. O mesmo gesto, o mesmo motor, o mesmo ghost.</div>
+</div>
+
+<h3>Apagado, por um motivo</h3>
+<p>Em modo edição, um card apagado diz uma coisa só: <strong>"só no celular" / "só no desktop"</strong> — o tipo não se mostra neste <code>WindowMode</code> (<code>DashboardComponentVariant.modes</code>). Vale para o card na vitrine <em>e</em> para o item na lista: um widget ativo que não renderiza nesta janela aparece apagado no editor, em vez de sumir. Continua arrastável — a dashboard é uma só, e o usuário edita para todos os seus dispositivos.</p>
+
+<h3>Detalhes que já estão decididos pelo código</h3>
+<ul>
+  <li><strong>O card é o preview real.</strong> <code>DashboardComponentVariant.*.Preview</code> e <code>DashboardPreviewFactory.createPreview(key, on)</code> já fabricam o widget com dados fictícios na moeda-base; a lista de edição já os renderiza.</li>
+  <li><strong>A inércia vem de um overlay, não da variante.</strong> Um <code>Box.matchParentSize()</code> com <code>clickable</code> + handle de arrasto cobre o widget (<code>DashboardEditingContent.kt:203-213</code>). A vitrine repete a técnica — e o overlay é a fonte do arrasto.</li>
+  <li><strong>O ≡ imediato fica em todo card</strong>, vitrine incluída. É o gesto do mouse no desktop e o único que o Maestro executa (<code>swipe from: id:</code>); o corpo espera um long-press.</li>
+  <li><strong>Mesmo breakpoint do painel.</strong> <code>isExtraWideWindow()</code> decide sheet ou painel, como já decide para todo <code>AdaptiveModal</code>. Se a janela encolhe no meio da edição, o <code>AdaptivePane</code> é dispensado (<code>AdaptiveDetail.kt:194-200</code>) e a sheet assume.</li>
+</ul>
+
+<h2>O modelo</h2>
+<p>Ordenar e adicionar separados, a chave continua sendo a do tipo, e "disponível" deixa de ser estado guardado: é o que o catálogo tem e a dashboard não.</p>
+<div class="pair">
+  <div><span class="eyebrow">Hoje</span><pre>Editing(activeItems, availableItems)
+move(fromKey, toKey)      <span class="k-mut">// 5 ramos, 3 sentinelas</span>
+availableItems guardado   <span class="k-mut">// e recalculado no VM</span></pre></div>
+  <div><span class="eyebrow">Depois</span><pre>Editing(activeItems)
+add(type, at)  remove(key)  move(from, to)
+vitrine = catálogo − ativos   <span class="k-mut">// derivada, não guardada</span></pre></div>
+</div>
+<p>Preferências, repositório e builder não mudam: <code>Preference(key, position, config)</code> continua sendo o que se salva. <code>EditListEntry.SectionHeader</code> e os dois placeholders somem; <code>AddAllComponents</code> e <code>RemoveAllComponents</code> saem.</p>
+
+<h2>O motor de arrasto</h2>
+<p>Com as duas apresentações na mesma árvore, o problema fica bem definido — e é o mesmo nas duas.</p>
+<pre class="block">core/dragdrop/                                <span class="k-mut">← módulo próprio, convenção finsight.compose.library</span>
+ ├─ DragAndDropHost { content }              <span class="k-mut">← montado no App ao lado de ModalManagerHost e DetailPaneHost (App.kt:150-151)</span>
+ │    ├─ LocalDragAndDropController
+ │    └─ overlay do ghost                    <span class="k-mut">← por cima de TUDO: no desktop o painel está fora da subárvore da tela</span>
+ ├─ Modifier.dragSource(payload, ghost)      <span class="k-mut">← long-press no corpo; imediato no ≡ e no mouse</span>
+ ├─ Modifier.dropTarget(onHover, onDrop, onExit)   <span class="k-mut">← bounds em coordenadas de janela</span>
+ └─ autoscroll de LazyListState nas bordas</pre>
+<ul>
+  <li><strong>Por que próprio.</strong> A <code>reorderable</code> recebe um <code>LazyListState</code> e o arrasto nasce e morre dentro dele; não há "sair da lista". Dois sistemas de gesto no mesmo item disputam o mesmo <code>pointerInput</code> — o item já empilha dois handles hoje. Um dono para os três gestos.</li>
+  <li><strong>Por que não o <code>dragAndDropSource</code> do foundation.</strong> É a sessão de arrasto do sistema operacional: sombra do SO, pensada para cruzar apps, sem slot animado nem ghost estilizado. Suporte iOS na CMP 1.10.1 não confirmado — e não mudaria a escolha.</li>
+  <li><strong>O que passa a ser nosso.</strong> Autoscroll e a animação de deslocamento (<code>Modifier.animateItem()</code>) — a parte chata, não a difícil. Estimativa: 300 a 500 linhas — grande o bastante para um módulo.</li>
+  <li><strong>O que a lista faz com o hover é dela.</strong> Recebe o offset, acha o índice pelos bounds dos itens visíveis, abre o slot. A vitrine é trivial: qualquer hover é "aqui remove".</li>
+</ul>
+
+<h3>Por que <code>core/</code>, e não <code>feature/</code></h3>
+<div class="modules">
+  <div>
+    <span class="eyebrow">core/dragdrop</span>
+    <ul>
+      <li>Um <code>core</code> é "quem não conhece feature nenhuma" — e o motor não conhece: não tem rota, não tem tela, não tem domínio, não tem <code>Entry</code>.</li>
+      <li>É o mesmo lugar dos seus irmãos: <code>ModalManager</code> e <code>DetailPane</code> moram em <code>core/designsystem</code>, e o host é montado por <code>:app:shared</code>, que vê tudo.</li>
+      <li>Qualquer feature <code>api</code> pode usá-lo — <code>api</code> depende só de <code>:core:*</code>.</li>
+      <li>Módulo separado de <code>designsystem</code>: tem tamanho e testes próprios, e não puxa o tema para quem só quer arrastar.</li>
+    </ul>
+  </div>
+  <div>
+    <span class="eyebrow">feature/dragdrop/api — descartado</span>
+    <ul>
+      <li>Um <code>api</code> declara "rotas, interfaces de repositório e de caso de uso, o <code>Entry</code>" — nada disso existe aqui; seria um <code>api</code> sem <code>impl</code> só para caber no padrão.</li>
+      <li>Uma feature <code>api</code> não pode depender dele (<code>api ⊄ api</code>), então um componente de <code>core/ui</code> ou de outro <code>api</code> nunca poderia oferecer arrasto.</li>
+      <li>O shell teria de montar o host de uma feature que não é uma seção do app.</li>
+    </ul>
+  </div>
+</div>
+<p class="ref" style="margin-top:12px">Regras citadas de <code>CLAUDE.md</code> (module structure, dependency rule) e <code>feature/README.md</code>.</p>
+
+<h2>Como se prova</h2>
+<h3>Unitário</h3>
+<ul>
+  <li><code>DashboardEditLayoutTest</code> (12 casos sobre <code>move</code> e sentinelas) morre inteiro — o que ele provava deixa de existir. No lugar: <code>add(type, at)</code> insere na posição e recusa um tipo já ativo; <code>remove(key)</code>; <code>move(from, to)</code>; e a vitrine é exatamente o catálogo menos os ativos, na ordem do catálogo.</li>
+  <li><code>DashboardDeprecatedWidgetTest</code> continua tal qual: "não é oferecido para adicionar" passa a significar "não está na vitrine".</li>
+  <li>Um layout salvo hoje reabre idêntico — nada muda na persistência, e o teste é o que garante que isso é verdade e não intenção.</li>
+  <li>O cálculo <em>"dado o offset do ponteiro e os bounds dos itens visíveis, qual é o índice do slot"</em> é função pura em <code>core/dragdrop</code>, com teste — pelo motivo que o KDoc de <code>DashboardEditLayout</code> dá para si: <em>expensive to prove through a screen and cheap to prove here</em>. O projeto só tem <code>jvmTest</code>; tudo o que puder ser aritmética sem Compose, é.</li>
+</ul>
+<h3>Maestro</h3>
+<ul>
+  <li><code>.maestro/flows/dashboard/customization.yaml</code> é reescrito, não remendado: seus sete usos de <code>dashboard_edit_section_header</code>, os dois comandos em massa e a leitura "acima/abaixo do cabeçalho = ativo/não" não têm tradução.</li>
+  <li>Nova leitura: está em <code>dashboard_edit_item_&lt;key&gt;</code> na lista, ou em <code>dashboard_showcase_item_&lt;key&gt;</code> na vitrine — nunca nos dois. Incluir é um <code>swipe</code> para cima a partir do ≡ do card na vitrine; remover, um <code>swipe</code> para baixo do ≡ do item até o peek.</li>
+  <li><strong>O estado vazio fica mais caro de alcançar.</strong> Hoje o flow chega a <code>dashboard_empty_edit</code> com um toque em "Remover todos"; sem ele, são tantos arrastos quantos widgets o layout padrão tem. A change decide se o flow paga esse preço ou se o estado vazio passa a ser coberto por outro caminho — é um custo do flow, não do produto.</li>
+  <li>O trecho das opções muda só o alvo — a sheet do <code>ModalManager</code> já expõe tags.</li>
+  <li>A entrega inclui rodar no AVD <code>pixel_6</code> API 36 e dizer em qual dispositivo foi, como o <code>.maestro/README.md</code> cobra.</li>
+</ul>
+
+<h2>Uma change só</h2>
+<ul>
+  <li><code>core/dragdrop</code>: host, modifiers, autoscroll, índice do slot com teste</li>
+  <li>Vitrine: sheet no celular, <code>AdaptivePane</code> no desktop; cards apagados por modo de janela</li>
+  <li>Modelo <code>add / remove / move</code>; vitrine derivada; <code>reorderable</code> e as duas ações em massa saem</li>
+  <li>Opções migram para o <code>ModalManager</code></li>
+  <li><code>customization.yaml</code> reescrito e executado</li>
+</ul>
+
+<h2>Fechado nesta rodada</h2>
+
+<div class="q">
+  <div class="qh"><h3>Widget já na dashboard: some da vitrine</h3><span class="chip done">decidido</span></div>
+  <p>Você deixou a meu critério entre <em>instâncias agora</em> e <em>some da vitrine</em>, condicionado a quanto instâncias distrairia do objetivo. Medi:</p>
+  <div class="size">
+    <b>core/model</b><span><code>DashboardComponentPreference</code> ganha <code>id</code>; <code>key</code> vira <code>type</code></span>
+    <b>repositório</b><span>carga com <code>id = type</code> para o legado — sem migração de dados</span>
+    <b>builder + VM</b><span>chaves da <code>LazyColumn</code>, <code>UpdateComponentConfig</code>, <code>DashboardEditItem</code> e a modal de opções passam a andar por <code>id</code></span>
+    <b>testes</b><span>migração, duplicatas com configs distintas, alocação de id</span>
+    <b>Maestro</b><span>tags do layout padrão não mudam; um trecho novo para a segunda instância</span>
+  </div>
+  <p class="rec"><b>Veredito:</b> é mecânico e sem risco visível, mas toca oito arquivos que esta change não precisaria abrir, e faz a change carregar dois assuntos — a vitrine e a identidade. Fica para a próxima. <em>Some da vitrine</em> custa zero agora, é o modelo mental que o editor já tem, e o caminho para instâncias continua curto: adicionar o <code>id</code> e deixar de subtrair os ativos do catálogo. O card apagado "na dashboard" que eu tinha proposto era pior que as duas alternativas — visível e inerte é um estado que ninguém pediu.</p>
+</div>
+
+<div class="q">
+  <div class="qh"><h3>Onde mora o motor: <code>core/dragdrop</code></h3><span class="chip done">decidido</span></div>
+  <p>Módulo próprio, como você pediu; prateleira <code>core</code>, pelas razões da seção do motor.</p>
+</div>
+
+<div class="q">
+  <div class="qh"><h3>Ações em massa: saem as duas</h3><span class="chip done">decidido</span></div>
+  <p>"Adicionar todos" e "Remover todos". O editor fica com um único verbo, o arrasto. A consequência para o Maestro está registrada acima.</p>
+</div>
+
+<div class="later">
+  <h3>Fora desta change: o mesmo widget duas vezes</h3>
+  <p>Registro do que a exploração encontrou, para a change que fizer isso não redescobrir. A chave de um widget <strong>é a do tipo</strong> — <em>"How the component is named in the saved layout — the type's own key"</em> (<code>DashboardComponent.kt:26</code>) — e ela chega em cinco lugares:</p>
+  <ul class="chain">
+    <li><b>persistência</b><code>SerializablePreference(key, position, config)</code><span class="ref"><code>DashboardPreferencesRepository.kt:60</code></span></li>
+    <li><b>LazyColumn</b><code>item(key = variant.key)</code> · <code>items(key = entry.key)</code><span class="ref"><code>Viewing:74</code> · <code>Editing:92</code></span></li>
+    <li><b>test tags</b><code>dashboard_component_${key}</code> · <code>dashboard_edit_item_${key}</code><span class="ref">lidas pelo Maestro</span></li>
+    <li><b>config</b><code>UpdateComponentConfig(key, config)</code><span class="ref"><code>DashboardAction.kt</code></span></li>
+    <li><b>builder</b><code>pref.key → componente</code><span class="ref"><code>BuildDashboardViewingUseCase.kt:22</code></span></li>
+  </ul>
+  <p>Duplicar hoje daria crash na <code>LazyColumn</code>, config de um sobrescrevendo a do outro, e tags ambíguas para o Maestro. Vai precisar de um <code>id</code> persistido por instância; o tamanho está medido no quadro acima. Uma ideia que valeu registrar: <code>id = type</code> para o que já está salvo e <code>type-2</code>, <code>type-3</code>… para as demais mantém o layout padrão com as mesmas tags e dá ao Maestro um id alcançável. Na vitrine, a única regra que muda é deixar de subtrair os ativos do catálogo.</p>
+</div>
+
+<footer>
+  Tudo o que está referenciado por arquivo e linha foi lido no disco em 2026-09-05, na <code>main</code>. Nada aqui foi implementado; o próximo passo é abrir a change.
+</footer>
+</div>

@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.feature.mcp.api.AgentActivity
 import com.neoutils.finsight.feature.mcp.api.McpPermissionAxis
 import com.neoutils.finsight.mcp.McpServerHarness.Companion.freePort
+import com.neoutils.finsight.mcp.tool.MAX_INSTALLMENTS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -1207,6 +1208,60 @@ class RegistrationFamilyOverTheProtocolTest {
                 before,
                 world.database.entryDao().getAll(),
                 "correcting the plan's description moved money",
+            )
+        }
+    }
+
+    /**
+     * **A count past the ceiling is clamped to it, and never narrowed into a different one.**
+     *
+     * The wire is free to send any `Long`, and a narrowing conversion wraps `4294967298` into a
+     * split of two: the plan asked for and the plan written would differ by four billion shares,
+     * under an answer that reports the second as though it were the first. The ceiling is the same
+     * one `create_transaction` applies, because the two tools take the same count.
+     */
+    @Test
+    fun `a split past the ceiling is clamped to it, not wrapped into a smaller one`() = runTest {
+        withRegistrationWorld { world, client ->
+            val card = world.cards.single()
+
+            val response = client.callTool(
+                "create_installment",
+                """{"card_id":${card.id},"amount":900,"count":4294967298,"date":"2026-03-10",
+                 "title":"Fone"}""".trimIndent().replace("\n", ""),
+            )
+
+            assertTrue(!response.isToolError(), response.toolText())
+
+            val planId = response.payload().at("installment").identity()
+            assertEquals(
+                MAX_INSTALLMENTS,
+                world.transactionRepository.getAllTransactions().count { it.installmentId == planId },
+                "the count was narrowed into another one instead of clamped to the ceiling",
+            )
+        }
+    }
+
+    /** The same ceiling on the correction, which writes the count the plan claims about itself. */
+    @Test
+    fun `correcting a plan past the ceiling is clamped to it`() = runTest {
+        withRegistrationWorld { world, client ->
+            val card = world.cards.single()
+            val planId = client.callTool(
+                "create_installment",
+                """{"card_id":${card.id},"amount":600,"count":3,"date":"2026-03-10","title":"Fone"}""",
+            ).payload().at("installment").identity()
+
+            val corrected = client.callTool(
+                "update_installment",
+                """{"id":$planId,"count":4294967298,"total_amount":800}""",
+            )
+
+            assertTrue(!corrected.isToolError(), corrected.toolText())
+            assertEquals(
+                MAX_INSTALLMENTS,
+                world.installmentRepository.getInstallmentById(planId)!!.count,
+                "the plan claims a count the call never asked for",
             )
         }
     }

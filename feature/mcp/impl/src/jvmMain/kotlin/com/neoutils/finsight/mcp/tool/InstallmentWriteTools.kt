@@ -63,7 +63,7 @@ internal class CreateInstallmentTool(
     override val inputSchema = schema(
         "card_id" to number("The card the purchase was charged to, from list_cards."),
         "amount" to amount("The total of the purchase, in the card's currency — 1200.00, not 120000."),
-        "count" to number("How many instalments to split it into. At least 2."),
+        "count" to number("How many instalments to split it into. At least 2, at most $MAX_INSTALLMENTS."),
         "date" to text("The day of the purchase, as `2026-03-14`. Defaults to today."),
         "title" to text("What was bought. Required unless a category is given."),
         "category_id" to number(
@@ -81,7 +81,7 @@ internal class CreateInstallmentTool(
     override suspend fun call(arguments: JsonObject?) = writing {
         val card = creditCardRepository.require(arguments.requiredLong("card_id"))
         val amount = arguments.requiredMoney("amount")
-        val count = arguments.requiredLong("count").toInt()
+        val count = arguments.requiredCount("count", max = MAX_INSTALLMENTS)
         val date = arguments.date("date") ?: clock.today()
         val title = arguments.string("title")
         val category = arguments.long("category_id")?.let { categoryRepository.require(it) }
@@ -195,7 +195,7 @@ internal class UpdateInstallmentTool(
 
     override val inputSchema = schema(
         "id" to number("The plan to correct, from list_installments."),
-        "count" to number("How many shares it has. At least 1."),
+        "count" to number("How many shares it has. At least 1, at most $MAX_INSTALLMENTS."),
         "total_amount" to amount("The total the user declared, in the card's currency — 1200.00, not 120000."),
         required = listOf("id"),
     )
@@ -209,7 +209,7 @@ internal class UpdateInstallmentTool(
                 summary = "edit installment $id",
             )
 
-        val count = arguments.long("count")?.toInt() ?: stored.count
+        val count = arguments.count("count", default = stored.count, max = MAX_INSTALLMENTS)
         val total = arguments.money("total_amount") ?: stored.totalAmount
 
         updateInstallment(id, count, total).reported(

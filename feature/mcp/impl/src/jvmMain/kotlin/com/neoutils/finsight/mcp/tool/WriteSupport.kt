@@ -29,8 +29,8 @@ import kotlin.math.roundToLong
  *
  * Nothing here decides what an operation *means*. Every refusal below is one the domain already
  * stated, and every resolution is a lookup — which is the line `mcp-tool-surface` draws: composing,
- * translating and resolving a name into an identity are the tool's work. The one convention it owns
- * is [NO_CATEGORY], which is a fact about the wire and not about the ledger.
+ * translating and resolving a name into an identity are the tool's work. The two conventions it
+ * owns — [NO_CATEGORY] and [MAX_INSTALLMENTS] — are facts about the wire and not about the ledger.
  */
 
 // ----------------------------------------------------------------------------------
@@ -247,6 +247,19 @@ internal fun noteFor(posting: AgentTransaction?, done: String): String = when (p
 internal fun JsonObject?.requiredLong(name: String): Long =
     long(name) ?: throw BadArgument(AgentRefusal(reason = "`$name` is required."))
 
+/**
+ * A count the tool cannot proceed without, clamped to the ceiling the tool states — [count] with no
+ * value to fall back on.
+ *
+ * Clamped rather than narrowed: `count.toInt()` on an argument the wire is free to send as any
+ * `Long` wraps, and `4294967298` arrives as a split into two under an answer that reports the split
+ * it made rather than the one that was asked for. The floor stays where the domain put it, so a
+ * count below it is still the domain's refusal to make and not a value invented here.
+ */
+internal fun JsonObject?.requiredCount(name: String, max: Int, min: Int = 0): Int =
+    long(name)?.coerceIn(min.toLong(), max.toLong())?.toInt()
+        ?: throw BadArgument(AgentRefusal(reason = "`$name` is required."))
+
 /** A word the tool cannot proceed without, from a closed set. */
 internal fun JsonObject?.requiredOneOf(name: String, allowed: List<String>): String =
     oneOf(name, allowed) ?: throw BadArgument(
@@ -296,6 +309,17 @@ internal fun JsonObject?.stringOr(name: String, carried: String?): String? =
  * identity matching nothing.
  */
 internal const val NO_CATEGORY = 0L
+
+/**
+ * A ceiling on a split, clamped like every count on this surface rather than refused: the domain's
+ * rule is a count of at least one, and anything past thirty years of monthly instalments is a typing
+ * accident with no answer worth a round trip.
+ *
+ * It belongs to the surface and not to one tool, because `create_transaction`,
+ * `create_installment` and `update_installment` all take a count of shares, and a ceiling only one
+ * of them applies is one the other two make a lie.
+ */
+internal const val MAX_INSTALLMENTS = 360
 
 /**
  * The other half of [NO_CATEGORY], said where the caller reads it: the creations take no `0`.

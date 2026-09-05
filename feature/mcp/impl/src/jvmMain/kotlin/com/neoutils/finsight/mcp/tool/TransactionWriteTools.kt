@@ -134,7 +134,9 @@ internal class CreateTransactionTool(
                 "Defaults to the card's open invoice. An account has no invoices, so giving " +
                 "this beside an account_id is refused.",
         ),
-        "installments" to number("How many instalments to split a card purchase into. Defaults to 1."),
+        "installments" to number(
+            "How many instalments to split a card purchase into. Defaults to 1, at most $MAX_INSTALLMENTS.",
+        ),
         "is_recurring" to yesOrNo(
             "Open a monthly template repeating on this day, with this posting as its first cycle. " +
                 "Defaults to false.",
@@ -327,16 +329,6 @@ internal class CreateTransactionTool(
         append(" on ")
         append(account?.name ?: card?.name ?: "no account")
         if (installments > 1) append(" in $installments instalments")
-    }
-
-    private companion object {
-
-        /**
-         * A ceiling on the split, clamped like every count on this surface rather than refused: the
-         * domain's rule is a count of at least one, and anything past thirty years of monthly
-         * instalments is a typing accident with no answer worth a round trip.
-         */
-        const val MAX_INSTALLMENTS = 360
     }
 }
 

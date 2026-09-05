@@ -357,9 +357,14 @@
     border-radius: 999px;
     padding: 1px 8px;
   }
-  .settings-mock details { margin-top: 10px; font-size: 14px; }
-  .settings-mock summary { cursor: pointer; color: var(--ink-2); }
-  .settings-mock summary:focus-visible { outline: 2px solid var(--stdio); outline-offset: 2px; }
+  .settings-mock .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); }
+  .settings-mock .tabs span {
+    font-size: 14px;
+    color: var(--muted);
+    padding: 6px 0;
+    border-bottom: 2px solid transparent;
+  }
+  .settings-mock .tabs .on { color: var(--ink-2); border-bottom-color: var(--stdio); }
 
   footer {
     border-top: 1px solid var(--line);
@@ -400,7 +405,7 @@
     <h2>O que muda</h2>
     <div class="prose">
       <p>Hoje o servidor é um Ktor dentro do processo da janela, escutando em <code>127.0.0.1:8477</code>. Quando a janela fecha, a superfície MCP deixa de existir, e a seção de configurações precisa avisar isso. Também é um transporte que o Claude Desktop não aceita para servidor local sem um adaptador de terceiros.</p>
-      <p>Com a mudança, o cliente lança <code>Finsight --mcp</code> e conversa com ele por stdio, que é o transporte que a spec do MCP recomenda para servidores locais e que os sete agentes pesquisados suportam nativamente. Esse processo decide, a cada chamada, se executa no próprio grafo ou se encaminha para a janela. O servidor HTTP continua existindo, agora como backend do encaminhamento e como caminho avançado.</p>
+      <p>Com a mudança, o cliente lança <code>Finsight --mcp</code> e conversa com ele por stdio, que é o transporte que a spec do MCP recomenda para servidores locais e que os sete agentes pesquisados suportam nativamente. Esse processo decide, a cada chamada, se executa no próprio grafo ou se encaminha para a janela. O servidor HTTP continua existindo, agora como backend do encaminhamento e como a segunda das duas formas de conectar que a seção oferece.</p>
     </div>
     <figure>
       <div class="figwrap">
@@ -642,11 +647,12 @@
   <section>
     <h2>O que o usuário configura</h2>
     <div class="prose">
-      <p>A seção do servidor nas configurações passa a mostrar o comando como instrução principal, com o caminho absoluto do executável desta instalação. O caminho vem de <code>jpackage.app-path</code>, uma propriedade que o launcher empacotado define, verificada no binário gerado. O endereço HTTP e o token continuam disponíveis, recolhidos, para quem preferir <code>url</code> com o app aberto.</p>
+      <p>A seção do servidor nas configurações passa a mostrar o comando como instrução principal, com o caminho absoluto do executável desta instalação. O caminho vem de <code>jpackage.app-path</code>, uma propriedade que o launcher empacotado define, verificada no binário gerado. O endereço HTTP e o token continuam disponíveis, na outra de duas abas lado a lado, para quem preferir <code>url</code>; a seção abre na do comando. Como abas apresentam os dois caminhos como iguais, cada uma diz o que a distingue: o comando responde com o app aberto ou fechado, o endereço só com ele aberto.</p>
     </div>
 
     <div class="settings-mock" aria-label="Como a seção de configurações vai apresentar a conexão">
       <div class="row"><span class="k">Servidor MCP</span><span class="pill">habilitado</span></div>
+      <div class="tabs"><span class="on">Comando</span><span>Endereço HTTP</span></div>
       <div class="row"><span class="k">Comando para o cliente</span><span class="btn">copiar</span></div>
       <pre><code>{
   "mcpServers": {
@@ -659,11 +665,10 @@
       <div class="row"><span class="k">Claude Code, em uma linha</span><span class="btn">copiar</span></div>
       <pre><code>claude mcp add finsight -- "/Applications/Finsight.app/Contents/MacOS/Finsight" --mcp</code></pre>
       <p class="note">Funciona com o app aberto ou fechado. Qualquer cliente que fale MCP por stdio conecta com esta configuração.</p>
-      <details>
-        <summary>Avançado: endereço HTTP e token, para clientes que usam url com o app aberto</summary>
-        <pre><code>{ "type": "http", "url": "http://127.0.0.1:8477/mcp",
+      <p class="note">Na aba <em>Endereço HTTP</em>, para clientes que usam <code>url</code>: o endereço e o
+      token, que só respondem com o app aberto. O token fica mascarado até o usuário pedir para vê-lo.</p>
+      <pre><code>{ "type": "http", "url": "http://127.0.0.1:8477/mcp",
   "headers": { "Authorization": "Bearer ••••••••" } }</code></pre>
-      </details>
     </div>
 
     <h3>Onde o executável fica em cada sistema</h3>

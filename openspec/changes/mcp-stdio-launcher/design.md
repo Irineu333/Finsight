@@ -206,9 +206,13 @@ como fallback em desenvolvimento. No macOS o caminho é o binário dentro do `.a
 (`Finsight.app/Contents/MacOS/Finsight`); no Windows, `Finsight.exe` na instalação por usuário;
 no Linux, `/opt/finsight/bin/Finsight`.
 
-O bloco HTTP com endereço e token continua disponível, recolhido sob "avançado", para clientes
-que preferem `url` com a janela aberta. A frase "só responde com o app aberto" sai; entra "funciona
-com o app aberto ou fechado".
+O bloco HTTP com endereço e token continua disponível, na outra de duas **abas lado a lado**, para
+clientes que preferem `url`; a seção abre na do comando. Abas desenham os dois caminhos como
+iguais, então a diferença entre eles é dita em texto: a aba do comando diz que funciona com o app
+aberto ou fechado, e a do endereço, que só responde com o app aberto. Onde não há comando a
+oferecer — um processo que não sabe dizer o que o lançou —, não há abas: o endereço é exibido
+direto, porque uma aba só não é escolha alguma. A frase "só responde com o app aberto" deixa de
+valer para a superfície e passa a valer para o caminho a que se aplica.
 
 O controlador expõe o comando (`launchCommand`) porque a seção não deve descobrir propriedades do
 sistema; é o mesmo padrão pelo qual ela lê a porta e o token dele.
@@ -222,6 +226,10 @@ sistema; é o mesmo padrão pelo qual ela lê a porta e o token dele.
   lida com `sync()`: servidor **desabilitado** → recusa na hora dizendo que está desligado no app;
   **habilitado** (janela abrindo) → tenta conectar por até 5 s antes de responder ao cliente que o
   app está iniciando e a chamada deve ser repetida.
+- **A espera é da chamada, não da lista.** Um `tools/call` é um ato, e só o dono do banco pode
+  executá-lo: esperar é a única alternativa a agir sem poder. Um `tools/list` é respondível aqui —
+  as mesmas ferramentas, os mesmos eixos —, então uma janela que ainda não responde é listada por
+  este processo na hora, e o cliente é avisado de que a lista mudou assim que a janela é alcançada.
 - Com a janela fechada no meio da sessão, a chamada que estava em voo pela ponte volta como erro
   ao cliente; a seguinte já é local.
 

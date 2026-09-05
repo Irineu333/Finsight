@@ -76,6 +76,13 @@ cada caso nomeado abaixo foram reconferidos no disco, o resto não.*
   (installments - 1)) * 100) / 100` põe o resíduo de arredondamento na **primeira** parcela,
   enquanto `AddInstallmentUseCaseImpl.kt:177-180` o põe na **última** (`if (index == count - 1)
   share + remainder else share`), com a KDoc de produção dizendo por quê
+- `WorldUpdateCreditCard` (`AgentWorldWrites.kt:462`) — `ensure(new.name.isNotBlank())` é a única
+  regra que ele aplica, e o `block(old)` que a antecede está fora de qualquer `catch`, enquanto
+  `UpdateCreditCardUseCaseImpl.kt:28` aplica o bloco **dentro** de um. A diferença não é de
+  predicado, é da forma do erro: os quatro invariantes de `CreditCard.init` (nome vazio, limite
+  negativo, `closingDay` e `dueDay` fora de `1..31`) chegam à produção como `Left` e ao dublê como
+  exceção que escapa do `Either`. Um teste de protocolo sobre `update_card` com limite negativo
+  afirmaria a recusa genérica do journal onde o app responde com a mensagem do domínio
 
 ### O precedente que derruba a hipótese de alcance
 

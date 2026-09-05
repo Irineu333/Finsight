@@ -2,6 +2,7 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCaseImpl
 import com.neoutils.finsight.ui.screen.report.config.BuildReportViewerParamsUseCase
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
 import com.neoutils.finsight.ui.screen.report.render.HtmlReportDocumentRenderer
@@ -18,8 +19,8 @@ val reportModule = module {
 
     factory<ReportDocumentRenderer> { HtmlReportDocumentRenderer() }
 
-    factory {
-        CalculateReportStatsUseCase(
+    factory<CalculateReportStatsUseCase> {
+        CalculateReportStatsUseCaseImpl(
             entryRepository = get(),
             accountRepository = get(),
             creditCardRepository = get(),

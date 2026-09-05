@@ -4,6 +4,12 @@ import com.neoutils.finsight.database.mapper.BudgetMapper
 import com.neoutils.finsight.database.repository.BudgetRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.CreateBudgetUseCase
+import com.neoutils.finsight.domain.usecase.CreateBudgetUseCaseImpl
+import com.neoutils.finsight.domain.usecase.DeleteBudgetUseCase
+import com.neoutils.finsight.domain.usecase.DeleteBudgetUseCaseImpl
+import com.neoutils.finsight.domain.usecase.UpdateBudgetUseCase
+import com.neoutils.finsight.domain.usecase.UpdateBudgetUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.feature.budgets.api.BudgetsEntry
 import com.neoutils.finsight.feature.budgets.impl.BudgetsEntryImpl
@@ -26,6 +32,23 @@ val budgetsModule = module {
 
     factory { CalculateBudgetProgressUseCase(entryRepository = get(), consolidateMoney = get()) }
     factory { ValidateBudgetTitleUseCase(repository = get()) }
+    factory<CreateBudgetUseCase> {
+        CreateBudgetUseCaseImpl(
+            budgetRepository = get(),
+            validateBudgetTitle = get(),
+        )
+    }
+    factory<UpdateBudgetUseCase> {
+        UpdateBudgetUseCaseImpl(
+            budgetRepository = get(),
+            validateBudgetTitle = get(),
+        )
+    }
+    factory<DeleteBudgetUseCase> {
+        DeleteBudgetUseCaseImpl(
+            budgetRepository = get(),
+        )
+    }
 
     single<BudgetsEntry> { BudgetsEntryImpl() }
 
@@ -54,7 +77,8 @@ val budgetsModule = module {
         BudgetFormViewModel(
             formatter = get(),
             budget = it.getOrNull(),
-            budgetRepository = get(),
+            createBudget = get(),
+            updateBudget = get(),
             getAccountCurrencies = get(),
             currencyRepository = get(),
             categoryRepository = get(),
@@ -63,14 +87,16 @@ val budgetsModule = module {
             modalManager = get(),
             debounceManager = get(),
             analytics = get(),
+            crashlytics = get(),
         )
     }
     viewModel {
         DeleteBudgetViewModel(
             budget = it.get(),
-            budgetRepository = get(),
+            deleteBudgetUseCase = get(),
             modalManager = get(),
             analytics = get(),
+            crashlytics = get(),
         )
     }
 }

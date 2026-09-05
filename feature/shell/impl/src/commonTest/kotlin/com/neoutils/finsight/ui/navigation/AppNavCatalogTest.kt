@@ -87,6 +87,21 @@ class AppNavCatalogTest {
     }
 
     @Test
+    fun `no route is claimed by two destinations`() {
+        val duplicates = destinations
+            .map { it.route }
+            .groupingBy { it::class.simpleName }
+            .eachCount()
+            .filterValues { it > 1 }
+
+        assertTrue(
+            duplicates.isEmpty(),
+            "two destinations claiming the same route make the highlighted item depend on catalog " +
+                "order rather than on where the user is: $duplicates"
+        )
+    }
+
+    @Test
     fun `no two destinations answer to the same tag`() {
         val duplicates = destinations.names
             .groupingBy { it }

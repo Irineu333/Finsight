@@ -6,6 +6,10 @@ import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCaseImpl
+import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
+import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCaseImpl
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransactionUseCaseImpl
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.impl.TransactionsEntryImpl
 import com.neoutils.finsight.ui.model.LedgerTransactionFacadeResolver
@@ -43,6 +47,22 @@ val transactionsModule = module {
         )
     }
 
+    factory<UpdateTransactionUseCase> {
+        UpdateTransactionUseCaseImpl(
+            transactionRepository = get(),
+            buildTransaction = get(),
+        )
+    }
+
+    factory<RegisterTransactionUseCase> {
+        RegisterTransactionUseCaseImpl(
+            transactionRepository = get(),
+            buildTransaction = get(),
+            addInstallment = get(),
+            startRecurringFromTransaction = get(),
+        )
+    }
+
     single<TransactionsEntry> { TransactionsEntryImpl() }
 
     viewModel {
@@ -74,27 +94,23 @@ val transactionsModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            transactionRepository = get(),
             accountRepository = get(),
-            buildTransactionUseCase = get(),
-            addInstallmentUseCase = get(),
+            registerTransaction = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
             validateTransactionForm = get(),
-            startRecurringFromTransaction = get(),
             clock = get(),
         )
     }
     viewModel {
         EditTransactionViewModel(
             transaction = it.get(),
-            transactionRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             accountRepository = get(),
-            buildTransactionUseCase = get(),
+            updateTransaction = get(),
             validateTransactionForm = get(),
             formatter = get(),
             modalManager = get(),

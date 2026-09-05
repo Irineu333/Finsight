@@ -14,6 +14,8 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.InvoiceUi
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
@@ -59,8 +61,15 @@ class DashboardAccountsOverviewTest {
         getPendingRecurringUseCase = GetPendingRecurringUseCase(GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase())),
         getUnhandledRecurringUseCase = GetUnhandledRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
-            override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
-                throw NotImplementedError()
+            override suspend fun toUi(
+                invoice: Invoice,
+                cardInvoices: List<Invoice>,
+                limit: Limit,
+            ): InvoiceUi = throw NotImplementedError()
+        },
+        calculateAvailableLimit = object : CalculateAvailableLimitUseCase {
+            override suspend fun invoke(creditCardIds: Collection<Long>): Map<Long, Limit> =
+                emptyMap()
         },
         entryRepository = ThrowingEntryRepository,
         accountRepository = FakeAccountRepository(),
@@ -225,6 +234,7 @@ private object ThrowingEntryRepository : IEntryRepository {
     // Month-wide asset income/expense the concrete-balance widget reads (spec `ledger-reporting`):
     // March holds income 100, expense 30; other months are empty — and "empty" is the
     // figure with no currency at all, which is not the same fact as zero in one.
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) =
         if (month == YearMonth(2026, 3)) {
             com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency(

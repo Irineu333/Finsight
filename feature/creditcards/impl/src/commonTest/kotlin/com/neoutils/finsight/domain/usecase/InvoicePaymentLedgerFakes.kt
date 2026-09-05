@@ -204,6 +204,8 @@ internal class LedgerTransactionRepository(
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = notUnderTest()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = notUnderTest()
     override suspend fun getAllTransactions(): List<Transaction> = notUnderTest()
+    override suspend fun getTransactionsBetween(startDate: LocalDate, endDate: LocalDate): List<Transaction> = throw NotImplementedError()
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = notUnderTest()
     override suspend fun deleteTransactionById(id: Long) = notUnderTest()
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = notUnderTest()
@@ -241,9 +243,14 @@ internal class LedgerEntryRepository(
     override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = notUnderTest()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = notUnderTest()
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = notUnderTest()
-    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = notUnderTest()
+    // The same answer as the scalar read above, one row per dimension asked about — which
+    // is what the grouped read *is*, and a fake that refused it would only be refusing the
+    // batch spelling of a figure it already knows.
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> =
+        dimensionIds.associateWith { dimensionOwedByCurrency(it) }
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = notUnderTest()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = notUnderTest()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = notUnderTest()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,

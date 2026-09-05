@@ -205,10 +205,15 @@ interface EntryDao {
     suspend fun getByTransactionId(transactionId: Long): List<EntryEntity>
 
     /**
-     * The legs of several transactions at once — the read that keeps a batch of
-     * transactions from costing one entry query per row.
+     * The legs of several transactions in one read — what keeps a batch of transactions
+     * from costing one entry query per row — grouped by the transaction they balance
+     * under and ordered within it as [getByTransactionId] orders them.
+     *
+     * One host parameter is bound per identity, so the list a caller passes is bounded
+     * by SQLite's own ceiling on them. Chunking to stay under it belongs to the caller
+     * (`TransactionRepository`), which is why this stays the plain query it looks like.
      */
-    @Query("SELECT * FROM entries WHERE transactionId IN (:transactionIds) ORDER BY id ASC")
+    @Query("SELECT * FROM entries WHERE transactionId IN (:transactionIds) ORDER BY transactionId ASC, id ASC")
     suspend fun getByTransactionIds(transactionIds: Collection<Long>): List<EntryEntity>
 
     /** Entries of a transaction, each hydrated with its account — a complete leg. */

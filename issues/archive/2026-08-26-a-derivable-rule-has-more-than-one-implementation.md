@@ -2,6 +2,7 @@
 area: transversal
 severity: low
 type: data
+verdict: fixed
 ---
 
 # Regras deriváveis com dono declarado têm mais de uma implementação

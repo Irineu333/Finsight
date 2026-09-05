@@ -3,11 +3,11 @@
 package com.neoutils.finsight.ui.modal.accountForm
 
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
+import com.neoutils.finsight.domain.usecase.CreateAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
-import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.SuggestAccountIconUseCase
-import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.accounts.FakeCategoryRepository
@@ -51,15 +51,15 @@ class AccountFormIconSuggestionTest {
             suggestAccountIcon = suggestAccountIcon,
             baseCurrencyRepository = StubBaseCurrency("BRL"),
             currencyRepository = StubCurrencies(),
-            createAccountUseCase = CreateAccountUseCase(
+            createAccountUseCase = CreateAccountUseCaseImpl(
                 repository = repository,
                 validateAccountName = ValidateAccountNameUseCase(repository),
-                setDefaultAccount = SetDefaultAccountUseCase(repository),
+                setDefaultAccount = SetDefaultAccountUseCaseImpl(repository),
             ),
-            updateAccountUseCase = UpdateAccountUseCase(
+            updateAccountUseCase = UpdateAccountUseCaseImpl(
                 repository = repository,
                 validateAccountName = ValidateAccountNameUseCase(repository),
-                setDefaultAccount = SetDefaultAccountUseCase(repository),
+                setDefaultAccount = SetDefaultAccountUseCaseImpl(repository),
             ),
             ensureYieldCategory = EnsureYieldCategoryUseCase(FakeCategoryRepository()),
             modalManager = ModalManager(),

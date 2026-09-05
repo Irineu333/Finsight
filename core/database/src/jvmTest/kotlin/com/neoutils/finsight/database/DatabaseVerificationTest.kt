@@ -176,7 +176,7 @@ class DatabaseVerificationTest {
     @Test
     fun `a schema version newer than this app is refused with its own cause`() = runBlocking {
         val file = goodBackup("newer")
-        onFile(file) { it.execSQL("PRAGMA user_version = 15") }
+        onFile(file) { it.execSQL("PRAGMA user_version = ${AppSchema.VERSION + 1}") }
 
         assertEquals(
             CandidateRejection.SCHEMA_TOO_NEW,
@@ -576,7 +576,7 @@ class DatabaseVerificationTest {
 
         assertNull(accepted.origin, "a file this old predates the stamp, and is taken anyway")
         assertEquals(
-            14L,
+            AppSchema.VERSION.toLong(),
             BundledSQLiteDriver().open(file.absolutePath).use { connection ->
                 val statement = connection.prepare("PRAGMA user_version")
                 try {

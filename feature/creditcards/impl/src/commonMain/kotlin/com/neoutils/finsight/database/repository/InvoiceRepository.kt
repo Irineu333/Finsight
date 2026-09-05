@@ -205,6 +205,29 @@ class InvoiceRepository(
         }
     }
 
+    /**
+     * One query for the invoices and one for the cards that denominate them, whatever
+     * the number of cards asked about. A card whose row is gone drops out rather than
+     * failing the read, which is the same degradation [getAllInvoices] would show.
+     */
+    override suspend fun getUnpaidInvoicesByCreditCards(
+        creditCardIds: Collection<Long>,
+    ): Map<Long, List<Invoice>> {
+        if (creditCardIds.isEmpty()) return emptyMap()
+
+        val creditCards = creditCardRepository
+            .getAllCreditCardsIncludingClosed()
+            .associateBy { it.id }
+
+        return dao.getUnpaidInvoicesByCreditCards(creditCardIds)
+            .mapNotNull { entity ->
+                creditCards[entity.creditCardId]?.let { creditCard ->
+                    mapper.toDomain(entity = entity, creditCard = creditCard)
+                }
+            }
+            .groupBy { it.creditCard.id }
+    }
+
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? {
         val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return null
 

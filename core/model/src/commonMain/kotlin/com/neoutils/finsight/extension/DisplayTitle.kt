@@ -27,6 +27,18 @@ fun displayTitleOrNull(title: String?, category: Category?): String? =
         ?: category?.name?.takeIf { it.isNotBlank() }
 
 /**
+ * The same chain with a **last resort**, for a surface that must print something.
+ *
+ * The `"Untitled"` literal is not localized: it is the fallback for a row with no title
+ * and no category, which the form makes hard to reach
+ * (`BuildTransactionError.TitleOrCategoryRequired` demands one or the other). The agent
+ * surface is what needs it — a flat DTO whose `title` is not nullable — while every
+ * screen has [operationName] to name the operation by its form instead.
+ */
+fun displayTitleOf(title: String?, category: Category?): String =
+    displayTitleOrNull(title, category) ?: "Untitled"
+
+/**
  * The name of an operation, whole: its title, then its category, then its **form**.
  *
  * The third link is a total function of the nature — which is itself derived from the

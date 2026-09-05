@@ -105,10 +105,22 @@ class ValidateTransactionFormUseCaseTest {
         )
     }
 
+    /**
+     * Zero and less than zero are one rule, because they are one mistake: `type` says the
+     * direction, so a negative amount is the same posting written on the other side of the
+     * ledger — an expense of minus forty is an income of forty, and the balance rises.
+     */
     @Test
-    fun `an amount is required and cannot be zero`() {
+    fun `an amount is required and has to be greater than zero`() {
         assertEquals(BuildTransactionError.AmountRequired, validate(form(amount = "")).leftOrNull())
-        assertEquals(BuildTransactionError.AmountZero, validate(form(amount = "0,00")).leftOrNull())
+        assertEquals(
+            BuildTransactionError.AmountNotPositive,
+            validate(form(amount = "0,00")).leftOrNull(),
+        )
+        assertEquals(
+            BuildTransactionError.AmountNotPositive,
+            validate(form(amount = "-4000")).leftOrNull(),
+        )
     }
 
     @Test

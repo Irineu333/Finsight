@@ -13,12 +13,11 @@ import com.neoutils.finsight.resources.transaction_error_generic
 import com.neoutils.finsight.util.UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import arrow.core.Either.Companion.catch
-import arrow.core.flatMap
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
+import com.neoutils.finsight.domain.model.TransactionRegistration
 import com.neoutils.finsight.domain.model.invoiceWindowFor
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
@@ -27,11 +26,10 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateInstallments
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.CreateTransaction
+import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.repository.*
+import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
 import com.neoutils.finsight.feature.transactions.api.TransactionOrigin
-import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
-import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
-import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCase
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.isAccept
@@ -50,15 +48,12 @@ class AddTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
-    private val buildTransactionUseCase: BuildTransactionUseCase,
-    private val addInstallmentUseCase: AddInstallmentUseCase,
+    private val registerTransaction: RegisterTransactionUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
     private val validateTransactionForm: ValidateTransactionFormUseCase,
-    private val startRecurringFromTransaction: StartRecurringFromTransactionUseCase,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -328,50 +323,39 @@ class AddTransactionViewModel(
         account = account,
     )
 
+    /**
+     * Hands the filled form over and reports what came back.
+     *
+     * What the form describes — an instalment plan, a template opened by its first
+     * cycle, or a plain transaction — is not decided here: `RegisterTransactionUseCase`
+     * owns that, and the sheet only says whether the user asked for a repetition. The
+     * event logged is chosen from the answer rather than from the form, so the screen
+     * never restates the rule it just delegated.
+     */
     private fun submit() = viewModelScope.launch {
         val form = uiState.value.form
 
-        if (form.installments > 1) {
-            addInstallmentUseCase(
-                form = form,
-                installments = form.installments,
-            ).onLeft {
-                crashlytics.recordException(it)
-                modalManager.showError(it.toUiMessage())
-            }.onRight {
-                analytics.logEvent(CreateInstallments(form, count = form.installments))
-                modalManager.dismiss()
-            }
-
-            return@launch
-        }
-
-        // Read off the input rather than the state: the state is derived and lands a
-        // frame later, and a submit right after the toggle would read the old answer.
-        val isRecurring = input.value.isRecurring
-
-        buildTransactionUseCase(form)
-            .flatMap { intent ->
-                if (isRecurring) {
-                    // The intent is completed, never rebuilt: it already carries the
-                    // invoice the user picked, and how a recurring is born is the
-                    // recurring feature's rule, consumed here.
-                    startRecurringFromTransaction(
-                        form = form.asRecurringOn(intent.date),
-                        firstCycle = intent,
+        registerTransaction(
+            form = form,
+            // Read off the input rather than the state: the state is derived and lands a
+            // frame later, and a submit right after the toggle would read the old answer.
+            isRecurring = input.value.isRecurring,
+        ).onLeft {
+            crashlytics.recordException(it)
+            modalManager.showError(it.toUiMessage())
+        }.onRight { registration ->
+            analytics.logEvent(
+                when (registration) {
+                    is TransactionRegistration.Installments -> CreateInstallments(
+                        form = form,
+                        count = registration.transactions.size,
                     )
-                } else {
-                    catch {
-                        transactionRepository.createTransaction(intent)
-                    }
+
+                    is TransactionRegistration.Single -> CreateTransaction(form)
                 }
-            }.onLeft {
-                crashlytics.recordException(it)
-                modalManager.showError(it.toUiMessage())
-            }.onRight {
-                analytics.logEvent(CreateTransaction(form))
-                modalManager.dismiss()
-            }
+            )
+            modalManager.dismiss()
+        }
     }
 
     /**
@@ -383,6 +367,7 @@ class AddTransactionViewModel(
         is ClosedAccountException -> error.toUiText()
         is UnbalancedTransactionException -> error.toUiText()
         is RecurringException -> error.toUiText()
+        is InstallmentException -> error.toUiText()
         else -> UiText.Res(Res.string.transaction_error_generic)
     }
 }

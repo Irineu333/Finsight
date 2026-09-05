@@ -14,23 +14,16 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
-import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.RegisterTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransactionFormUseCaseImpl
 import com.neoutils.finsight.ui.component.ErrorModal
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
-import com.neoutils.finsight.ui.modal.FakeTransactionRepository
-import com.neoutils.finsight.domain.usecase.StartRecurringFromTransactionUseCase
-import com.neoutils.finsight.ui.modal.RecordingRecurringRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -163,7 +156,7 @@ class AddTransactionSubmitTest {
         val crashlytics = FakeCrashlytics()
         val viewModel = viewModel(
             today = LocalDate(2026, 3, 10),
-            addInstallmentUseCase = Refused,
+            registerTransaction = Refused,
             modalManager = modalManager,
             crashlytics = crashlytics,
         )
@@ -193,7 +186,7 @@ class AddTransactionSubmitTest {
 
     private fun viewModel(
         today: LocalDate,
-        addInstallmentUseCase: AddInstallmentUseCase = NotWritten,
+        registerTransaction: RegisterTransactionUseCase = NotWritten,
         modalManager: ModalManager = ModalManager(),
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = AddTransactionViewModel(
@@ -202,17 +195,11 @@ class AddTransactionSubmitTest {
         categoryRepository = FakeCategoryRepository,
         creditCardRepository = FakeCreditCardRepository,
         invoiceRepository = FakeInvoiceRepository,
-        transactionRepository = FakeTransactionRepository(),
         accountRepository = FakeAccountRepository(account),
-        buildTransactionUseCase = NotWritten,
-        addInstallmentUseCase = addInstallmentUseCase,
+        registerTransaction = registerTransaction,
         modalManager = modalManager,
         analytics = FakeAnalytics,
         crashlytics = crashlytics,
-        startRecurringFromTransaction = StartRecurringFromTransactionUseCase(
-            repository = RecordingRecurringRepository(),
-            clock = FixedClock(today),
-        ),
         validateTransactionForm = ValidateTransactionFormUseCaseImpl(clock = FixedClock(today)),
         clock = FixedClock(today),
     )
@@ -229,14 +216,16 @@ private object FakeAnalytics : Analytics {
 }
 
 /** Nothing here writes: these tests stop at the submit being offered. */
-private object NotWritten : BuildTransactionUseCase, AddInstallmentUseCase {
-    override suspend operator fun invoke(form: TransactionForm) = throw NotImplementedError()
-    override suspend operator fun invoke(form: TransactionForm, installments: Int) = throw NotImplementedError()
+private object NotWritten : RegisterTransactionUseCase {
+    override suspend operator fun invoke(
+        form: TransactionForm,
+        isRecurring: Boolean,
+    ) = throw NotImplementedError()
 }
 
 /** A write boundary that refuses, the way a closed invoice makes it refuse. */
-private object Refused : AddInstallmentUseCase {
-    override suspend operator fun invoke(form: TransactionForm, installments: Int) =
+private object Refused : RegisterTransactionUseCase {
+    override suspend operator fun invoke(form: TransactionForm, isRecurring: Boolean) =
         Either.Left(IllegalStateException("closed invoice"))
 }
 
@@ -285,6 +274,7 @@ private object FakeInvoiceRepository : IInvoiceRepository {
     override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+    override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> = throw NotImplementedError()
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
     override suspend fun getInvoiceById(id: Long): Invoice? = throw NotImplementedError()
     override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()

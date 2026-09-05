@@ -35,6 +35,15 @@ está `RecurringException(RecurringError.CURRENCY_MISMATCH)`, lançado por
 `recurring_error_currency_mismatch` — a mensagem existe, escrita nos dois idiomas, e a tela
 não a pede.
 
+E não é um caso: `RecurringError.toUiText()` é exaustivo em **oito** membros, com as oito
+chaves nos dois idiomas, e **nenhum consumidor** — `grep -rn "toUiText" feature/recurring/`
+não devolve nada. `SkipRecurringViewModel.skip()` monta o mesmo genérico fixo, e
+`SkipRecurringUseCaseImpl` lança `RecurringException(RecurringError.NOT_FOUND)`, que tem
+tradução própria. A feature consome um mapper — `toRecurringRetireUiMessage()`, nas modais de
+arquivar e apagar — e é o de outro domínio de erro. O efeito é que cada correção que
+acrescenta uma recusa a este domínio escreve uma mensagem que ninguém vai ler, e passa na
+revisão porque a convenção de Error Types está cumprida.
+
 **3. Os dois lados existem e ninguém os ligou.** `BuildTransactionError.toUiText()` é
 exaustivo, com 13 ramos e 13 chaves em pt e en. **Nenhum chamador em produção.** Os dois
 `toUiMessage()` que precisariam dele — `AddTransactionViewModel` e `EditTransactionViewModel`
@@ -67,16 +76,18 @@ pela porta com a resposta velha e produzir o `BuildTransactionException` que nin
 - padrão certo, para comparação: `DeleteAccountViewModel.toUiMessage()`,
   `ReopenInvoiceViewModel.toUiMessage()`, `AddInstallmentViewModel.submit()` — os três
   perguntam ao erro
-- fora da conta, por ser legítimo: `SkipRecurringViewModel.skip()` também usa o genérico
-  fixo, mas `SkipRecurringUseCase` só falha por `require`/banco — não há causa tipada a
-  perder
+- `feature/recurring/impl/.../skipRecurring/SkipRecurringViewModel.kt` — `skip()`, o mesmo
+  genérico fixo; e `SkipRecurringUseCaseImpl`, que lança
+  `RecurringException(RecurringError.NOT_FOUND)` antes dos dois `require`
+- `core/model/.../domain/error/RecurringError.kt` — oito membros, `toUiText()` exaustivo,
+  `grep -rn "toUiText" feature/recurring/` vazio
 
 ## Consequência
 
 "Tente de novo em instantes" é falso para toda recusa desta lista: a condição não passa com
 o tempo. O usuário repete a ação, obtém o mesmo nada, e não descobre o passo que faltava —
 mudar a data, reduzir o valor, ajustar o saldo da fatura antes. As 26 traduções de
-`BuildTransactionError` são trabalho pago e não entregue.
+`BuildTransactionError` e as 16 de `RecurringError` são trabalho pago e não entregue.
 
 ## Sugestão
 

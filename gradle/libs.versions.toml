@@ -14,7 +14,9 @@ composeMultiplatform = "1.10.1"
 composeMaterial3Adaptive = "1.2.0"
 junit = "4.13.2"
 kotlin = "2.3.10"
-kotlinx-coroutines = "1.10.2"
+# 1.11.0 because `kotlin-sdk-core` requires it, and Gradle resolves to the highest
+# version anyway: pinning it lower here would only hide which version the app runs.
+kotlinx-coroutines = "1.11.0"
 kotlinx-datetime = "0.7.1"
 
 room = "2.8.4"
@@ -24,15 +26,27 @@ koin = "4.1.1"
 koin-compose = "4.1.1"
 
 multiplatform-settings = "1.3.0"
-kotlinx-serialization-json = "1.8.0"
+
+# 1.11.0 for the same reason as coroutines: `kotlin-sdk-core` requires it.
+kotlinx-serialization-json = "1.11.0"
 
 # Material 3 settings tiles, multiplatform. Pinned to 2.x: the 3.x series stopped
 # publishing the `iosX64` target, which this project still compiles.
 compose-settings = "2.26.0"
 
-# A última 3.4.x — a mais recente cujo stdlib (2.3.0) não passa à frente do compilador
-# do projeto (Kotlin 2.3.10). Vive num módulo só, `feature/settings/impl` (design D11).
+# The last 3.4.x — the most recent whose stdlib (2.3.0) does not run ahead of the project's
+# compiler (Kotlin 2.3.10), and the exact version `kotlin-sdk-server` requires.
+#
+# Two modules use it, at opposite ends of the wire, and neither may become the other:
+# `feature/settings/impl` is the only **client**, reaching the remote rate source and never
+# reading through it (design D11); `feature/mcp/impl` is the only **server**, and only in
+# `jvmMain`, because the desktop process is the only one that owns a socket (design D2).
 ktor = "3.4.3"
+
+# The MCP server SDK, pinned without a range on purpose: between 0.14.0 and 0.15.0 the Ktor
+# it requires moved a minor (3.4.3 → 3.5.1) and its stdlib passed the project's compiler, so
+# which version is used is a decision to take, never a `+` to accept.
+mcp-kotlin-sdk = "0.14.0"
 
 kotlinSerialization = "2.3.10"
 
@@ -85,6 +99,18 @@ ktor-serialization-kotlinxJson = { module = "io.ktor:ktor-serialization-kotlinx-
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+
+# CIO, not Netty: a loopback server for one client on the same machine has no use for
+# Netty's thread pools and native transports, and every jar it drags goes into the desktop
+# distribution.
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
+
+mcp-kotlin-sdk-server = { module = "io.modelcontextprotocol:kotlin-sdk-server", version.ref = "mcp-kotlin-sdk" }
+
+# The same SDK from the other end of the wire, at the same version because it is the same
+# release: the app speaks the protocol to itself, a session lit by one process forwarding to
+# the server the window already holds.
+mcp-kotlin-sdk-client = { module = "io.modelcontextprotocol:kotlin-sdk-client", version.ref = "mcp-kotlin-sdk" }
 
 compose-material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "composeMaterial3Adaptive" }
 

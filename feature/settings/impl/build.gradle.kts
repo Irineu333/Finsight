@@ -19,10 +19,14 @@ kotlin {
 
             implementation(projects.feature.settings.api)
 
-            // The first edge this module draws to another feature. Settings is the door
-            // to backup because backup is not a tab and holds no place in the navigation
-            // catalog, and the door only needs the route — the api, never the impl, which
-            // the dependency rules would refuse anyway.
+            // The integrations group: Settings hosts the MCP section — it names its route and builds
+            // its graph inside its own, through the feature's entry point — and reads the platform
+            // axis that decides whether the door into it is offered at all.
+            implementation(projects.feature.mcp.api)
+
+            // Settings is the door to backup because backup is not a tab and holds no place
+            // in the navigation catalog, and the door only needs the route — the api, never
+            // the impl, which the dependency rules would refuse anyway.
             implementation(projects.feature.backup.api)
 
             implementation(libs.arrow.core)

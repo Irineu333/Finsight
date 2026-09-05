@@ -25,12 +25,32 @@ class FakeCrashlytics : Crashlytics {
     }
 }
 
-class FakeTransactionRepository : ITransactionRepository {
+class FakeTransactionRepository(
+    stored: List<Transaction> = emptyList(),
+) : ITransactionRepository {
 
     private val byId = MutableSharedFlow<Transaction?>(replay = 1)
 
+    /** What the store already holds, for the reads a use case does before it writes. */
+    private val stored = stored.associateByTo(mutableMapOf()) { it.id }
+
     /** What was written straight through this repository, rather than by a cycle. */
     val created = mutableListOf<TransactionIntent>()
+
+    /** Every rewrite this repository was asked for, in the order they arrived. */
+    val rewritten = mutableListOf<Rewrite>()
+
+    /** The identities this repository was asked to remove. */
+    val deleted = mutableListOf<Long>()
+
+    /** One call of [updateTransaction], kept whole so a test can read what the rewrite carried. */
+    data class Rewrite(
+        val id: Long,
+        val title: String?,
+        val date: LocalDate,
+        val legs: List<TransactionLeg>,
+        val contra: ContraLeg?,
+    )
 
     fun emit(transaction: Transaction?) {
         byId.tryEmit(transaction)
@@ -45,20 +65,35 @@ class FakeTransactionRepository : ITransactionRepository {
         accountId: Long?,
     ): Flow<List<Transaction>> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = throw NotImplementedError()
+
     override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
         throw NotImplementedError()
 
-    override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+    override suspend fun getTransactionById(id: Long): Transaction? = stored[id]
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
+        ids.filterTo(mutableSetOf()) { it in stored }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         created += intent
         return transaction(id = created.size.toLong())
     }
 
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) = throw NotImplementedError()
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) {
+        rewritten += Rewrite(id, title, date, legs, contra)
+        // The rewrite is total in the real repository, so what a later read sees here is the
+        // edited row and not the one the test seeded.
+        stored[id]?.let { stored[id] = it.copy(title = title, date = date) }
+    }
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
 
-    override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
+    override suspend fun deleteTransactionById(id: Long) {
+        deleted += id
+    }
 }
 
 /**

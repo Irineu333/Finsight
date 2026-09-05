@@ -36,6 +36,9 @@ maestro test .maestro                                      # Maestro E2E suite (
 - **Categories**: category management with icons, spending tracking
 - **Budgets**: budget progress per category
 - **Settings**: base currency and the local exchange-rate archive
+- **MCP**: the local server an AI agent reaches the app through — the switch, the four permission
+  axes, the token and the activity log, in two modes of the one executable (the window's socket and
+  `--mcp` over stdio)
 
 ## Module structure (feature api/impl + core + app)
 
@@ -55,8 +58,9 @@ enforced mechanically by convention plugins in `build-logic`
   markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
   core models + shared UI models — never names a feature), `database` (the facade entities/DAOs,
-  `AppDatabase` and every migration + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
-  no-op services).
+  `AppDatabase` and every migration + shared mappers, plus `DatabaseOwnership` on `jvmMain` — the
+  OS file lock that decides which process may open the archive), `analytics`/`crashlytics`/`auth`
+  (Firebase/no-op services).
 - **`feature/<name>/api`** — routes (`@Serializable`), repository interfaces, public
   use-case interfaces, the `<Name>Entry` UI entry point. Depends only on `:core:*`.
 - **`feature/<name>/impl`** — screens, ViewModels, modals, use cases, repository impls,
@@ -64,21 +68,26 @@ enforced mechanically by convention plugins in `build-logic`
   any `feature:*:api` and `:core:*`.
 - **`app/`** — the app, split by responsibility:
   - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
-    `impl`s): `App` (theme, `LocalNavController`, `ModalManagerHost`, invokes `HomeChromeHost`),
+    `impl`s): `App` (theme, `LocalNavController`, `ModalManagerHost`, invokes `ChromeHost`),
     `AppNavHost` (only `<name>Graph()` calls), Koin aggregation (`appModules`). Declares no
     route, no `Scaffold`, no chrome. Under the `finsight.app.shared` convention plugin.
   - **`:app:android`** — `com.android.application` (non-KMP): `MainActivity`, `AndroidApp`
     (startKoin), Manifest, mipmaps, signing, google-services, crashlytics, versionCode/Name.
-  - **`:app:desktop`** — `kotlin("jvm")`: `main.kt` + `compose.desktop` `nativeDistributions`.
+  - **`:app:desktop`** — `kotlin("jvm")`: `main.kt` dispatching on the arguments — `--mcp` speaks
+    MCP over stdio with no window, anything else opens the window — + `compose.desktop`
+    `nativeDistributions`.
   - **`:app:ios`** — KMP iOS-only: `MainViewController` + framework `ComposeApp`
     (exports `:core:*` + `feature:*:api`).
   - Koin bindings for cross-cutting singletons live in the owning core (`databaseModule` in
     `:core:database`, `commonModule` in `:core:common`, `designsystemModule` in
     `:core:designsystem`); `:app:shared` only aggregates.
 
-Features: home (tab chrome: `HomeGraph`, `NavigationItem`, `HomeChromeHost`, FAB), support,
-categories, budgets, accounts, creditcards (incl. invoices/installments/invoiceTransactions),
-recurring, transactions, report, dashboard, settings.
+Features: shell (tab chrome: `NavCatalog`, `NavDestination`, `Chrome`, `ChromeHost`, FAB, and
+`FeaturePlatform`, the axis a section reads to hide what a target cannot do), support, categories, budgets,
+accounts, creditcards (incl. invoices/installments/invoiceTransactions), recurring, transactions,
+report, dashboard, settings, backup (manual export, restore, the automatic vault, reached from
+settings), mcp (the agent surface: the server in both of its modes, the permission axes and the
+activity log, reached from settings).
 
 > Normative reference: **`feature/README.md`** (dependency rules, entry points, shell role).
 

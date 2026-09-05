@@ -22,10 +22,10 @@ class YieldDeclarationTest {
     private val account = Account(id = 1, name = "Nubank", type = AccountType.ASSET, currency = "BRL")
     private val date = LocalDate(2026, 7, 5)
 
-    private fun updateUseCase(accounts: AccountStore) = UpdateAccountUseCase(
+    private fun updateUseCase(accounts: AccountStore) = UpdateAccountUseCaseImpl(
         repository = accounts,
         validateAccountName = ValidateAccountNameUseCase(accounts),
-        setDefaultAccount = SetDefaultAccountUseCase(accounts),
+        setDefaultAccount = SetDefaultAccountUseCaseImpl(accounts),
     )
 
     @Test
@@ -45,7 +45,7 @@ class YieldDeclarationTest {
         val accounts = AccountStore(account.copy(yieldsInterest = true))
         val transactions = RecordingTransactionsForDeclaration()
         val categories = YieldCategoryStore()
-        LaunchYieldUseCase(transactions, EnsureYieldCategoryUseCase(categories))(
+        LaunchYieldUseCase(accounts, transactions, EnsureYieldCategoryUseCase(categories))(
             account = accounts.rows.single(),
             date = date,
             amount = 12.40,
@@ -130,10 +130,16 @@ private class RecordingTransactionsForDeclaration : com.neoutils.finsight.domain
         throw NotImplementedError()
     override suspend fun getAllTransactions(): List<com.neoutils.finsight.domain.model.Transaction> =
         throw NotImplementedError()
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<com.neoutils.finsight.domain.model.Transaction> = throw NotImplementedError()
+
     override suspend fun getTransactionsByIds(
         ids: Collection<Long>
     ): List<com.neoutils.finsight.domain.model.Transaction> = throw NotImplementedError()
-
     override suspend fun getTransactionById(id: Long): com.neoutils.finsight.domain.model.Transaction? =
+        throw NotImplementedError()
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
         throw NotImplementedError()
 }

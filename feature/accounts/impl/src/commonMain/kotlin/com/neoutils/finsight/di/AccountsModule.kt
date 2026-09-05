@@ -6,7 +6,9 @@ import com.neoutils.finsight.database.mapper.AccountMapper
 import com.neoutils.finsight.database.repository.AccountRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
+import com.neoutils.finsight.domain.usecase.CreateAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
@@ -17,12 +19,17 @@ import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.EnsureYieldCategoryUseCase
 import com.neoutils.finsight.domain.usecase.LaunchYieldUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.SuggestAccountIconUseCase
 import com.neoutils.finsight.domain.usecase.SuggestAccountIconUseCaseImpl
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
+import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
+import com.neoutils.finsight.domain.usecase.UpdateTransferUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateTransferUseCase
 import com.neoutils.finsight.extension.toYearMonth
@@ -53,16 +60,16 @@ val accountsModule = module {
 
     factory { EnsureDefaultAccountUseCase(repository = get(), baseCurrencyRepository = get()) }
     factory { ValidateAccountNameUseCase(repository = get()) }
-    factory { SetDefaultAccountUseCase(repository = get()) }
-    factory {
-        CreateAccountUseCase(
+    factory<SetDefaultAccountUseCase> { SetDefaultAccountUseCaseImpl(repository = get()) }
+    factory<CreateAccountUseCase> {
+        CreateAccountUseCaseImpl(
             repository = get(),
             validateAccountName = get(),
             setDefaultAccount = get(),
         )
     }
-    factory {
-        UpdateAccountUseCase(
+    factory<UpdateAccountUseCase> {
+        UpdateAccountUseCaseImpl(
             repository = get(),
             validateAccountName = get(),
             setDefaultAccount = get(),
@@ -73,6 +80,7 @@ val accountsModule = module {
     }
     factory<ArchiveAccountUseCase> {
         ArchiveAccountUseCaseImpl(
+            accountRepository = get(),
             accountDao = get(),
             entryRepository = get(),
         )
@@ -87,18 +95,21 @@ val accountsModule = module {
     factory<SuggestAccountIconUseCase> {
         SuggestAccountIconUseCaseImpl(accountRepository = get())
     }
-    factory { UnarchiveAccountUseCase(repository = get()) }
+    factory<UnarchiveAccountUseCase> { UnarchiveAccountUseCaseImpl(repository = get()) }
     factory { EnsureYieldCategoryUseCase(categoryRepository = get()) }
     factory {
         LaunchYieldUseCase(
+            accountRepository = get(),
             transactionRepository = get(),
             ensureYieldCategory = get(),
         )
     }
-    factory {
-        AdjustBalanceUseCase(
+    factory<AdjustBalanceUseCase> {
+        AdjustBalanceUseCaseImpl(
+            accountRepository = get(),
             transactionRepository = get(),
             calculateBalanceUseCase = get(),
+            clock = get(),
         )
     }
     factory {
@@ -107,15 +118,15 @@ val accountsModule = module {
             clock = get(),
         )
     }
-    factory {
-        TransferBetweenAccountsUseCase(
+    factory<TransferBetweenAccountsUseCase> {
+        TransferBetweenAccountsUseCaseImpl(
             harvestExchangeRate = get(),
             transactionRepository = get(),
             validateTransfer = get(),
         )
     }
-    factory {
-        UpdateTransferUseCase(
+    factory<UpdateTransferUseCase> {
+        UpdateTransferUseCaseImpl(
             harvestExchangeRate = get(),
             transactionRepository = get(),
             validateTransfer = get(),

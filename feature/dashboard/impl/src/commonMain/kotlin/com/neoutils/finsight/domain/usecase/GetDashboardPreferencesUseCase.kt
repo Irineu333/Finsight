@@ -101,8 +101,11 @@ class GetDashboardPreferencesUseCase(
             config = mapOf(
                 DashboardComponentConfig.TOP_SPACING to "true",
                 DashboardComponentConfig.SHOW_HEADER to "true",
+                // The grid is an affordance of the narrow window, and a narrow window happens on
+                // the desktop too — so what it hides is what *this platform* does not offer, in
+                // both directions, and not one of the two directions spelled out by name.
                 QuickActionsConfig.HIDDEN_ACTIONS to navCatalog.destinations
-                    .filter { it.mobileOnly }
+                    .filterNot { it.isOffered }
                     .joinToString(",") { it.actionKey },
             ),
         ),

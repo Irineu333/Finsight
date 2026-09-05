@@ -117,7 +117,7 @@ internal class YieldCategoryStore : ICategoryRepository {
     private val rows = mutableListOf<Category>()
     private var nextId = 0L
 
-    override suspend fun insert(category: Category) {
+    override suspend fun insert(category: Category): Long {
         // The store's unique index on `systemKey`, so the test cannot pass on a
         // guarantee production does not have.
         require(category.systemKey == null || rows.none { it.systemKey == category.systemKey }) {
@@ -127,6 +127,7 @@ internal class YieldCategoryStore : ICategoryRepository {
         val stored = category.copy(id = nextId, dimensionId = 100 + nextId)
         rows += stored
         inserted += stored
+        return nextId
     }
 
     override suspend fun update(category: Category) = replace(category.id) { category }

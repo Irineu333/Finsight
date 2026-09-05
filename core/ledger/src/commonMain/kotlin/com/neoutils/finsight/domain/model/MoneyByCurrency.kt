@@ -67,6 +67,26 @@ class MoneyByCurrency private constructor(
     }
 
     /**
+     * The difference between two figures, each currency against its own — the same
+     * arithmetic as [plus] in the other direction, and for the same reason the only
+     * implementation.
+     *
+     * A currency present on either side is present in the result, so a figure that
+     * appeared or disappeared between the two reads shows up as its own term rather
+     * than vanishing. It is **not** a comparison: subtracting figures of disjoint
+     * currencies yields terms that still do not add up, which is exactly what the
+     * consolidation layer is for.
+     */
+    operator fun minus(other: MoneyByCurrency): MoneyByCurrency {
+        if (other.isEmpty) return this
+        val difference = amounts.toMutableMap()
+        other.amounts.forEach { (currency, value) ->
+            difference[currency] = (difference[currency] ?: 0.0) - value
+        }
+        return of(difference)
+    }
+
+    /**
      * The single term of a figure that has exactly one, or `null` when it is empty
      * or spans more than one currency.
      *

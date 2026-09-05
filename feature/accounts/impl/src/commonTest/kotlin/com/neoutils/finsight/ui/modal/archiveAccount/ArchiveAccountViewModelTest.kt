@@ -30,7 +30,7 @@ class ArchiveAccountViewModelTest {
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     private object Archives : ArchiveAccountUseCase {
-        override suspend fun invoke(account: Account): Either<Throwable, Unit> = Unit.right()
+        override suspend fun invoke(accountId: Long): Either<Throwable, Unit> = Unit.right()
     }
 
     private object SilentCrashlytics : Crashlytics {

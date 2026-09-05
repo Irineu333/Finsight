@@ -222,11 +222,10 @@ class ConfirmRecurringViewModel(
             account = if (uiState.value.selectedTarget.isAccount) uiState.value.selectedAccount else null,
             creditCard = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedCreditCard else null,
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
-            // Blank is an absence, not the template's title: a transaction with no title
-            // of its own is displayed by its category, which is the rule the whole app
-            // reads titles by (`displayTitleOrNull`). Falling back to the template here would
-            // hand the user a name they had just erased.
-            title = title.trim().takeIf { it.isNotBlank() },
+            // Handed over as typed. That a blank field is an absence — and never the
+            // template's title — is the use case's rule, so it holds for every caller
+            // rather than for the ones that remembered to trim.
+            title = title,
             category = selectedCategory.value,
         ).onLeft {
             crashlytics.recordException(it)

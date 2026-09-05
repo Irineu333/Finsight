@@ -15,7 +15,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.ResolveRecurringRetirabilityUseCaseImpl
 import com.neoutils.finsight.ui.model.RetireAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -70,7 +70,7 @@ class ViewRecurringViewModelTest {
         override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
     }
 
-    private fun resolver(hasTransaction: Boolean = false) = ResolveRecurringRetirabilityUseCase(
+    private fun resolver(hasTransaction: Boolean = false) = ResolveRecurringRetirabilityUseCaseImpl(
         recurringRepository = FakeRecurringRepository(hasTransaction = hasTransaction),
         budgetRepository = object : IBudgetRepository {
             override fun observeAllBudgets(): Flow<List<Budget>> = throw NotImplementedError()

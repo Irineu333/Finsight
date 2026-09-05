@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCaseImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -73,7 +73,7 @@ class ViewAccountViewModelTest {
     ) = ViewAccountViewModel(
         accountId = 1L,
         accountRepository = repository,
-        unarchiveAccount = UnarchiveAccountUseCase(repository),
+        unarchiveAccount = UnarchiveAccountUseCaseImpl(repository),
         analytics = analytics,
         crashlytics = FakeCrashlytics(),
     )

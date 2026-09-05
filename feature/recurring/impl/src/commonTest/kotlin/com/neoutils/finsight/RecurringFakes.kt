@@ -1,9 +1,11 @@
+@file:OptIn(ExperimentalTime::class)
 package com.neoutils.finsight
 
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.RecurringOccurrence
@@ -29,6 +31,9 @@ import com.neoutils.finsight.domain.usecase.AccountCurrencies
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,11 +68,12 @@ class FakeCrashlytics : Crashlytics {
 }
 
 class FakeRecurringRepository(
+    stored: List<Recurring> = emptyList(),
     private val hasTransaction: Boolean = false,
     private val updateFailure: Throwable? = null,
 ) : IRecurringRepository {
 
-    val all = MutableStateFlow<List<Recurring>>(emptyList())
+    val all = MutableStateFlow(stored)
     private val byId = MutableSharedFlow<Recurring?>(replay = 1)
 
     val updated = mutableListOf<Recurring>()
@@ -145,6 +151,17 @@ class FakeAccountRepository(
     override suspend fun update(account: Account) = throw NotImplementedError()
     override suspend fun delete(account: Account) = throw NotImplementedError()
     override suspend fun reopen(accountId: Long) = throw NotImplementedError()
+}
+
+/**
+ * A clock that does not move, so two calls that are the same operation stamp the same
+ * instant — the reading off the system made them differ whenever they straddled a
+ * millisecond.
+ */
+internal class StoppedClock(
+    private val instant: Instant = Instant.fromEpochMilliseconds(1_767_225_600_000),
+) : Clock {
+    override fun now(): Instant = instant
 }
 
 /**
@@ -245,6 +262,7 @@ class TriggerOnlyLedger : IEntryRepository {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>) = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>) = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>) = throw NotImplementedError()
     override suspend fun totalsByDimensionInMonthByCurrency(month: YearMonth, nominalType: AccountType) = throw NotImplementedError()
@@ -281,6 +299,9 @@ class FakeTransactionsByIds(
         asked += ids
         return transactions.filter { it.id in ids }
     }
+
+    override suspend fun getTransactionsBetween(startDate: LocalDate, endDate: LocalDate): List<Transaction> = throw NotImplementedError()
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
 
     override fun observeAllTransactions() = throw NotImplementedError()
     override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?) =

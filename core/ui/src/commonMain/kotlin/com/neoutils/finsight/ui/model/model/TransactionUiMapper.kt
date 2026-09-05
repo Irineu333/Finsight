@@ -58,7 +58,11 @@ fun Transaction.toTransactionUi(
         isUncategorized = matches(SpendingSubject.Uncategorized),
         categoryIcon = category?.icon,
         isCategoryArchived = category?.isArchived == true,
-        isCardTarget = entries.any { it.account.type == AccountType.LIABILITY },
+        // Read, not re-derived: the agent's mapper consumes `hasLiabilityLeg` for the same
+        // question, and two spellings of one derivation are free to drift apart without
+        // anything failing — which is the divergence hardest to notice, since nobody puts
+        // the two surfaces side by side.
+        isCardTarget = hasLiabilityLeg,
         isRecurring = recurringId != null,
         installmentLabel = lookup.installmentLabelOf(this),
     )

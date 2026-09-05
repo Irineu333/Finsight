@@ -4,6 +4,8 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.FakeAccountRepository
 import com.neoutils.finsight.FakeRecurringOccurrenceRepository
+import com.neoutils.finsight.FakeRecurringRepository
+import com.neoutils.finsight.StoppedClock
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
@@ -54,16 +56,18 @@ class RecurringCycleFloorTest {
 
     private object UnusedInvoices : GetOrCreateInvoiceForMonthUseCase {
         override suspend fun invoke(
-            creditCard: CreditCard,
+            creditCardId: Long,
             targetDueMonth: YearMonth,
         ): arrow.core.Either<Throwable, Invoice> = throw NotImplementedError()
     }
 
     private fun confirmUseCase(occurrences: FakeRecurringOccurrenceRepository) =
-        ConfirmRecurringUseCase(
+        ConfirmRecurringUseCaseImpl(
+            recurringRepository = FakeRecurringRepository(listOf(template)),
             recurringOccurrenceRepository = occurrences,
             getOrCreateInvoiceForMonthUseCase = UnusedInvoices,
             accountRepository = FakeAccountRepository(listOf(account)),
+            clock = StoppedClock(),
         )
 
     @Test
@@ -85,7 +89,11 @@ class RecurringCycleFloorTest {
     fun `skipping a month before the series began is refused`() = runTest {
         val occurrences = FakeRecurringOccurrenceRepository()
 
-        val result = SkipRecurringUseCase(occurrences)(
+        val result = SkipRecurringUseCaseImpl(
+            recurringRepository = FakeRecurringRepository(listOf(template)),
+            recurringOccurrenceRepository = occurrences,
+            clock = StoppedClock(),
+        )(
             recurring = template,
             date = LocalDate(2026, 7, 5),
         )
@@ -98,7 +106,11 @@ class RecurringCycleFloorTest {
     fun `the origin month is not refused by the floor`() = runTest {
         val occurrences = FakeRecurringOccurrenceRepository()
 
-        val result = SkipRecurringUseCase(occurrences)(
+        val result = SkipRecurringUseCaseImpl(
+            recurringRepository = FakeRecurringRepository(listOf(template)),
+            recurringOccurrenceRepository = occurrences,
+            clock = StoppedClock(),
+        )(
             recurring = template,
             date = LocalDate(august.year, august.month, 5),
         )

@@ -1,6 +1,8 @@
 package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
+import com.neoutils.finsight.FakeRecurringRepository
+import com.neoutils.finsight.StoppedClock
 import com.neoutils.finsight.domain.error.RecurringError
 import com.neoutils.finsight.domain.exception.RecurringException
 import com.neoutils.finsight.domain.model.Account
@@ -20,7 +22,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -56,13 +60,18 @@ class ConfirmRecurringCurrencyTest {
 
     private val date = LocalDate(2026, 3, 5)
 
-    private fun useCase(occurrences: RecordingOccurrences) = ConfirmRecurringUseCase(
+    private fun useCase(
+        occurrences: RecordingOccurrences,
+        template: Recurring = this.template,
+    ) = ConfirmRecurringUseCaseImpl(
+        recurringRepository = FakeRecurringRepository(stored = listOf(template)),
         recurringOccurrenceRepository = occurrences,
         getOrCreateInvoiceForMonthUseCase = object : GetOrCreateInvoiceForMonthUseCase {
-            override suspend fun invoke(creditCard: CreditCard, targetDueMonth: YearMonth) =
+            override suspend fun invoke(creditCardId: Long, targetDueMonth: YearMonth) =
                 throw NotImplementedError("no test here reaches a card invoice")
         },
         accountRepository = FakeAccountRepository(listOf(reais, dollars, dollarCardAccount)),
+        clock = StoppedClock(date.atStartOfDayIn(TimeZone.currentSystemDefault())),
     )
 
     @Test
@@ -114,7 +123,11 @@ class ConfirmRecurringCurrencyTest {
         val occurrences = RecordingOccurrences()
         val orphan = template.copy(account = null)
 
-        val result = useCase(occurrences)(recurring = orphan, date = date, account = dollars)
+        val result = useCase(occurrences, template = orphan)(
+            recurring = orphan,
+            date = date,
+            account = dollars,
+        )
 
         assertTrue(result.isRight())
         assertEquals(dollars.id, occurrences.recorded?.legs?.single()?.accountId)

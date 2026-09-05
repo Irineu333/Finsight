@@ -189,10 +189,16 @@ internal class FakeTransactionRepository(private val transactions: List<Transact
 
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = transactions
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = transactions.filter { it.date in startDate..endDate }
+
     override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
         transactions.filter { it.id in ids }
-
     override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
+        transactions.mapTo(mutableSetOf()) { it.id }.apply { retainAll(ids.toSet()) }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
     override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) =
@@ -252,6 +258,7 @@ internal object FlatEntryRepository : IEntryRepository {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,

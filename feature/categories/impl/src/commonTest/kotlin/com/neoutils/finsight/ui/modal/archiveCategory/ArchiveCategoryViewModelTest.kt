@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCaseImpl
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -34,16 +35,20 @@ class ArchiveCategoryViewModelTest {
     }
 
     /** Only the one write the use case makes; every other read is out of this test. */
-    private class ArchivingCategories : ICategoryRepository {
+    private class ArchivingCategories(private vararg val known: Category) : ICategoryRepository {
         val archived = mutableListOf<Long>()
         override suspend fun archive(id: Long) { archived += id }
+
+        // Resolved, because the operation resolves the identity before it retires
+        // anything: a store that answered nothing would refuse as `NOT_FOUND`, and the
+        // test would be asserting the refusal.
+        override suspend fun getCategoryById(id: Long): Category? = known.firstOrNull { it.id == id }
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
         override fun observeAllCategories(): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getAllCategories(): List<Category> = throw NotImplementedError()
         override suspend fun getAllCategoriesIncludingClosed(): List<Category> = throw NotImplementedError()
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = throw NotImplementedError()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
-        override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
         override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override suspend fun unarchive(id: Long) = throw NotImplementedError()
@@ -58,7 +63,6 @@ class ArchiveCategoryViewModelTest {
     @Test
     fun `retiring a category reports itself as an archive, not as a deletion`() = runTest(dispatcher) {
         val analytics = RecordingAnalytics()
-        val repository = ArchivingCategories()
         val category = Category(
             id = 5L,
             name = "Food",
@@ -68,10 +72,11 @@ class ArchiveCategoryViewModelTest {
             isArchived = false,
             dimensionId = 10L,
         )
+        val repository = ArchivingCategories(category)
 
         val viewModel = ArchiveCategoryViewModel(
             category = category,
-            archiveCategoryUseCase = ArchiveCategoryUseCase(repository),
+            archiveCategoryUseCase = ArchiveCategoryUseCaseImpl(repository),
             modalManager = ModalManager(),
             analytics = analytics,
             crashlytics = SilentCrashlytics,

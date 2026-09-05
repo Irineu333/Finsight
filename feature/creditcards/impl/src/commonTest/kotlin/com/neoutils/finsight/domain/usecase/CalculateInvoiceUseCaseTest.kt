@@ -38,7 +38,7 @@ class CalculateInvoiceUseCaseTest {
     private fun useCase(
         owed: Double,
         entries: Map<Long, List<Entry>> = emptyMap(),
-    ) = CalculateInvoiceUseCase(
+    ) = CalculateInvoiceUseCaseImpl(
         FakeEntryRepository(
             owedByInvoiceId = mapOf(checkNotNull(invoice.dimensionId) to owed),
             entriesByTransactionId = entries,

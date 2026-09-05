@@ -85,6 +85,7 @@ internal class FakeLedger(private val transactions: List<Transaction>) : IEntryR
         it.account.type == AccountType.INCOME && it.dimensionId == dimensionId
     }
 
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(
         month: YearMonth,
         yieldDimensionId: Long?,

@@ -1,55 +1,77 @@
 package com.neoutils.finsight.di
 
-import com.neoutils.finsight.domain.usecase.ArchiveCreditCardUseCase
-import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
-import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
-import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCaseImpl
-import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
-import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
-import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
-import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
-import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
-import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
-import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
-import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCase
-import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.AddCreditCardUseCaseImpl
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCaseImpl
+import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCaseImpl
+import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCaseImpl
+import com.neoutils.finsight.domain.usecase.ArchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveCreditCardUseCaseImpl
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCaseImpl
+import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
+import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCaseImpl
+import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCaseImpl
+import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCaseImpl
+import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCaseImpl
+import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCaseImpl
+import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCaseImpl
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.PayInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCaseImpl
+import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.UpdateInstallmentUseCaseImpl
+import com.neoutils.finsight.domain.usecase.ValidateAdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.WriteInvoicePaymentUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
-    factory {
-        AdjustInvoiceUseCase(
+    factory<AdjustInvoiceUseCase> {
+        AdjustInvoiceUseCaseImpl(
+            invoiceRepository = get(),
             transactionRepository = get(),
             calculateInvoiceUseCase = get(),
         )
     }
 
-    factory { CalculateInvoiceUseCase(entryRepository = get()) }
+    factory<CalculateInvoiceUseCase> { CalculateInvoiceUseCaseImpl(entryRepository = get()) }
 
     factory { CalculateInvoiceOverviewsUseCase(entryRepository = get()) }
 
-    factory {
-        CalculateAvailableLimitUseCase(
+    factory<CalculateAvailableLimitUseCase> {
+        CalculateAvailableLimitUseCaseImpl(
+            creditCardRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
         )
     }
 
-    factory {
-        AddCreditCardUseCase(
+    factory<AddCreditCardUseCase> {
+        AddCreditCardUseCaseImpl(
             repository = get(),
             openInvoiceUseCase = get(),
             validateCreditCardName = get(),
@@ -57,10 +79,22 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        UpdateCreditCardUseCase(
+    factory<UpdateCreditCardUseCase> {
+        UpdateCreditCardUseCaseImpl(
             repository = get(),
             validateCreditCardName = get(),
+        )
+    }
+
+    factory<PayInvoicePaymentUseCase> {
+        PayInvoicePaymentUseCaseImpl(
+            validateInvoicePayment = get(),
+            writeInvoicePayment = get(),
+            accountRepository = get(),
+            clock = get(),
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
+            payInvoiceUseCase = get(),
         )
     }
 
@@ -73,42 +107,35 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        PayInvoicePaymentUseCase(
-            writeInvoicePayment = get(),
-            invoiceRepository = get(),
-            calculateInvoiceUseCase = get(),
-            payInvoiceUseCase = get(),
-        )
-    }
-
     // Every rule a partial payment is admissible by — one owner, and both modes read
     // it, so registering one and correcting one cannot drift apart.
     factory {
-        ValidateInvoicePaymentUseCase(
+        ValidateAdvanceInvoicePaymentUseCase(
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             clock = get(),
         )
     }
 
-    factory {
-        AdvanceInvoicePaymentUseCase(
+    factory<AdvanceInvoicePaymentUseCase> {
+        AdvanceInvoicePaymentUseCaseImpl(
             writeInvoicePayment = get(),
             validateInvoicePayment = get(),
+            accountRepository = get(),
         )
     }
 
-    factory {
-        UpdateAdvanceInvoicePaymentUseCase(
+    factory<UpdateAdvanceInvoicePaymentUseCase> {
+        UpdateAdvanceInvoicePaymentUseCaseImpl(
             writeInvoicePayment = get(),
             validateInvoicePayment = get(),
             transactionRepository = get(),
+            accountRepository = get(),
         )
     }
 
-    factory {
-        CloseInvoiceUseCase(
+    factory<CloseInvoiceUseCase> {
+        CloseInvoiceUseCaseImpl(
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
@@ -116,31 +143,37 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        PayInvoiceUseCase(
+    factory<PayInvoiceUseCase> {
+        PayInvoiceUseCaseImpl(
             invoiceRepository = get(),
+            validateInvoicePayment = get(),
             clock = get(),
         )
     }
 
-    factory {
-        CreateInvoiceUseCase(
+    factory<CreateInvoiceUseCase> {
+        CreateInvoiceUseCaseImpl(
+            creditCardRepository = get(),
             invoiceRepository = get(),
         )
     }
 
-    factory {
-        ReopenInvoiceUseCase(
+    factory<ReopenInvoiceUseCase> {
+        ReopenInvoiceUseCaseImpl(
             invoiceRepository = get(),
         )
     }
 
-    factory {
-        OpenInvoiceUseCase(
+    factory<OpenInvoiceUseCase> {
+        OpenInvoiceUseCaseImpl(
             invoiceRepository = get(),
             creditCardRepository = get(),
             clock = get(),
         )
+    }
+
+    factory {
+        ValidateInvoicePaymentUseCase()
     }
 
     factory {
@@ -153,28 +186,36 @@ val useCaseModules = module {
         DeleteInstallmentUseCaseImpl(
             transactionRepository = get(),
             installmentRepository = get(),
+            installmentDao = get(),
         )
     }
 
-    factory {
-        DeleteCreditCardUseCase(
+    factory<UpdateInstallmentUseCase> {
+        UpdateInstallmentUseCaseImpl(
+            installmentRepository = get(),
+        )
+    }
+
+    factory<DeleteCreditCardUseCase> {
+        DeleteCreditCardUseCaseImpl(
             creditCardRepository = get(),
             entryRepository = get(),
             recurringRepository = get(),
         )
     }
 
-    factory {
-        ArchiveCreditCardUseCase(
+    factory<ArchiveCreditCardUseCase> {
+        ArchiveCreditCardUseCaseImpl(
+            creditCardRepository = get(),
             accountRepository = get(),
             archiveAccountUseCase = get(),
         )
     }
 
-    factory { UnarchiveCreditCardUseCase(repository = get()) }
+    factory<UnarchiveCreditCardUseCase> { UnarchiveCreditCardUseCaseImpl(repository = get()) }
 
-    factory {
-        DeleteFutureInvoiceUseCase(
+    factory<DeleteFutureInvoiceUseCase> {
+        DeleteFutureInvoiceUseCaseImpl(
             invoiceRepository = get(),
             transactionRepository = get(),
         )
@@ -192,14 +233,9 @@ val useCaseModules = module {
 
     factory<GetOrCreateInvoiceForMonthUseCase> {
         GetOrCreateInvoiceForMonthUseCaseImpl(
+            creditCardRepository = get(),
             invoiceRepository = get(),
             createInvoiceUseCase = get(),
         )
     }
-
-
-
-
-
-
 }

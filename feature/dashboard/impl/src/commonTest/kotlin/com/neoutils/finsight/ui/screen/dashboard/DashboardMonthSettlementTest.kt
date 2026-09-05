@@ -16,7 +16,9 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
@@ -76,7 +78,14 @@ class DashboardMonthSettlementTest {
         getPendingRecurringUseCase = GetPendingRecurringUseCase(GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase())),
         getUnhandledRecurringUseCase = GetUnhandledRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
-            override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
+            override suspend fun toUi(
+                invoice: Invoice,
+                cardInvoices: List<Invoice>,
+                limit: Limit,
+            ): InvoiceUi = throw NotImplementedError()
+        },
+        calculateAvailableLimit = object : CalculateAvailableLimitUseCase {
+            override suspend fun invoke(creditCardIds: Collection<Long>): Map<Long, Limit> =
                 throw NotImplementedError()
         },
         entryRepository = entryRepository,
@@ -524,6 +533,7 @@ private class SettlementEntryRepository(
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,

@@ -15,6 +15,7 @@ import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
@@ -22,6 +23,7 @@ import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
+import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
@@ -74,6 +76,7 @@ class DashboardComponentsBuilder(
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
     private val getUnhandledRecurringUseCase: GetUnhandledRecurringUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
+    private val calculateAvailableLimit: CalculateAvailableLimitUseCase,
     private val entryRepository: IEntryRepository,
     private val accountRepository: IAccountRepository,
     // The one reducer, and the only place the base currency is allowed to surface: every
@@ -414,8 +417,12 @@ class DashboardComponentsBuilder(
 
         val excludedIds = config.excludedIds(CreditCardsPagerConfig.EXCLUDED_CARD_IDS)
 
-        val creditCardsWithBills = input.creditCards
-            .filter { it.id !in excludedIds }
+        val shownCards = input.creditCards.filter { it.id !in excludedIds }
+
+        // One read for the whole pager, not one per card (design D7).
+        val limits = calculateAvailableLimit(shownCards.map { it.id })
+
+        val creditCardsWithBills = shownCards
             .mapNotNull { creditCard ->
                 // The limit is the card's money, so it reads in the card's currency
                 // (D17). A card whose account does not resolve is an orphan row: it is
@@ -434,7 +441,11 @@ class DashboardComponentsBuilder(
                     // The dashboard shows a summary and offers no reopen action, so it
                     // has no need of the sibling list `canReopen` would derive from.
                     invoiceUi = invoice?.let {
-                        invoiceUiMapper.toUi(invoice = it, cardInvoices = listOfNotNull(it))
+                        invoiceUiMapper.toUi(
+                            invoice = it,
+                            cardInvoices = listOfNotNull(it),
+                            limit = limits[creditCard.id] ?: Limit.NONE,
+                        )
                     },
                 )
                 val limit = DisplayAmount.magnitude(

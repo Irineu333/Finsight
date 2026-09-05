@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -44,11 +45,19 @@ class AddInstallmentUseCaseImpl(
                 InstallmentException(InstallmentError.MissingCreditCard)
             }
 
+            val firstDueMonth = ensureNotNull(form.invoiceDueMonth) {
+                InstallmentException(InstallmentError.MissingInvoice)
+            }
+
+            // Building is what validates the form, and it comes before any invoice is
+            // resolved: resolving one creates and persists it as a deliberate side effect
+            // outside the unit of work (design D7), so a refusal after it would leave
+            // invoice structure behind for a purchase that never posted.
+            val base = buildTransactionUseCase(form).bind()
+
             val firstInvoice = getOrCreateInvoiceForMonthUseCase(
                 creditCard = creditCard,
-                targetDueMonth = ensureNotNull(form.invoiceDueMonth) {
-                    InstallmentException(InstallmentError.MissingInvoice)
-                }
+                targetDueMonth = firstDueMonth,
             ).bind()
 
             val existingInvoices = invoiceRepository
@@ -63,7 +72,7 @@ class AddInstallmentUseCaseImpl(
 
             val invoices = getInvoices(slots).bind()
 
-            registerTransactions(form, invoices).bind()
+            registerTransactions(base, invoices).bind()
         }
     }
 
@@ -116,12 +125,10 @@ class AddInstallmentUseCaseImpl(
     }
 
     private suspend fun registerTransactions(
-        form: TransactionForm,
+        base: TransactionIntent,
         invoices: List<Invoice>,
     ): Either<Throwable, List<Transaction>> {
         return either {
-            val base = buildTransactionUseCase(form).bind()
-
             val installmentId = installmentRepository.createInstallment(
                 count = invoices.size,
                 totalAmount = base.legs.first().amount,

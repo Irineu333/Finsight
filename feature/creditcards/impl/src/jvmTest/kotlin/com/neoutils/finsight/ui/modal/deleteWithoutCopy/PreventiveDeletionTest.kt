@@ -5,10 +5,12 @@ package com.neoutils.finsight.ui.modal.deleteWithoutCopy
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.dao.InstallmentDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.DimensionEntity
 import com.neoutils.finsight.database.entity.EntryEntity
+import com.neoutils.finsight.database.entity.InstallmentEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.repository.LedgerEntryWriter
@@ -29,6 +31,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCaseImpl
 import com.neoutils.finsight.feature.backup.api.PreventiveCaptureException
 import com.neoutils.finsight.feature.backup.api.DestructiveAction
@@ -210,7 +213,11 @@ class PreventiveDeletionTest {
         val deleted = mutableListOf<Long>()
         override suspend fun getAllInstallments(): List<Installment> = emptyList()
         override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(emptyList())
-        override suspend fun getInstallmentById(id: Long): Installment? = null
+        // Resolved, because the operation resolves the identity it was given before it
+        // removes anything: a store that answered nothing would refuse every deletion
+        // here as `NotFound`, and the test would be asserting the refusal.
+        override suspend fun getInstallmentById(id: Long): Installment? =
+            INSTALLMENT.takeIf { it.id == id }
         override suspend fun createInstallment(count: Int, totalAmount: Double): Long =
             throw NotImplementedError()
 
@@ -248,6 +255,9 @@ class PreventiveDeletionTest {
             throw NotImplementedError()
 
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> =
+            throw NotImplementedError()
+
+        override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
             throw NotImplementedError()
 
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
@@ -373,7 +383,11 @@ class PreventiveDeletionTest {
         installment = INSTALLMENT,
         transactions = transactions,
         categoryRepository = FakeCategoryRepository(),
-        deleteInstallmentUseCase = DeleteInstallmentUseCaseImpl(repository(prelude), installments),
+        deleteInstallmentUseCase = DeleteInstallmentUseCaseImpl(
+            repository(prelude),
+            installments,
+            NamedTransactions(transactions.map { it.id }),
+        ),
         modalManager = ModalManager(),
         analytics = SilentAnalytics,
         crashlytics = SilentCrashlytics,
@@ -388,7 +402,7 @@ class PreventiveDeletionTest {
         coverage: PreventiveCoverage = PreventiveCoverage.None,
     ) = DeleteFutureInvoiceViewModel(
         invoice = futureInvoice,
-        deleteFutureInvoiceUseCase = DeleteFutureInvoiceUseCase(invoices, repository(prelude)),
+        deleteFutureInvoiceUseCase = DeleteFutureInvoiceUseCaseImpl(invoices, repository(prelude)),
         modalManager = ModalManager(),
         analytics = SilentAnalytics,
         crashlytics = SilentCrashlytics,
@@ -403,10 +417,11 @@ class PreventiveDeletionTest {
         val transactions = enterTwelve(installmentId = INSTALLMENT.id)
         val vault = Capturing()
 
-        DeleteInstallmentUseCaseImpl(repository(vault), RecordingInstallments())(
-            INSTALLMENT,
-            transactions,
-        )
+        DeleteInstallmentUseCaseImpl(
+            repository(vault),
+            RecordingInstallments(),
+            NamedTransactions(transactions.map { it.id }),
+        )(INSTALLMENT)
 
         val copy = vault.files.singleOrNull()
         assertNotNull(copy, "no copy was taken before the twelve went")
@@ -618,7 +633,7 @@ class PreventiveDeletionTest {
         val vault = Capturing()
         val invoices = SingleInvoice(futureInvoice)
 
-        DeleteFutureInvoiceUseCase(invoices, repository(vault))(futureInvoice.id)
+        DeleteFutureInvoiceUseCaseImpl(invoices, repository(vault))(futureInvoice.id)
 
         val copy = vault.files.singleOrNull()
         assertNotNull(copy, "no copy was taken before the invoice went")
@@ -711,7 +726,7 @@ class PreventiveDeletionTest {
         val vault = Capturing()
         val invoices = SingleInvoice(futureInvoice)
 
-        val outcome = DeleteFutureInvoiceUseCase(invoices, repository(vault))(futureInvoice.id)
+        val outcome = DeleteFutureInvoiceUseCaseImpl(invoices, repository(vault))(futureInvoice.id)
 
         assertTrue(outcome.isRight(), "an empty future invoice is deletable")
         assertEquals(
@@ -733,7 +748,7 @@ class PreventiveDeletionTest {
         val paid = futureInvoice.copy(status = Invoice.Status.PAID)
         val invoices = SingleInvoice(paid)
 
-        val outcome = DeleteFutureInvoiceUseCase(invoices, repository(vault))(paid.id)
+        val outcome = DeleteFutureInvoiceUseCaseImpl(invoices, repository(vault))(paid.id)
 
         assertTrue(outcome.isLeft(), "a paid invoice is not deletable")
         assertEquals(0, vault.asked, "a refused deletion must not reach for a copy")
@@ -788,4 +803,20 @@ class PreventiveDeletionTest {
         const val INVOICE_DIMENSION = 1L
         val INSTALLMENT = Installment(id = 7, count = 12, totalAmount = 600.0)
     }
+}
+
+/**
+ * The installment's own question about the transactions that name it, answered from the
+ * list the test entered — the one read `DeleteInstallmentUseCase` makes of this DAO.
+ */
+private class NamedTransactions(private val ids: List<Long>) : InstallmentDao {
+    override suspend fun transactionIds(installmentId: Long): List<Long> = ids
+    override suspend fun countTransactions(installmentId: Long): Int = ids.size
+    override suspend fun detachTransactions(installmentId: Long) = throw NotImplementedError()
+    override suspend fun insert(installment: InstallmentEntity): Long = throw NotImplementedError()
+    override suspend fun getById(id: Long): InstallmentEntity? = throw NotImplementedError()
+    override fun observeAll(): Flow<List<InstallmentEntity>> = throw NotImplementedError()
+    override suspend fun getAll(): List<InstallmentEntity> = throw NotImplementedError()
+    override suspend fun deleteById(id: Long) = throw NotImplementedError()
+    override suspend fun updateById(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
 }

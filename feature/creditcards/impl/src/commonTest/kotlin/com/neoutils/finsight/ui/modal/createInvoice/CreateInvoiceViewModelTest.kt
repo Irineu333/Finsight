@@ -8,8 +8,10 @@ import com.neoutils.finsight.domain.analytics.Event
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCaseImpl
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -120,12 +122,27 @@ class CreateInvoiceViewModelTest {
         creditCard = card,
         initialDueMonth = openInvoice.dueMonth,
         invoiceRepository = store,
-        createInvoiceUseCase = CreateInvoiceUseCase(store),
+        createInvoiceUseCase = CreateInvoiceUseCaseImpl(OneCard(card), store),
         onCreated = onCreated,
         modalManager = manager,
         analytics = MuteAnalytics,
         crashlytics = MuteCrashlytics,
     )
+}
+
+private class OneCard(private val card: CreditCard) : ICreditCardRepository {
+    override suspend fun getCreditCardById(creditCardId: Long): CreditCard? =
+        card.takeIf { it.id == creditCardId }
+    override suspend fun getAllCreditCards(): List<CreditCard> = listOf(card)
+    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = listOf(card)
+    override fun observeAllCreditCards(): Flow<List<CreditCard>> = throw NotImplementedError()
+    override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = throw NotImplementedError()
+    override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
+    override suspend fun insert(creditCard: CreditCard, currency: String): Long = throw NotImplementedError()
+    override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
+    override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
+    override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
+    override suspend fun currencyForNewCard(): String = throw NotImplementedError()
 }
 
 /** Holds the card's invoices and re-emits them, so the sheet sees what it just created. */
@@ -160,6 +177,8 @@ private class InvoiceStore(vararg seed: Invoice) : IInvoiceRepository {
     override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+    override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
+        creditCardIds.associateWith { getUnpaidInvoicesByCreditCard(it) }.filterValues { it.isNotEmpty() }
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
     override suspend fun deleteById(id: Long) = throw NotImplementedError()
 }

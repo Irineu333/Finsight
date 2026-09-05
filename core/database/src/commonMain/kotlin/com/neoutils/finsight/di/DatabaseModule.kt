@@ -3,6 +3,7 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.DatabaseBuilderFactory
 import com.neoutils.finsight.database.dao.AccountDao
+import com.neoutils.finsight.database.dao.AgentActivityDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
@@ -60,6 +61,7 @@ val databaseModule = module {
     single<DimensionDao> { get<AppDatabase>().dimensionDao() }
     single<ExchangeRateDao> { get<AppDatabase>().exchangeRateDao() }
     single<CurrencyDao> { get<AppDatabase>().currencyDao() }
+    single<AgentActivityDao> { get<AppDatabase>().agentActivityDao() }
 
     // The verifier opens the candidate with Room, because running the migration chain
     // and the schema identity check over it *is* the verification — so it is assembled

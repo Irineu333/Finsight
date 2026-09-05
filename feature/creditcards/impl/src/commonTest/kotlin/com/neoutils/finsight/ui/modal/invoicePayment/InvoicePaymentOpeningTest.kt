@@ -17,14 +17,19 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.HarvestExchangeRateUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.PayInvoiceUseCaseImpl
 import com.neoutils.finsight.domain.usecase.RecordingTransactionWriter
 import com.neoutils.finsight.domain.usecase.StoppedClock
 import com.neoutils.finsight.domain.usecase.SuggestCrossCurrencyAmountUseCase
-import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.UpdateAdvanceInvoicePaymentUseCaseImpl
+import com.neoutils.finsight.domain.usecase.ValidateAdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.ValidateInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.WriteInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.testInvoice
@@ -139,6 +144,7 @@ class InvoicePaymentOpeningTest {
         override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = notAsked()
         override suspend fun getAllInvoices(): List<Invoice> = notAsked()
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = notAsked()
+        override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> = throw NotImplementedError()
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = notAsked()
         override suspend fun insert(invoice: Invoice): Invoice = notAsked()
         override suspend fun update(invoice: Invoice) = notAsked()
@@ -187,28 +193,32 @@ class InvoicePaymentOpeningTest {
             owedByInvoiceId = mapOf(dimensionId to 800.0),
             entriesByTransactionId = mapOf(payment.id to payment.entries),
         )
-        val calculate = CalculateInvoiceUseCase(entries)
+        val calculate = CalculateInvoiceUseCaseImpl(entries)
         val write = WriteInvoicePaymentUseCase(
             transactionRepository = RecordingTransactionWriter(),
             harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
             accountRepository = accounts,
         )
-        val validate = ValidateInvoicePaymentUseCase(invoices, calculate, clock)
+        val validate = ValidateAdvanceInvoicePaymentUseCase(invoices, calculate, clock)
 
         return InvoicePaymentViewModel(
             initialInvoiceId = null,
             transaction = transaction,
-            payInvoicePaymentUseCase = PayInvoicePaymentUseCase(
+            payInvoicePaymentUseCase = PayInvoicePaymentUseCaseImpl(
+                clock = clock,
+                validateInvoicePayment = ValidateInvoicePaymentUseCase(),
                 writeInvoicePayment = write,
                 invoiceRepository = invoices,
                 calculateInvoiceUseCase = calculate,
-                payInvoiceUseCase = PayInvoiceUseCase(invoices, clock),
+                payInvoiceUseCase = PayInvoiceUseCaseImpl(invoices, ValidateInvoicePaymentUseCase(), clock),
+                accountRepository = accounts,
             ),
-            advanceInvoicePaymentUseCase = AdvanceInvoicePaymentUseCase(write, validate),
-            updateAdvanceInvoicePaymentUseCase = UpdateAdvanceInvoicePaymentUseCase(
+            advanceInvoicePaymentUseCase = AdvanceInvoicePaymentUseCaseImpl(write, validate, accounts),
+            updateAdvanceInvoicePaymentUseCase = UpdateAdvanceInvoicePaymentUseCaseImpl(
                 writeInvoicePayment = write,
                 validateInvoicePayment = validate,
                 transactionRepository = RecordingTransactionWriter(),
+                accountRepository = accounts,
             ),
             calculateInvoiceUseCase = calculate,
             suggestCrossCurrencyAmount = SuggestCrossCurrencyAmountUseCase(NoExchangeRates),

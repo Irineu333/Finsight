@@ -12,6 +12,7 @@ import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.mapper.toDomain
+import com.neoutils.finsight.database.readByIdentity
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
@@ -140,15 +141,48 @@ class TransactionRepository(
             entries = entryDao.getByTransactionId(id).toDomainEntries(accounts),
         )
 
-    override suspend fun getAllTransactions(): List<Transaction> {
-        val accounts = ledgerAccounts()
-        return transactionDao.getAll().mapNotNull { it.toDomain(accounts) }
+    /**
+     * Rows plus legs, hydrated **in bulk**: the legs of every row in one read, chunked
+     * to what SQLite will bind, and handed out grouped by the transaction they balance
+     * under.
+     *
+     * Asked row by row instead, the cost of a list is one query per posting in it, which
+     * is the cost of the whole history for a caller that wanted one month of it.
+     */
+    private suspend fun List<TransactionEntity>.toDomain(
+        accounts: Map<Long, Account>,
+    ): List<Transaction> {
+        val entriesByTransactionId = map { it.id }
+            .readByIdentity(entryDao::getByTransactionIds)
+            .groupBy { it.transactionId }
+
+        return mapNotNull { entity ->
+            transactionMapper.toDomain(
+                entity = entity,
+                entries = entriesByTransactionId[entity.id].orEmpty().toDomainEntries(accounts),
+            )
+        }
     }
+
+    override suspend fun getAllTransactions(): List<Transaction> =
+        transactionDao.getAll().toDomain(ledgerAccounts())
+
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = transactionDao
+        .getBetween(startDate = startDate, endDate = endDate)
+        .toDomain(ledgerAccounts())
 
     override suspend fun getTransactionById(id: Long): Transaction? {
         val entity = transactionDao.getById(id) ?: return null
         return entity.toDomain(ledgerAccounts())
     }
+
+    // Deduplicated before it is asked: a repeated identity spends a host parameter and answers
+    // nothing the first one did not.
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
+        ids.toSet().readByIdentity(transactionDao::getExistingIds).toSet()
 
     /**
      * Three reads for the whole batch — the rows, their legs and the chart — instead of

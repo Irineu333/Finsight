@@ -20,14 +20,19 @@
     <string name="account_error_currency_immutable">A moeda de uma conta é definida na criação e não pode ser alterada. Para corrigir, apague a conta (se ela não tiver lançamentos) e crie outra.</string>
     <string name="account_error_cannot_archive_default">Não é possível arquivar a conta padrão. Escolha outra conta como padrão antes.</string>
     <string name="account_error_cannot_delete_default">Não é possível excluir a conta padrão. Escolha outra conta como padrão antes.</string>
+    <string name="account_error_adjustment_date_in_future">Um ajuste de saldo não pode ter data futura. Escolha hoje ou uma data anterior.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
     <string name="category_error_already_exist">Já existe uma categoria com esse nome.</string>
+    <string name="category_error_not_found">Categoria não encontrada.</string>
 
     <!-- Budget errors -->
     <string name="budget_error_empty_title">O título do orçamento não pode ser vazio.</string>
     <string name="budget_error_already_exist">Já existe um orçamento com esse título.</string>
+    <string name="budget_error_not_found">Orçamento não encontrado.</string>
+    <string name="budget_error_missing_base_income">Um orçamento em porcentagem precisa da receita recorrente da qual ele é uma fração.</string>
+    <string name="budget_error_negative_limit">O limite do orçamento não pode ser negativo.</string>
 
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">O nome do cartão é obrigatório.</string>
@@ -55,6 +60,10 @@
     <string name="ledger_error_closed_removal_account">Esta conta está arquivada. Apagar esta transação devolveria saldo a ela, e uma conta arquivada não pode ser acertada.</string>
     <string name="ledger_error_closed_removal_credit_card">Este cartão está arquivado. Apagar esta transação devolveria saldo a ele, e um cartão arquivado não pode ser acertado.</string>
     <string name="transaction_error_generic">Algo deu errado ao salvar a transação. Tente de novo em instantes.</string>
+    <string name="transaction_error_not_found">Transação não encontrada.</string>
+    <string name="transaction_error_multiple_monetary_legs">Este lançamento move dinheiro em dois lugares e não pode ser editado por aqui.</string>
+    <string name="transaction_error_is_adjustment">Um ajuste não é editado como um lançamento comum.</string>
+    <string name="transaction_error_installment_share">Uma parcela não é editada sozinha; edite o parcelamento.</string>
     <!-- Neutral fallback for ledger operations (save/adjust/pay/delete) when no typed reason applies. -->
     <string name="ledger_action_error_generic">Algo deu errado. Tente de novo em instantes.</string>
 
@@ -63,6 +72,9 @@
     <string name="installment_error_blocked_invoice">Uma das parcelas coincide com uma fatura bloqueada.</string>
     <string name="installment_error_missing_credit_card">Selecione um cartão para registrar o parcelamento.</string>
     <string name="installment_error_missing_invoice">Selecione uma fatura para registrar o parcelamento.</string>
+    <string name="installment_error_not_found">Parcelamento não encontrado.</string>
+    <string name="installment_error_non_positive_count">O número de parcelas deve ser maior que zero.</string>
+    <string name="installment_error_non_positive_total">O total do parcelamento deve ser maior que zero.</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_dashboard">Dashboard</string>
@@ -467,6 +479,7 @@
     <string name="reopen_invoice_cancel">Cancelar</string>
     <string name="reopen_invoice_confirm">Reabrir</string>
     <string name="invoice_error_cannot_reopen">Só a última fatura fechada pode ser reaberta.</string>
+    <string name="invoice_error_cannot_close_before_closing_date">A fatura só pode ser fechada a partir da data de fechamento.</string>
 
     <!-- Invoice Payment Modal -->
     <!-- The head names the operation and holds still; the verb is derived from the
@@ -816,8 +829,9 @@
     <string name="report_output_error_unknown">Ocorreu um erro inesperado.</string>
 
     <!-- Recurring Errors -->
+    <string name="recurring_error_not_found">Recorrência não encontrada.</string>
     <string name="recurring_error_amount_required">O valor é obrigatório.</string>
-    <string name="recurring_error_amount_zero">O valor não pode ser zero.</string>
+    <string name="recurring_error_amount_not_positive">O valor deve ser maior que zero.</string>
     <string name="recurring_error_title_or_category_required">Informe um título ou categoria.</string>
     <string name="recurring_error_invalid_day">O dia deve ser entre 1 e 31.</string>
     <string name="recurring_error_account_required">A conta é obrigatória.</string>
@@ -1008,8 +1022,10 @@
     <string name="currency_error_base_currency_not_archivable">Esta é a moeda base. Troque a moeda base antes de arquivá-la.</string>
     <string name="currency_error_not_found">Esta moeda não existe mais.</string>
     <string name="recurring_error_currency_mismatch">Esta recorrência é em outra moeda. Escolha uma conta ou um cartão na mesma moeda dela.</string>
+    <string name="recurring_error_category_direction_mismatch">Esta categoria é do sentido oposto ao da recorrência. Escolha uma categoria do mesmo sentido ou deixe sem categoria.</string>
+    <string name="recurring_error_date_in_future">Este ciclo não pode ser confirmado em uma data futura.</string>
     <string name="build_transaction_error_amount_required">Informe o valor.</string>
-    <string name="build_transaction_error_amount_zero">O valor não pode ser zero.</string>
+    <string name="build_transaction_error_amount_not_positive">O valor deve ser maior que zero.</string>
     <string name="build_transaction_error_date_required">Informe a data.</string>
     <string name="build_transaction_error_date_invalid">Data inválida.</string>
     <string name="build_transaction_error_date_future">A data não pode ser futura.</string>
@@ -1021,6 +1037,88 @@
     <string name="build_transaction_error_account_required">Selecione a conta.</string>
     <string name="build_transaction_error_closed_invoice">Uma fatura fechada não recebe novas despesas.</string>
     <string name="build_transaction_error_closed_selection">Uma conta ou cartão arquivado não recebe novas transações.</string>
+    <string name="mcp_server_error_port_in_use">O servidor MCP não subiu: a porta %1$d já está em uso por outro programa. Escolha outra porta nas configurações do servidor.</string>
+    <string name="mcp_server_error_unavailable">O servidor MCP não subiu: não foi possível escutar na porta %1$d. Escolha outra porta nas configurações do servidor.</string>
+
+    <string name="settings_group_integrations">Integrações</string>
+    <string name="mcp_settings_title">Servidor MCP</string>
+    <string name="mcp_settings_subtitle">Deixe um agente de IA consultar e lançar no app</string>
+
+    <string name="mcp_screen_title">Servidor MCP</string>
+    <string name="mcp_about_body">Um servidor MCP local permite que um agente de IA rodando nesta máquina consulte suas finanças e lance por você, com as ferramentas que você liberar. Nada sai desta máquina: o cliente lança o próprio app, ou fala com ele em 127.0.0.1 apresentando um token.</string>
+    <string name="mcp_about_reach_note">O agente alcança seus dados com o app aberto ou fechado — fechado, o cliente lança o próprio Finsight para falar com ele. Nos dois casos, só o que você liberar aqui é oferecido.</string>
+    <string name="mcp_enable_title">Habilitar o servidor</string>
+    <string name="mcp_enable_description">A escolha vale para as próximas aberturas do app — você habilita uma vez.</string>
+    <string name="mcp_unavailable_title">Indisponível nesta plataforma</string>
+    <string name="mcp_unavailable_description">O servidor MCP precisa de um executável que um cliente possa lançar e de um processo que segure um socket local — coisas que só o app de desktop tem.</string>
+
+    <string name="mcp_status_stopped">Desligado</string>
+    <string name="mcp_status_running">No ar em 127.0.0.1:%1$d</string>
+    <string name="mcp_status_failed">Habilitado, mas não está no ar</string>
+    <string name="mcp_status_no_client">Nenhum cliente conectado agora</string>
+    <string name="mcp_status_clients">Clientes com sessão aberta agora: %1$d</string>
+    <string name="mcp_disconnect_sessions">Encerrar sessões</string>
+
+    <string name="mcp_port_label">Porta</string>
+    <string name="mcp_port_helper">O cliente é configurado contra esta porta; trocá-la exige reconfigurá-lo.</string>
+    <string name="mcp_port_apply">Aplicar a porta</string>
+    <string name="mcp_port_error_invalid">Informe um número de porta entre 1024 e 65535.</string>
+    <string name="mcp_port_error_in_use">A porta %1$d já está em uso por outro programa. Escolha outra.</string>
+    <string name="mcp_port_error_unavailable">Não foi possível escutar na porta %1$d. Escolha outra.</string>
+
+    <string name="mcp_address_label">Endereço</string>
+    <string name="mcp_token_label">Token</string>
+    <string name="mcp_token_reveal">Mostrar o token</string>
+    <string name="mcp_token_hide">Ocultar o token</string>
+    <string name="mcp_instructions_json_note">O formato abaixo é convenção dos clientes, não do protocolo — se o seu usar outro, monte-o com o endereço e o token acima.</string>
+    <string name="mcp_port_title">Trocar a porta</string>
+    <string name="mcp_token_regenerate">Gerar um token novo</string>
+    <string name="mcp_token_regenerate_title">Gerar um token novo?</string>
+    <string name="mcp_token_regenerate_message">O token atual deixa de ser aceito, e quem estiver conectado agora é desconectado. Todo cliente já configurado precisa receber o token novo para voltar a conectar.</string>
+    <string name="mcp_token_regenerate_confirm">Gerar e invalidar o atual</string>
+    <string name="mcp_token_pending">O token é criado quando o servidor sobe pela primeira vez.</string>
+    <string name="mcp_copy">Copiar</string>
+
+    <string name="mcp_instructions_title">Como conectar um cliente</string>
+    <string name="mcp_instructions_body">Qualquer cliente que fale o protocolo MCP conecta — não há um cliente oficial. Escolha abaixo a forma que o seu aceita.</string>
+    <string name="mcp_connection_tab_command">Comando</string>
+    <string name="mcp_connection_tab_address">Endereço HTTP</string>
+    <string name="mcp_command_body">O cliente lança o app em modo servidor e conversa com ele pela entrada e saída padrão.</string>
+    <string name="mcp_command_label">Comando para o cliente</string>
+    <string name="mcp_command_copy">Copiar o comando</string>
+    <!-- Completes a sentence the client's name opens: "Claude Code, em uma linha" -->
+    <string name="mcp_command_line_label">, em uma linha</string>
+    <string name="mcp_command_line_copy">Copiar a linha</string>
+    <string name="mcp_command_line_target">Escolher o cliente</string>
+    <string name="mcp_command_note">Funciona com o app aberto ou fechado: o cliente lança o app quando precisa dele, e com a janela aberta é ela quem responde.</string>
+    <string name="mcp_address_body">Para clientes que preferem url: aponte-o para o endereço abaixo, com transporte HTTP (streamable), e faça-o enviar o token no cabeçalho Authorization.</string>
+    <string name="mcp_address_note">Só funciona com o app aberto: quem atende neste endereço é a janela, e com ela fechada não há nada escutando.</string>
+    <string name="mcp_instructions_copy">Copiar as instruções</string>
+
+    <string name="mcp_permissions_title">O que o agente pode fazer</string>
+    <string name="mcp_permissions_description">Cada eixo é uma pergunta independente: liberar um não libera outro. O que estiver retido não é nem anunciado ao agente.</string>
+    <string name="mcp_permission_read_title">Consultar</string>
+    <string name="mcp_permission_read_description">Ler saldos, listar lançamentos, contas, cartões, categorias, orçamentos e recorrências.</string>
+    <string name="mcp_permission_record_title">Registrar e editar</string>
+    <string name="mcp_permission_record_description">Criar e alterar lançamentos, contas, cartões, categorias, orçamentos, parcelamentos e recorrências.</string>
+    <string name="mcp_permission_remove_title">Apagar</string>
+    <string name="mcp_permission_remove_description">Remover definitivamente o que existe — lançamentos, contas, cartões, categorias, orçamentos, parcelamentos, recorrências e faturas futuras.</string>
+    <string name="mcp_permission_operate_title">Operar</string>
+    <string name="mcp_permission_operate_description">Mover dinheiro e ciclo de vida: transferir, ajustar saldo, pagar, fechar, reabrir e ajustar faturas, confirmar e pular recorrências, arquivar e desarquivar.</string>
+    <string name="mcp_permission_granted_count">%1$d ferramentas liberadas</string>
+    <string name="mcp_permission_withheld_count">%1$d ferramentas retidas</string>
+
+    <string name="mcp_activity_title">Atividade recente</string>
+    <string name="mcp_activity_see_all">Ver tudo</string>
+    <string name="mcp_activity_history_title">Atividade do agente</string>
+    <string name="mcp_activity_outcome_refused">Recusado</string>
+    <string name="mcp_activity_empty_title">Nada registrado ainda</string>
+    <string name="mcp_activity_empty_description">Toda escrita, operação e recusa de um agente aparece aqui. Consultas não entram — elas não alteram nada.</string>
+    <string name="mcp_activity_reference_gone">O que esta entrada criou não existe mais.</string>
+    <string name="mcp_activity_clear">Limpar</string>
+    <string name="mcp_activity_clear_title">Limpar o registro?</string>
+    <string name="mcp_activity_clear_message">As entradas somem e nenhum lançamento é alterado: o registro é o rastro do que foi feito, não a contabilidade. Apagar uma entrada não desfaz a operação que ela descreve.</string>
+    <string name="mcp_activity_clear_confirm">Limpar o registro</string>
 
     <string name="backup_error_not_a_backup">Este arquivo não é um backup válido deste app. Escolha o arquivo que você exportou.</string>
     <string name="backup_error_file_damaged">Este backup está danificado e não pode ser lido. Use outra cópia, se você tiver.</string>

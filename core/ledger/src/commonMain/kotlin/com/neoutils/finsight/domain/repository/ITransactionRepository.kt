@@ -20,7 +20,33 @@ interface ITransactionRepository {
     fun observeTransactionById(id: Long): Flow<Transaction?>
 
     suspend fun getAllTransactions(): List<Transaction>
+
+    /**
+     * The transactions dated within [startDate]..[endDate], **both days included**,
+     * newest first.
+     *
+     * The period is the cut, and it is the database's to make: a caller that wants one
+     * month of a history filters what it asked for rather than what the user has ever
+     * recorded, so what the answer costs is what the period holds. Their legs are read
+     * in bulk beside them, so it costs no query per posting either.
+     */
+    suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction>
+
     suspend fun getTransactionById(id: Long): Transaction?
+
+    /**
+     * Which of [ids] still name a transaction — the identities alone, not the transactions.
+     *
+     * For a caller that only has to tell what is still there from what was removed, and has a
+     * page of identities rather than one. Hydrating each of them costs a read of the row, a
+     * read of its entries and a read of the chart of accounts, and answering existence does not
+     * need any of the three; asked per identity it also makes the cost of a page grow with the
+     * page. An identity absent from the result is a transaction that is gone.
+     */
+    suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long>
 
     /**
      * The transactions [ids] names, in one query.
@@ -56,10 +82,10 @@ interface ITransactionRepository {
      * legs — a transfer — states both, and the boundary completes and balances the
      * intent exactly as it does on creation, conversion legs included.
      *
-     * [contra] has no default on purpose: a rewrite deletes the old entries, so a
-     * caller that forgets it turns a one-sided intent into an unbalanced write —
-     * refused at the boundary, with the edit silently rolled back. Defaulting it to
-     * `null` let exactly that compile.
+     * [contra] has no default on purpose: a rewrite deletes the old entries, so a caller
+     * that forgets it turns a one-sided intent into an unbalanced write — refused at the
+     * boundary, with the edit silently rolled back. Defaulting it to `null` let exactly
+     * that compile.
      */
     suspend fun updateTransaction(
         id: Long,

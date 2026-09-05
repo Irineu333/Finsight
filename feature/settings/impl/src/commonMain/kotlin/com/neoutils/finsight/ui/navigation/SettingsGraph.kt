@@ -5,6 +5,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
 import com.neoutils.finsight.feature.backup.api.BackupEntry
+import com.neoutils.finsight.feature.mcp.api.McpEntry
+import com.neoutils.finsight.feature.mcp.api.McpRoute
 import com.neoutils.finsight.feature.settings.api.CurrenciesRoute
 import com.neoutils.finsight.feature.settings.api.ExchangeRatesRoute
 import com.neoutils.finsight.feature.settings.api.SettingsGraph
@@ -21,13 +23,19 @@ import org.koin.core.parameter.parametersOf
 import org.koin.mp.KoinPlatform
 
 fun NavGraphBuilder.settingsGraph() {
-    // The graph builder's lambda is not `@Composable`, so the entry point comes from the
-    // Koin instance directly and not from `koinInject()`.
-    val backupEntry = KoinPlatform.getKoin().get<BackupEntry>()
+    // The graph builder's lambda is not `@Composable`, so the entry points of the sections
+    // hosted below come from the Koin instance directly and not from `koinInject()`.
+    val koin = KoinPlatform.getKoin()
+    val backupEntry = koin.get<BackupEntry>()
 
     navigation<SettingsGraph>(
         startDestination = SettingsRoute,
     ) {
+        // The MCP server is a section of settings that happens to be a feature module of its own:
+        // its graph is built here, inside this one, so being reached from settings and being part of
+        // settings are the same fact — the one the shell's selector reads off the hierarchy.
+        koin.get<McpEntry>().register()
+
         composable<SettingsRoute> {
             val navController = LocalNavController.current
 
@@ -36,6 +44,7 @@ fun NavGraphBuilder.settingsGraph() {
                     onNavigateBack = { navController.navigateUp() },
                     onOpenExchangeRates = { navController.navigate(ExchangeRatesRoute) },
                     onOpenCurrencies = { navController.navigate(CurrenciesRoute) },
+                    onOpenMcpServer = { navController.navigate(McpRoute) },
                 )
             }
         }

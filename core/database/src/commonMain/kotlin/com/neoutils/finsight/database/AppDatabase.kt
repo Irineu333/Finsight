@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import com.neoutils.finsight.database.dao.AccountDao
+import com.neoutils.finsight.database.dao.AgentActivityDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
@@ -19,6 +20,7 @@ import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.entity.AccountEntity
+import com.neoutils.finsight.database.entity.AgentActivityEntity
 import com.neoutils.finsight.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.database.entity.CategoryEntity
@@ -45,7 +47,7 @@ object AppSchema {
      * declaring a version this build does not know. Written once, so a migration raises
      * it in one place.
      */
-    const val VERSION = 14
+    const val VERSION = 15
 }
 
 @Database(
@@ -64,6 +66,7 @@ object AppSchema {
         DimensionEntity::class,
         ExchangeRateEntity::class,
         CurrencyEntity::class,
+        AgentActivityEntity::class,
     ],
     version = AppSchema.VERSION,
     exportSchema = true
@@ -84,6 +87,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dimensionDao(): DimensionDao
     abstract fun exchangeRateDao(): ExchangeRateDao
     abstract fun currencyDao(): CurrencyDao
+    abstract fun agentActivityDao(): AgentActivityDao
 }
 
 // Room compiler generates the actual implementations

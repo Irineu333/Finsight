@@ -1,10 +1,9 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.ui.modal.budgetForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
@@ -15,12 +14,13 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
 import com.neoutils.finsight.domain.model.CurrencyInfo
-import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICurrencyRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.AccountCurrencies
+import com.neoutils.finsight.domain.usecase.CreateBudgetUseCase
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
+import com.neoutils.finsight.domain.usecase.UpdateBudgetUseCase
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
@@ -37,13 +37,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class BudgetFormViewModel(
     private val formatter: CurrencyFormatter,
     private val budget: Budget? = null,
-    private val budgetRepository: IBudgetRepository,
+    private val createBudget: CreateBudgetUseCase,
+    private val updateBudget: UpdateBudgetUseCase,
     // Which currencies the user holds — across accounts **and** cards, which is why it
     // is one use case and not a listing this form assembles: a user whose foreign
     // spending is all on a card is exactly the case D13 exists for, and the account
@@ -58,6 +57,7 @@ class BudgetFormViewModel(
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val isEditMode = budget != null
@@ -265,51 +265,44 @@ class BudgetFormViewModel(
             // with a denomination nobody chose.
             val currency = state.currency ?: return@launch
 
-            val resolvedAmount = when (state.limitType) {
-                LimitType.FIXED -> state.amount.moneyToDouble()
-                LimitType.PERCENTAGE -> {
-                    val rec = state.selectedRecurring ?: return@launch
-                    rec.amount * (state.percentage.toDoubleOrNull() ?: 0.0) / 100.0
+            // Parsing the money field is the form's job — it typed the mask. What the
+            // limit then *is* belongs to the use case: a percentage limit's amount is a
+            // share of its base income, and deriving it here would be the same rule in
+            // a second place.
+            if (budget != null) {
+                updateBudget(
+                    budgetId = budget.id,
+                    title = validatedTitle,
+                    categories = state.selectedCategories,
+                    iconKey = state.selectedIcon.key,
+                    limitType = state.limitType,
+                    amount = state.amount.moneyToDouble(),
+                    percentage = state.percentage.toDoubleOrNull(),
+                    baseIncome = state.selectedRecurring,
+                ).onLeft {
+                    crashlytics.recordException(it)
+                }.onRight {
+                    analytics.logEvent(EditBudget(state.limitType, state.selectedCategories))
+                    modalManager.dismissAll()
                 }
+                return@launch
             }
 
-            if (budget != null) {
-                budgetRepository.update(
-                    budget.copy(
-                        title = validatedTitle.trim(),
-                        categories = state.selectedCategories,
-                        iconKey = state.selectedIcon.key,
-                        amount = resolvedAmount,
-                        // `currency` is deliberately absent from this copy: the
-                        // denomination of a stored limit never changes.
-                        limitType = state.limitType,
-                        percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
-                        recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
-                    )
-                )
-            } else {
-                budgetRepository.insert(
-                    Budget(
-                        title = validatedTitle.trim(),
-                        categories = state.selectedCategories,
-                        iconKey = state.selectedIcon.key,
-                        amount = resolvedAmount,
-                        currency = currency,
-                        limitType = state.limitType,
-                        percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
-                        recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
-                        createdAt = Clock.System.now().toEpochMilliseconds(),
-                    )
-                )
+            createBudget(
+                title = validatedTitle,
+                categories = state.selectedCategories,
+                iconKey = state.selectedIcon.key,
+                currency = currency,
+                limitType = state.limitType,
+                amount = state.amount.moneyToDouble(),
+                percentage = state.percentage.toDoubleOrNull(),
+                baseIncome = state.selectedRecurring,
+            ).onLeft {
+                crashlytics.recordException(it)
+            }.onRight {
+                analytics.logEvent(CreateBudget(state.limitType, state.selectedCategories))
+                modalManager.dismissAll()
             }
-            analytics.logEvent(
-                if (budget != null) {
-                    EditBudget(state.limitType, state.selectedCategories)
-                } else {
-                    CreateBudget(state.limitType, state.selectedCategories)
-                }
-            )
-            modalManager.dismissAll()
         }
     }
 }

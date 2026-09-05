@@ -22,6 +22,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCaseImpl
 import com.neoutils.finsight.domain.model.AccountType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -75,6 +76,8 @@ internal class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInv
     override fun observeInvoicesToSettle(month: YearMonth): Flow<List<Invoice>> = throw NotImplementedError()
     override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+    override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
+        creditCardIds.associateWith { getUnpaidInvoicesByCreditCard(it) }.filterValues { it.isNotEmpty() }
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
     override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
     override suspend fun update(invoice: Invoice) = throw NotImplementedError()
@@ -86,10 +89,15 @@ internal class FakeTransactionRepository(private val transactions: List<Transact
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = throw NotImplementedError()
+
     override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
         transactions.filter { it.id in ids }
-
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
     override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, legs: List<TransactionLeg>, contra: ContraLeg?) = throw NotImplementedError()
@@ -159,6 +167,7 @@ internal class FakeEntryRepository(
     override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,

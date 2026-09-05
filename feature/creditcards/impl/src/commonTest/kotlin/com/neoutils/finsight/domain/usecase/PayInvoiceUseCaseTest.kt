@@ -30,7 +30,7 @@ class PayInvoiceUseCaseTest {
     private fun useCase(
         today: LocalDate = LocalDate(2026, 2, 20),
         store: RecordingInvoiceStore = RecordingInvoiceStore(invoice),
-    ) = PayInvoiceUseCase(store, StoppedClock(today))
+    ) = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), StoppedClock(today))
 
     @Test
     fun `paying between closing and due settles it, and records when`() = runTest {

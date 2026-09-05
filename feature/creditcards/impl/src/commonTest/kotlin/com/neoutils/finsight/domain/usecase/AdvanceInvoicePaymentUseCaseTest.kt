@@ -37,18 +37,19 @@ class AdvanceInvoicePaymentUseCaseTest {
         store: RecordingInvoiceStore,
         writer: RecordingTransactionWriter,
         owed: Map<Long, Double>,
-    ) = AdvanceInvoicePaymentUseCase(
+    ) = AdvanceInvoicePaymentUseCaseImpl(
         writeInvoicePayment = WriteInvoicePaymentUseCase(
             transactionRepository = writer,
             // Same-currency throughout, so there is no rate to learn.
             harvestExchangeRate = HarvestExchangeRateUseCase(NoExchangeRates),
             accountRepository = FakeCardAccountRepository(),
         ),
-        validateInvoicePayment = ValidateInvoicePaymentUseCase(
+        validateInvoicePayment = ValidateAdvanceInvoicePaymentUseCase(
             invoiceRepository = store,
-            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(owed)),
+            calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(owed)),
             clock = StoppedClock(today),
         ),
+        accountRepository = FakeCardAccountRepository(),
     )
 
     @Test

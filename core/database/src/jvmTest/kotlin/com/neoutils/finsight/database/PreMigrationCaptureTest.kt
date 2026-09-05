@@ -112,7 +112,7 @@ class PreMigrationCaptureTest {
             "the copy is of the archive as it was, before the migration touched it",
         )
         assertEquals(
-            14L,
+            AppSchema.VERSION.toLong(),
             onFile(liveFile) { it.scalarLong("PRAGMA user_version") },
             "and the archive itself did migrate",
         )
@@ -137,7 +137,7 @@ class PreMigrationCaptureTest {
 
         assertFalse(copyFile.exists(), "nothing was written where a destination was not given")
         assertEquals(
-            14L,
+            AppSchema.VERSION.toLong(),
             onFile(liveFile) { it.scalarLong("PRAGMA user_version") },
             "the migration is not conditional on any of this",
         )
@@ -221,7 +221,7 @@ class PreMigrationCaptureTest {
         open(captureInto = copyFile.absolutePath).openAndClose()
 
         assertEquals(
-            14L,
+            AppSchema.VERSION.toLong(),
             onFile(liveFile) { it.scalarLong("PRAGMA user_version") },
             "the app opened and the migration ran, with no copy behind it",
         )

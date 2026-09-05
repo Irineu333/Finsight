@@ -29,9 +29,9 @@ class AddCreditCardUseCaseTest {
     private fun useCase(
         cards: RecordingCardStore,
         invoices: RecordingInvoiceStore,
-    ) = AddCreditCardUseCase(
+    ) = AddCreditCardUseCaseImpl(
         repository = cards,
-        openInvoiceUseCase = OpenInvoiceUseCase(
+        openInvoiceUseCase = OpenInvoiceUseCaseImpl(
             invoiceRepository = invoices,
             creditCardRepository = cards,
             clock = clock,

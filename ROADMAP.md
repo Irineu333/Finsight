@@ -4,7 +4,8 @@ App de finanças em Kotlin Multiplatform (Android/Desktop/iOS) com Compose Multi
 
 Produção atual: **1.10.0**.
 Há um ciclo aberto depois dela, ainda sem número declarado: as linhas com `—` na coluna de versão
-já estão no `main` e não saíram em release nenhuma.
+estão escritas e testadas, e não saíram em release nenhuma. As cinco primeiras estão no `main`; as
+oito do servidor MCP estão em `feature/local-mcp-server`, que já carrega o `main` mesclado.
 
 ## Entregue
 
@@ -68,6 +69,14 @@ já estão no `main` e não saíram em release nenhuma.
 | **Botão de ação único**         | Um FAB para o app: a tela publica as ações, a casca decide a forma e a posição        | Funcionalidade | —             |
 | **Snapshot do banco**           | Capturar, verificar em isolamento e substituir o conteúdo, sem reiniciar o app        | Arquitetura    | —             |
 | **Prelúdio de remoção**         | O razão anuncia a remoção antes das linhas saírem; calar exige `@OptIn`               | Arquitetura    | —             |
+| **Servidor MCP**                | Servidor local no processo do desktop, em loopback, atrás de token e checagem de origem | Funcionalidade | —             |
+| **Superfície de 58 ferramentas** | Perguntas, catálogo, registro e operações — uma tela com um agente no lugar de quem lê | Funcionalidade | —             |
+| **Permissões por eixo**         | Ler, registrar, apagar e operar decidem quais ferramentas existem, e o retido é dito   | Funcionalidade | —             |
+| **Registro de atividade**       | O que um agente mudou fica registrado, com retenção declarada e alcance ao lançamento | Funcionalidade | —             |
+| **Use case por id**             | O id carrega a implementação e o agregado delega; 45 use cases chegaram à `api`        | Arquitetura    | —             |
+| **Plataforma nos dois sentidos** | O que só funciona no desktop se oculta pelo mesmo eixo do que não funciona nele       | Arquitetura    | —             |
+| **MCP com o app fechado**       | O mesmo executável em `--mcp` fala o protocolo por stdio, com a janela aberta ou não  | Funcionalidade | —             |
+| **Dono do acervo**              | Um lock do sistema operacional decide qual dos dois processos abre o banco            | Arquitetura    | —             |
 
 ## Planejado
 
@@ -75,10 +84,9 @@ Nada começado: sem change em `openspec/` e sem código no repositório.
 
 | Nome                            | Descrição                                                                             | Tipo           |
 |---------------------------------|---------------------------------------------------------------------------------------|----------------|
-| **Servidor MCP**                | O assistente lê as figuras do razão e lança por ele, pela fronteira de escrita única  | Funcionalidade |
 | **Sincronização**               | O mesmo razão em mais de um dispositivo, sem exportar e importar à mão                | Funcionalidade |
 | **Open Finance**                | Lançamentos e saldos vindos do banco pelo Open Finance, em vez de digitados           | Funcionalidade |
-| **Assistente de IA**            | Perguntar sobre as próprias finanças e lançar em linguagem natural, no app            | Funcionalidade |
+| **Assistente de IA**            | Perguntar e lançar em linguagem natural **dentro** do app, sem um cliente MCP de fora | Funcionalidade |
 | **Cofrinhos**                   | Reservar parte do saldo de uma conta para um fim, sem tirá-lo da conta                | Funcionalidade |
 | **Criptomoedas**                | Cripto como moeda de conta, com as casas decimais e a cotação que ela exige           | Funcionalidade |
 | **Saldo guardado**              | A conta mostra o que está guardado à parte do que resta livre para gastar             | Funcionalidade |

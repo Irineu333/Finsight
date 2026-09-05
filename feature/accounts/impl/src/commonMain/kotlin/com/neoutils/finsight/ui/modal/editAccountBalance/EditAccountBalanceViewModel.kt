@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.exception.AccountNotAdjustedException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -145,6 +146,7 @@ class EditAccountBalanceViewModel(
         runCatching { dayMonthYear.parse(this) }.getOrNull()
 
     private fun Throwable.toUiMessage(): UiText = when (this) {
+        is AccountException -> error.toUiText()
         is ClosedAccountException -> error.toUiText()
         is UnbalancedTransactionException -> error.toUiText()
         else -> UiText.Res(Res.string.ledger_action_error_generic)

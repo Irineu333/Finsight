@@ -2,6 +2,7 @@ package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_error_cannot_close_before_closing_date
 import com.neoutils.finsight.resources.invoice_error_cannot_reopen
 import com.neoutils.finsight.resources.ledger_error_closed_invoice
 import com.neoutils.finsight.resources.ledger_error_paid_invoice
@@ -21,13 +22,14 @@ sealed class InvoiceError(val message: String) {
     data object CannotClosePaidInvoice : InvoiceError("Cannot close a paid invoice")
     data object AlreadyClosed : InvoiceError("Invoice is already closed")
     data object CannotCloseOutsideClosingMonth : InvoiceError("Cannot close invoice outside of the closing month")
+    data object CannotCloseBeforeClosingDate : InvoiceError("Cannot close invoice before its closing date")
     data object NegativeBalance : InvoiceError("Cannot close invoice with negative balance")
 
     // Open
     data object OverlappingInvoice : InvoiceError("Invoice period overlaps with existing invoice")
 
     // Pay
-    data object CannotPayOpenInvoice : InvoiceError("Only closed invoices can be paid")
+    data object CannotPayOpenInvoice : InvoiceError("Only a closed or retroactive invoice can be paid")
     data object PaymentDateBeforeClosing : InvoiceError("Payment date cannot be before closing date")
     data object PaymentDateAfterDue : InvoiceError("Payment date cannot be after due date")
     data object PaymentDateInFuture : InvoiceError("Payment date cannot be in the future")
@@ -69,6 +71,8 @@ class InvoiceException(val error: InvoiceError) : Exception(error.message)
  */
 fun InvoiceError.toUiText(): UiText = when (this) {
     InvoiceError.CannotReopenInvoice -> UiText.Res(Res.string.invoice_error_cannot_reopen)
+    InvoiceError.CannotCloseBeforeClosingDate ->
+        UiText.Res(Res.string.invoice_error_cannot_close_before_closing_date)
     InvoiceError.Paid -> UiText.Res(Res.string.ledger_error_paid_invoice)
     InvoiceError.ClosedToNewSpending -> UiText.Res(Res.string.ledger_error_closed_invoice)
     else -> UiText.Res(Res.string.ledger_action_error_generic)

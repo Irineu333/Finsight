@@ -58,9 +58,10 @@ class AdjustInvoiceUseCaseTest {
     @Test
     fun `re-adjusting an invoice rewrites the adjustment from the ledger`() = runTest {
         val ledger = InvoiceLedgerStore(card)
-        val useCase = AdjustInvoiceUseCase(
+        val useCase = AdjustInvoiceUseCaseImpl(
+            invoiceRepository = RecordingInvoiceStore(invoice),
             transactionRepository = FakeTransactionRepository(ledger),
-            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+            calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(ledger)),
         )
 
         // First adjustment: owed 0 -> 100, creates the adjustment transaction.
@@ -84,9 +85,10 @@ class AdjustInvoiceUseCaseTest {
     fun `clearing an adjustment withholds the announcement that would take a copy`() = runTest {
         val ledger = InvoiceLedgerStore(card)
         val repository = FakeTransactionRepository(ledger)
-        val useCase = AdjustInvoiceUseCase(
+        val useCase = AdjustInvoiceUseCaseImpl(
+            invoiceRepository = RecordingInvoiceStore(invoice),
             transactionRepository = repository,
-            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+            calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(ledger)),
         )
 
         useCase(invoice = invoice, target = 100.0, adjustmentDate = date).getOrNull()
@@ -113,9 +115,10 @@ class AdjustInvoiceUseCaseTest {
     @Test
     fun `a same-day cross-currency invoice payment is not rewritten as the adjustment`() = runTest {
         val ledger = InvoiceLedgerStore(card)
-        val useCase = AdjustInvoiceUseCase(
+        val useCase = AdjustInvoiceUseCaseImpl(
+            invoiceRepository = RecordingInvoiceStore(invoice),
             transactionRepository = FakeTransactionRepository(ledger),
-            calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(ledger)),
+            calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(ledger)),
         )
 
         val dimensionId = invoice.dimensionId!!
@@ -267,10 +270,15 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = throw NotImplementedError()
+
     override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
         ids.mapNotNull { getTransactionById(it) }
-
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
 }
 
 class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryRepository {
@@ -291,9 +299,11 @@ class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryReposi
     override suspend fun dimensionMonthlySeriesByCurrency(dimensionId: Long, upTo: YearMonth): Map<YearMonth, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonthByCurrency(month: YearMonth, dimensionId: Long): MoneyByCurrency = throw NotImplementedError()
     override suspend fun dimensionFlowsByCurrency(dimensionId: Long): DimensionFlowsByCurrency = throw NotImplementedError()
-    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
+    override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> =
+        dimensionIds.distinct().associateWith { dimensionOwedByCurrency(it) }
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,

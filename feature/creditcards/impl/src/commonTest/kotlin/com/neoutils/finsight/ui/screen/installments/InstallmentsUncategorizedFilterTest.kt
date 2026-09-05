@@ -161,6 +161,8 @@ private object NoInvoices : IInvoiceRepository {
     override suspend fun getAllInvoices(): List<Invoice> = emptyList()
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = emptyList()
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = emptyList()
+    override suspend fun getUnpaidInvoicesByCreditCards(creditCardIds: Collection<Long>): Map<Long, List<Invoice>> =
+        creditCardIds.associateWith { getUnpaidInvoicesByCreditCard(it) }.filterValues { it.isNotEmpty() }
     override suspend fun getInvoiceById(id: Long): Invoice? = null
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = null
     override suspend fun insert(invoice: Invoice): Invoice = throw NotImplementedError()
@@ -177,10 +179,16 @@ private class ChargeStore(private val transactions: List<Transaction>) : ITransa
         MutableStateFlow(transactions.firstOrNull { it.id == id })
 
     override suspend fun getAllTransactions(): List<Transaction> = transactions
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = transactions.filter { it.date in startDate..endDate }
+
     override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
         transactions.filter { it.id in ids }
-
     override suspend fun getTransactionById(id: Long): Transaction? = transactions.firstOrNull { it.id == id }
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> =
+        transactions.mapTo(mutableSetOf()) { it.id }.apply { retainAll(ids.toSet()) }
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
     override suspend fun updateTransaction(

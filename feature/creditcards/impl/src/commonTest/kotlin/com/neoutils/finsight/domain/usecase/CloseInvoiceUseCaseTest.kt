@@ -34,12 +34,12 @@ class CloseInvoiceUseCaseTest {
         today: LocalDate = LocalDate(2026, 2, 20),
     ): CloseInvoiceUseCase {
         val clock = StoppedClock(today)
-        val calculate = CalculateInvoiceUseCase(FakeEntryRepository(owed))
-        return CloseInvoiceUseCase(
+        val calculate = CalculateInvoiceUseCaseImpl(FakeEntryRepository(owed))
+        return CloseInvoiceUseCaseImpl(
             invoiceRepository = store,
             calculateInvoiceUseCase = calculate,
-            payInvoiceUseCase = PayInvoiceUseCase(store, clock),
-            openInvoiceUseCase = OpenInvoiceUseCase(store, SingleCardRepository(card), clock),
+            payInvoiceUseCase = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), clock),
+            openInvoiceUseCase = OpenInvoiceUseCaseImpl(store, SingleCardRepository(card), clock),
         )
     }
 
@@ -123,6 +123,23 @@ class CloseInvoiceUseCaseTest {
 
         assertEquals(InvoiceError.CannotCloseOutsideClosingMonth, result.leftOrNull()?.error)
         assertTrue(store.updates.isEmpty())
+    }
+
+    @Test
+    fun `closing before the closing day is refused, even inside the closing month`() = runTest {
+        // The month is right and the day has not arrived: closing here would produce an
+        // invoice ValidateInvoicePaymentUseCase then refuses to pay, since a payment
+        // before `closingDate` is PaymentDateBeforeClosing. The domain does not create a
+        // state it will not operate.
+        val invoice = testInvoice(openingMonth = january, card = card)
+        val store = RecordingInvoiceStore(invoice)
+        val dayBefore = LocalDate(2026, 2, 4)
+
+        val result = useCase(store, owed = mapOf(100L to 120.0), today = dayBefore)(invoice.id, dayBefore)
+
+        assertEquals(InvoiceError.CannotCloseBeforeClosingDate, result.leftOrNull()?.error)
+        assertTrue(store.updates.isEmpty())
+        assertTrue(store.inserts.isEmpty(), "and no next cycle was opened either")
     }
 
     @Test

@@ -27,5 +27,20 @@ import com.neoutils.finsight.domain.model.Account
  * categories alike — all three are facades over one chart-of-accounts row.
  */
 interface ArchiveAccountUseCase {
-    suspend operator fun invoke(account: Account): Either<Throwable, Unit>
+
+    /**
+     * The canonical form, and the one that carries the implementation.
+     *
+     * The account is resolved **when the operation runs**, so the guards read the
+     * account as it is at that instant rather than as a caller once loaded it; an
+     * identity that matches nothing is refused with `AccountError.NOT_FOUND` and
+     * nothing is written.
+     */
+    suspend operator fun invoke(accountId: Long): Either<Throwable, Unit>
+
+    /**
+     * The convenience for a caller that already holds the account. It extracts the
+     * identity and delegates — not another rule, so not another implementation.
+     */
+    suspend operator fun invoke(account: Account): Either<Throwable, Unit> = invoke(account.id)
 }

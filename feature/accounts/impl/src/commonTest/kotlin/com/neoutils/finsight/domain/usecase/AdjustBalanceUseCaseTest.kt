@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.ledger.RemovalAnnouncement
@@ -10,17 +12,25 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.naturalBalanceOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.plus
 import kotlin.math.roundToLong
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.domain.error.AccountError
+import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.MoneyByCurrency
 import com.neoutils.finsight.domain.repository.AssetMonthFlowsByCurrency
 import com.neoutils.finsight.domain.repository.DimensionFlowsByCurrency
@@ -36,14 +46,17 @@ import com.neoutils.finsight.domain.repository.ScopeStatsByCurrency
 class AdjustBalanceUseCaseTest {
 
     private val date = LocalDate(2026, 1, 10)
+    private val today = LocalDate(2026, 3, 1)
     private val account = Account(id = 1, name = "Checking", type = AccountType.ASSET, currency = "BRL")
 
     @Test
     fun `re-adjusting a balance rewrites the adjustment from the ledger`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         // First adjustment: balance 0 -> 100, creates the adjustment transaction.
@@ -67,9 +80,11 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `a same-day cross-currency transfer is not rewritten as the adjustment`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         val transferId = ledger.seedCrossCurrencyTransfer(date)
@@ -89,9 +104,11 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `adjusting on two dates produces one adjustment on each`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
         val later = LocalDate(2026, 2, 10)
 
@@ -108,9 +125,11 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `re-adjusting back to the original value removes that date's adjustment`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
@@ -137,9 +156,11 @@ class AdjustBalanceUseCaseTest {
     fun `clearing an adjustment withholds the announcement that would take a copy`() = runTest {
         val ledger = LedgerStore(account)
         val repository = FakeTransactionRepository(ledger)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = repository,
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
@@ -159,9 +180,11 @@ class AdjustBalanceUseCaseTest {
     @Test
     fun `altering the past propagates to the present without rewriting the adjustment`() = runTest {
         val ledger = LedgerStore(account)
-        val useCase = AdjustBalanceUseCase(
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
             transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
         )
 
         useCase(targetBalance = 200.0, adjustmentDate = date, account = account).getOrNull()
@@ -172,6 +195,51 @@ class AdjustBalanceUseCaseTest {
 
         assertEquals(mapOf(date to 200.0), ledger.adjustmentsByDate())
         assertEquals(250.0, ledger.accountBalance())
+    }
+
+    /**
+     * The balance an adjustment corrects is `Σ entries` up to its date, so a date the
+     * clock has not reached yet corrects a reading nobody can take — the difference
+     * lands in a month the user never opens, and the account goes on showing the old
+     * figure. The rule belongs here and not to the form's date picker: every other way
+     * in reaches this operation without one.
+     */
+    @Test
+    fun `an adjustment dated after today is refused and nothing is written`() = runTest {
+        val ledger = LedgerStore(account)
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
+        )
+
+        val error = assertIs<AccountException>(
+            useCase(
+                targetBalance = 100.0,
+                adjustmentDate = today.plus(1, DateTimeUnit.DAY),
+                account = account,
+            ).leftOrNull()
+        )
+
+        assertEquals(AccountError.ADJUSTMENT_DATE_IN_FUTURE, error.error)
+        assertTrue(ledger.entriesByTransaction.isEmpty(), "nothing may be written")
+    }
+
+    /** And today itself is not the future: the boundary is inclusive. */
+    @Test
+    fun `an adjustment dated today is written`() = runTest {
+        val ledger = LedgerStore(account)
+        val useCase = AdjustBalanceUseCaseImpl(
+            accountRepository = KnownAccounts(account),
+            transactionRepository = FakeTransactionRepository(ledger),
+            calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
+            clock = ClockOn(today),
+        )
+
+        useCase(targetBalance = 100.0, adjustmentDate = today, account = account).getOrNull()
+
+        assertEquals(mapOf(today to 100.0), ledger.adjustmentsByDate())
     }
 
     /**
@@ -266,6 +334,30 @@ class LedgerStore(private val account: Account) {
         .toMap()
 }
 
+/** The chart as the use case resolves it: the accounts that exist, and nothing else. */
+class KnownAccounts(private vararg val accounts: Account) : IAccountRepository {
+    override suspend fun getAccountById(accountId: Long): Account? =
+        accounts.firstOrNull { it.id == accountId }
+
+    override suspend fun getAllAccounts(): List<Account> = accounts.toList()
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts.toList())
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts.toList()
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(accounts.toList())
+    override suspend fun getAllLedgerAccounts(): List<Account> = accounts.toList()
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts.toList())
+    override fun observeAccountById(accountId: Long): Flow<Account?> =
+        flowOf(accounts.firstOrNull { it.id == accountId })
+
+    override suspend fun getDefaultAccount(): Account? = accounts.firstOrNull { it.isDefault }
+    override fun observeDefaultAccount(): Flow<Account?> = flowOf(accounts.firstOrNull { it.isDefault })
+    override suspend fun getAccountCount(): Int = accounts.size
+    override suspend fun hasYieldingAccount(): Boolean = accounts.any { it.yieldsInterest }
+    override suspend fun insert(account: Account): Long = throw NotImplementedError()
+    override suspend fun update(account: Account) = throw NotImplementedError()
+    override suspend fun delete(account: Account) = throw NotImplementedError()
+    override suspend fun reopen(accountId: Long) = throw NotImplementedError()
+}
+
 class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionRepository {
 
     /**
@@ -327,10 +419,15 @@ class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionR
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+    override suspend fun getTransactionsBetween(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> = throw NotImplementedError()
+
     override suspend fun getTransactionsByIds(ids: Collection<Long>): List<Transaction> =
         ids.mapNotNull { getTransactionById(it) }
-
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+    override suspend fun getExistingTransactionIds(ids: Collection<Long>): Set<Long> = throw NotImplementedError()
 }
 
 class FakeEntryRepository(private val ledger: LedgerStore) : IEntryRepository {
@@ -354,6 +451,7 @@ class FakeEntryRepository(private val ledger: LedgerStore) : IEntryRepository {
     override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
     override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
     override suspend fun totalsByDimensionByCurrency(
         nominalType: AccountType,

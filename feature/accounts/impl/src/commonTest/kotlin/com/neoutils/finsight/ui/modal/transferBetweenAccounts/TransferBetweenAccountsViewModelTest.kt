@@ -17,7 +17,8 @@ import com.neoutils.finsight.domain.usecase.RewriteRecordingTransactions
 import com.neoutils.finsight.domain.usecase.StaticAccounts
 import com.neoutils.finsight.domain.usecase.SuggestCrossCurrencyAmountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
-import com.neoutils.finsight.domain.usecase.UpdateTransferUseCase
+import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCaseImpl
+import com.neoutils.finsight.domain.usecase.UpdateTransferUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateTransferUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.Dispatchers
@@ -88,12 +89,12 @@ class TransferBetweenAccountsViewModelTest {
         return TransferBetweenAccountsViewModel(
             initialSourceAccount = transaction?.entries?.first { it.amount < 0 }?.account ?: nubank,
             transaction = transaction,
-            transferBetweenAccountsUseCase = TransferBetweenAccountsUseCase(
+            transferBetweenAccountsUseCase = TransferBetweenAccountsUseCaseImpl(
                 transactionRepository = transactions,
                 validateTransfer = validate,
                 harvestExchangeRate = HarvestExchangeRateUseCase(rates),
             ),
-            updateTransferUseCase = UpdateTransferUseCase(
+            updateTransferUseCase = UpdateTransferUseCaseImpl(
                 transactionRepository = transactions,
                 validateTransfer = validate,
                 harvestExchangeRate = HarvestExchangeRateUseCase(rates),

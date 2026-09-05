@@ -24,7 +24,8 @@ feature/
 
 Features: `shell` (a casca — catálogo de navegação e contrato de chrome), `dashboard`,
 `transactions`, `accounts`, `creditcards`, `categories`, `budgets`, `recurring`, `report`,
-`settings` (moeda base e acervo de taxas de câmbio) e `support`.
+`settings` (moeda base e acervo de taxas de câmbio), `mcp` (a superfície MCP local, hospedada por
+`settings`) e `support`.
 
 **Critério de triagem:** só entra na `api` o que **outro módulo consome**. Tudo o mais é detalhe de implementação e vive no `impl`. Na dúvida, comece no `impl` — promover para a `api` depois é barato; o inverso quebra consumidores.
 
@@ -155,14 +156,21 @@ modalManager.show(entry.payInvoiceModal(invoice.id))
 | **Composable embutido** | Método no entry point retornando conteúdo `@Composable` — caso raro; só se surgir necessidade real |
 | **Registro de subgrafo** | `context(builder: NavGraphBuilder) fun register()` no entry point, quando uma feature **hospeda** os destinos de outra |
 
-O quarto caso **não tem usuário hoje**, e é a única linha da tabela nessa situação. Ele existiu
-por causa do `home`, que aninhava os grafos de `dashboard` e `transactions` dentro do seu
-`navigation<HomeGraph>` e, por `impl ⊄ impl`, não podia chamar `dashboardGraph()` diretamente —
-pedia o registro ao `DashboardEntry`. O `home` deixou de existir: a casca virou `feature/shell` e
-os dois grafos passaram a ser de primeiro nível, invocados direto pelo `AppNavHost`. O mecanismo
-continua disponível para quando uma feature genuinamente hospedar os destinos de outra, e é assim
-que ele funciona: a extension `NavGraphBuilder.<feature>Graph()` da feature hospedada fica
-`internal`, invocada apenas pelo seu próprio `<Nome>EntryImpl`.
+O quarto caso existe para uma seção que **pertence a outra** e ainda assim é módulo de feature
+próprio: o `mcp`, que o usuário alcança pelas configurações. O `settings:impl` aninha o grafo dele
+dentro do seu `navigation<SettingsGraph>` e, como `impl ⊄ impl`, não pode chamar `mcpGraph()`
+diretamente — pede o registro ao `McpEntry`. As extensions `NavGraphBuilder.<feature>Graph()` das
+features hospedadas ficam `internal`, invocadas apenas pelo seu próprio `<Nome>EntryImpl`.
+
+O que o aninhamento compra é a **hierarquia**: com o grafo do `mcp` dentro do de `settings`, toda
+tela da seção tem `SettingsGraph` na sua `hierarchy`, e o seletor da chrome (`sectionOf`) responde
+por ela sem que o catálogo declare nada. Registrar o grafo como top-level no `AppNavHost` não erra
+nenhuma navegação, mas deixa a seção sem dono para quem lê a hierarquia.
+
+O mecanismo é anterior ao `mcp`: existiu pelo `home`, que aninhava os grafos de `dashboard` e
+`transactions` dentro do seu `navigation<HomeGraph>`. O `home` deixou de existir — a casca virou
+`feature/shell` e os dois grafos passaram a ser de primeiro nível, invocados direto pelo
+`AppNavHost`.
 
 O `NavGraphBuilder` é um **context parameter**, não um parâmetro comum: o receiver implícito do
 `navigation<>` o satisfaz, então o call site é só `entry.register()`, e o compilador impede que
@@ -199,18 +207,20 @@ fun NavGraphBuilder.budgetsGraph() {
     }
 }
 
-// uma feature que hospedasse os destinos de outra, sem enxergar o seu impl
-fun NavGraphBuilder.hostGraph() {
+// feature/settings/impl — hospeda o grafo do mcp sem enxergar o impl dele
+fun NavGraphBuilder.settingsGraph() {
     val koin = KoinPlatform.getKoin()
-    navigation<HostGraph>(startDestination = GuestGraph) {
-        koin.get<GuestEntry>().register()   // NavGraphBuilder vem do contexto
+    navigation<SettingsGraph>(startDestination = SettingsRoute) {
+        koin.get<McpEntry>().register()   // NavGraphBuilder vem do contexto
+        composable<SettingsRoute> { ... }
     }
 }
 
-// :app:shared — AppNavHost: só chamadas a <nome>Graph(), todas de primeiro nível
+// :app:shared — AppNavHost: só chamadas a <nome>Graph(), as demais de primeiro nível
 NavHost(startDestination = DashboardGraph) {
     dashboardGraph()
     transactionsGraph()
+    settingsGraph()   // e, dentro dele, o grafo do mcp
     supportGraph()
     budgetsGraph()
 }
@@ -232,11 +242,13 @@ o dashboard abre as duas primeiras pela entrada e o `AppNavCatalog` da casca nom
 `TransactionsGraph` ficam no `impl`, ao lado da extension, porque quem navega até elas mira a tela
 (`BudgetsRoute`, `AccountsRoute(id)`) e nunca o grafo. `DashboardGraph` está na `api` porque o
 `AppNavHost` o nomeia como `startDestination` do `NavHost` — e o `startDestination` precisa ser um
-filho direto, que é o subgrafo e não a tela. Uma feature que não é destino de ninguém não cria
-módulo `api` para hospedar rota alguma.
+filho direto, que é o subgrafo e não a tela. `McpGraph` fica no `impl` mesmo sendo aninhado por
+outra feature: quem chega à seção mira `McpRoute`, e o host registra o grafo pelo `McpEntry`, sem
+nomeá-lo. Uma feature que não é destino de ninguém não cria módulo `api` para hospedar rota alguma.
+
 *Registro via Koin, só quando necessário:* o `:app:shared` enxerga os `impl` e chama as extensions
 diretamente. Uma **feature** que hospeda o grafo de outra não pode, e aí passa pelo `register()` do
-entry point. É a exceção que nenhuma feature obriga hoje, e não a regra.
+entry point. É a exceção que o `mcp` obriga, não a regra.
 
 > **Entry point é opcional.** Uma feature só declara `<Nome>Entry` quando **outra** feature consome
 > UI dela (modal/composable). O piloto `support` não expõe modal a terceiros (seu modal é interno),
@@ -260,8 +272,40 @@ As assinaturas dos entry points só referenciam tipos do core (`:core:model`,
 - Todos os módulos de feature declaram os targets KMP (Android, iOS, Desktop), mas a
   regra é código `commonMain` puro. Source sets de plataforma no `impl` são exceção
   justificada (ex.: `report:impl`, com serviços nativos de print/share).
+- **Source set de plataforma numa `api` é exceção mais estreita, e vale por um motivo só:** o tipo é
+  consumido por um módulo `app/` que **não enxerga `impl`** e implementado por um `impl` — e a `api`
+  é o único lugar que os dois enxergam. `:app:shared` publica cada `api` com `api(...)` e cada
+  `impl` com `implementation(...)` (`app/shared/build.gradle.kts`), então um `impl` não está no
+  compile classpath de `:app:desktop`; e um `:core:*` não serve de casa alternativa, porque nenhum
+  core pode nomear uma feature. É o caso do `mcp:api` (`jvmMain`): `McpStdout`, que o ponto de
+  entrada `--mcp` reivindica antes de existir grafo e o `impl` lê para escrever o protocolo, e
+  `McpLaunchCommand.ofThisProcess()`, que resolve o executável desta instalação. Fora desse desenho,
+  o lugar continua sendo o `impl`.
 - No framework iOS (configurado no `:app:ios`), apenas `:core:*` e `feature:*:api`
   são exportados (`export()`); os `impl` são linkados via `:app:shared`, mas invisíveis ao Swift.
+
+### A superfície MCP: dois modos e um dono do banco
+
+O `mcp` é servido por **dois transportes**, e os dois montam a mesma sessão — as ferramentas
+registradas, o filtro por eixo de permissão, o registro de atividade e as instruções do aperto de
+mão não nomeiam porta nenhuma, então a montagem (`McpSessionFactory`, no `jvmMain` do `impl`) é uma
+só e os dois modos não têm como responder diferente:
+
+| Modo | Contrato na `api` | Quem o inicia | Dura enquanto |
+|---|---|---|---|
+| **Servidor HTTP** em loopback | `McpServerController` | a janela, no `main` do `:app:desktop` | a janela estiver aberta |
+| **Sessão stdio** | `McpStdioSession` | o cliente, lançando o executável com `--mcp` | o cliente mantiver a conversa |
+
+**Há no máximo um dono do banco por vez, e enquanto a janela está aberta o dono é ela.** A posse é
+um lock exclusivo do sistema operacional sobre um arquivo ao lado do acervo (`DatabaseOwnership`,
+`:core:database`/`jvmMain`, que não depende do `mcp`): a janela a toma antes de montar o grafo Koin
+e a segura até sair; o processo stdio a toma por chamada e a devolve ao terminar. Quem não é dono
+**não executa** — encaminha para quem é, para que a escrita aconteça no processo que tem os `Flow`s.
+A exclusão é do kernel e não um acordo entre os processos: a janela já coleta `Flow`s antes de
+vincular a porta, e uma sondagem de porta teria um intervalo em que nenhuma resposta seria correta.
+
+`:app:desktop` nomeia os dois contratos e nenhuma implementação: a janela pede o `McpServerController`
+ao Koin e o ponto de entrada `--mcp` pede a `McpStdioSession`.
 
 ---
 

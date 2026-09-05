@@ -16,6 +16,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.plus
+import kotlinx.datetime.minus
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -45,7 +48,9 @@ class PayInvoicePaymentUseCaseTest {
         store: RecordingInvoiceStore,
         writer: RecordingTransactionWriter,
         owed: Map<Long, Double>,
-    ) = PayInvoicePaymentUseCase(
+    ) = PayInvoicePaymentUseCaseImpl(
+        validateInvoicePayment = ValidateInvoicePaymentUseCase(),
+        clock = StoppedClock(LocalDate(2026, 2, 20)),
         writeInvoicePayment = WriteInvoicePaymentUseCase(
             transactionRepository = writer,
             // Same-currency throughout, so there is no rate to learn and no second
@@ -54,8 +59,9 @@ class PayInvoicePaymentUseCaseTest {
             accountRepository = FakeCardAccountRepository(),
         ),
         invoiceRepository = store,
-        calculateInvoiceUseCase = CalculateInvoiceUseCase(FakeEntryRepository(owed)),
-        payInvoiceUseCase = PayInvoiceUseCase(store, StoppedClock(LocalDate(2026, 2, 20))),
+        calculateInvoiceUseCase = CalculateInvoiceUseCaseImpl(FakeEntryRepository(owed)),
+        payInvoiceUseCase = PayInvoiceUseCaseImpl(store, ValidateInvoicePaymentUseCase(), StoppedClock(LocalDate(2026, 2, 20))),
+        accountRepository = FakeCardAccountRepository(),
     )
 
     @Test
@@ -158,5 +164,85 @@ class PayInvoicePaymentUseCaseTest {
 
         assertEquals(InvoiceError.NotFound, (result.leftOrNull() as InvoiceException).error)
         assertNull(writer.captured)
+    }
+    /**
+     * **A refusal has to mean nothing happened.**
+     *
+     * Paying is two writes — the posting that takes the money out, and the invoice marked paid —
+     * and what refuses the payment used to be discovered inside the second one. The first had
+     * already run: the account came up short by a payment the app reported as refused, with no
+     * compensating write and a log entry saying it had not gone through.
+     */
+    @Test
+    fun `a payment dated before the invoice closed writes nothing at all`() = runTest {
+        val store = RecordingInvoiceStore(closed)
+        val writer = RecordingTransactionWriter()
+
+        val result = useCase(store, writer, owed = mapOf(closed.dimensionId!! to 70.0))(
+            invoiceId = closed.id,
+            date = closed.closingDate.minus(1, DateTimeUnit.DAY),
+            accountId = account.id,
+        )
+
+        assertEquals(
+            InvoiceError.PaymentDateBeforeClosing,
+            (result.leftOrNull() as InvoiceException).error,
+        )
+        assertNull(writer.captured, "the money left the account on a payment that was refused")
+        assertTrue(store.updates.isEmpty(), "the invoice was touched by a payment that was refused")
+    }
+
+    @Test
+    fun `a payment dated after the due date writes nothing at all`() = runTest {
+        val store = RecordingInvoiceStore(closed)
+        val writer = RecordingTransactionWriter()
+
+        val result = useCase(store, writer, owed = mapOf(closed.dimensionId!! to 70.0))(
+            invoiceId = closed.id,
+            date = closed.dueDate.plus(1, DateTimeUnit.DAY),
+            accountId = account.id,
+        )
+
+        assertEquals(
+            InvoiceError.PaymentDateAfterDue,
+            (result.leftOrNull() as InvoiceException).error,
+        )
+        assertNull(writer.captured, "the money left the account on a payment that was refused")
+    }
+
+    /**
+     * **This path discharges, and only a closed invoice is discharged by being paid.** Which
+     * ones those are is `Invoice.acceptsFullSettlement`'s and is read rather than restated,
+     * so a status enumerated here could not come to disagree with the screen that offers the
+     * action — `InvoicePaymentUiState.settles` reads the same predicate.
+     *
+     * A retroactive invoice is **not** unpayable: it still takes spending, so what it takes is
+     * a *part* of what it owes, and `AdvanceInvoicePaymentUseCase` is what owns that — the
+     * same door the payment sheet sends it through. Refusing it here is the two paths
+     * agreeing, not a bill nobody can pay.
+     */
+    @Test
+    fun `a retroactive invoice is settled in parts, and not discharged this way`() = runTest {
+        val retroactive = testInvoice(
+            openingMonth = YearMonth(2026, 1),
+            status = Invoice.Status.RETROACTIVE,
+            card = card,
+        )
+        val store = RecordingInvoiceStore(retroactive)
+        val writer = RecordingTransactionWriter()
+
+        val result = useCase(store, writer, owed = mapOf(retroactive.dimensionId!! to 70.0))(
+            invoiceId = retroactive.id,
+            date = paymentDay,
+            accountId = account.id,
+        )
+
+        val error = assertIs<InvoiceException>(result.leftOrNull())
+        assertEquals(InvoiceError.InvoiceNotClosed, error.error)
+        assertNull(writer.captured, "nothing is written for a refusal")
+        assertTrue(
+            retroactive.acceptsPartialPayment,
+            "and the bill is not unpayable — the partial path is the one that takes it",
+        )
     }
 }

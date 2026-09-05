@@ -19,10 +19,14 @@ interface BottomNavigationItem {
     val testTag: String
 }
 
+/**
+ * [selectedItem] is `null` when the screen on top belongs to no item: none is drawn as selected,
+ * rather than an arbitrary one claiming a screen that is not its own.
+ */
 @Composable
 fun <T : BottomNavigationItem> BottomNavigationBar(
     items: List<T>,
-    selectedItem: T,
+    selectedItem: T?,
     onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {

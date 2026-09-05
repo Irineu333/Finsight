@@ -15,10 +15,11 @@ import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.ui.theme.Primary1
 import org.jetbrains.compose.resources.stringResource
 
+/** [selectedItem] answers as it does in [BottomNavigationBar]: `null` selects none of the items. */
 @Composable
 fun <T : BottomNavigationItem> NavigationRailBar(
     items: List<T>,
-    selectedItem: T,
+    selectedItem: T?,
     onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null,

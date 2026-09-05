@@ -14,7 +14,6 @@ val mapperModule = module {
     factory<InvoiceUiMapper> {
         InvoiceUiMapperImpl(
             calculateInvoiceUseCase = get(),
-            calculateAvailableLimitUseCase = get(),
             accountRepository = get(),
             clock = get(),
         )

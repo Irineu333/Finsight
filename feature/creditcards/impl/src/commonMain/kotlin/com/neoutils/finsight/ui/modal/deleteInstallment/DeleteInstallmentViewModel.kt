@@ -93,7 +93,7 @@ class DeleteInstallmentViewModel(
         offer.settle()
 
         refusal.attempt { withoutCopy ->
-            deleteInstallmentUseCase(installment, transactions, withoutCopy).onRight {
+            deleteInstallmentUseCase(installment, withoutCopy).onRight {
                 analytics.logEvent(DeleteInstallments(installment, categoryName))
                 modalManager.dismissAll()
             }.onLeft {

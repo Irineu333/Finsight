@@ -1,0 +1,719 @@
+<title>Finsight --mcp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f6f8f7;
+    --surface: #ffffff;
+    --surface-2: #eef2f1;
+    --ink: #0f172a;
+    --ink-2: #3b4757;
+    --muted: #64748b;
+    --line: #d5dcd9;
+    --line-strong: #aab5b1;
+    --window: #0d9a8e;
+    --window-soft: #d7f1ed;
+    --stdio: #2f6fd6;
+    --stdio-soft: #dce8fb;
+    --db: #64748b;
+    --db-soft: #e6eaee;
+    --refuse: #b45309;
+    --refuse-soft: #fbe9d0;
+    --code-bg: #0f172a;
+    --code-ink: #e5eaf0;
+    --font-display: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0b1220;
+      --surface: #111a2b;
+      --surface-2: #172234;
+      --ink: #e6eaf0;
+      --ink-2: #c3cbd6;
+      --muted: #94a3b8;
+      --line: #263449;
+      --line-strong: #3b4c66;
+      --window: #2fc4b6;
+      --window-soft: #10332f;
+      --stdio: #6ea2f2;
+      --stdio-soft: #14284a;
+      --db: #a3aebd;
+      --db-soft: #1c2636;
+      --refuse: #f2a23c;
+      --refuse-soft: #3a2a10;
+      --code-bg: #060b14;
+      --code-ink: #dfe5ee;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0b1220;
+    --surface: #111a2b;
+    --surface-2: #172234;
+    --ink: #e6eaf0;
+    --ink-2: #c3cbd6;
+    --muted: #94a3b8;
+    --line: #263449;
+    --line-strong: #3b4c66;
+    --window: #2fc4b6;
+    --window-soft: #10332f;
+    --stdio: #6ea2f2;
+    --stdio-soft: #14284a;
+    --db: #a3aebd;
+    --db-soft: #1c2636;
+    --refuse: #f2a23c;
+    --refuse-soft: #3a2a10;
+    --code-bg: #060b14;
+    --code-ink: #dfe5ee;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+  .prose { max-width: 68ch; }
+
+  header.masthead {
+    border-bottom: 1px solid var(--line-strong);
+    padding-bottom: 28px;
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(34px, 5vw, 48px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  h1 code {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.86em;
+    color: var(--stdio);
+  }
+  .lede {
+    font-family: var(--font-display);
+    font-size: 21px;
+    line-height: 1.45;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0 0 24px;
+    text-wrap: balance;
+  }
+  .rule {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--window);
+    max-width: 760px;
+  }
+  .rule .k {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--window);
+    padding-top: 4px;
+  }
+  .rule p { margin: 0; font-size: 17px; }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 28px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .facts li {
+    padding: 14px 16px;
+    border-top: 2px solid var(--line-strong);
+  }
+  .facts b {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 17px;
+    margin-bottom: 4px;
+  }
+  .facts span { color: var(--ink-2); font-size: 15px; }
+
+  section { margin: 48px 0; }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 16px;
+    margin: 28px 0 8px;
+  }
+  p { margin: 0 0 14px; }
+  p:last-child { margin-bottom: 0; }
+  a { color: var(--stdio); }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    line-height: 1.55;
+    border-radius: 4px;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  .pre-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin: 14px 0 6px;
+    letter-spacing: 0.04em;
+  }
+
+  figure {
+    margin: 24px 0;
+    padding: 0;
+  }
+  figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    font-family: var(--font-body);
+    color: var(--ink);
+  }
+  .figwrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 14px;
+  }
+  figcaption {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 10px;
+    max-width: 68ch;
+  }
+  /* SVG roles */
+  svg text { font-size: 12.5px; fill: currentColor; }
+  svg .lbl { font-size: 11.5px; fill: var(--muted); }
+  svg .mono { font-family: var(--font-mono); font-size: 11.5px; }
+  svg .title { font-weight: 600; font-size: 13px; }
+  svg .box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; }
+  svg .box.win { fill: var(--window-soft); stroke: var(--window); }
+  svg .box.std { fill: var(--stdio-soft); stroke: var(--stdio); }
+  svg .box.db { fill: var(--db-soft); stroke: var(--db); }
+  svg .box.ref { fill: var(--refuse-soft); stroke: var(--refuse); }
+  svg .edge { fill: none; stroke: currentColor; stroke-width: 1.3; }
+  svg .edge.win { stroke: var(--window); }
+  svg .edge.std { stroke: var(--stdio); }
+  svg .edge.dim { stroke: var(--line-strong); stroke-dasharray: 4 4; }
+  svg .bar.win { fill: var(--window); }
+  svg .bar.std { fill: var(--stdio); }
+  svg .bar.dim { fill: var(--line); }
+  svg .tick { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+  svg .head { fill: currentColor; }
+  svg .head.win { fill: var(--window); }
+  svg .head.std { fill: var(--stdio); }
+  svg .tag { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); letter-spacing: 0.06em; }
+
+  .scenarios {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 22px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .scenarios li {
+    padding: 14px 0 12px;
+    border-top: 1px solid var(--line);
+  }
+  .scenarios .when {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .scenarios .who {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+  }
+  .who.win { background: var(--window-soft); color: var(--window); }
+  .who.std { background: var(--stdio-soft); color: var(--stdio); }
+  .who.ref { background: var(--refuse-soft); color: var(--refuse); }
+  .scenarios p { font-size: 15px; margin: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    margin: 16px 0 0;
+  }
+  th, td {
+    text-align: left;
+    vertical-align: top;
+    padding: 10px 12px 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  td:first-child { font-weight: 600; width: 34%; }
+  .tablewrap { overflow-x: auto; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px 22px;
+    margin: 20px 0;
+  }
+  .panel .pre-label:first-child { margin-top: 0; }
+  .settings-mock {
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    padding: 18px 20px;
+    max-width: 640px;
+  }
+  .settings-mock .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+  .settings-mock .row:last-child { border-bottom: 0; }
+  .settings-mock .k { color: var(--muted); }
+  .settings-mock .btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 3px 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .settings-mock .note { font-size: 14px; color: var(--muted); margin-top: 10px; }
+  .settings-mock .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--window);
+    border: 1px solid var(--window);
+    border-radius: 999px;
+    padding: 1px 8px;
+  }
+  .settings-mock .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); }
+  .settings-mock .tabs span {
+    font-size: 14px;
+    color: var(--muted);
+    padding: 6px 0;
+    border-bottom: 2px solid transparent;
+  }
+  .settings-mock .tabs .on { color: var(--ink-2); border-bottom-color: var(--stdio); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    margin-top: 56px;
+    padding-top: 18px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  footer code { background: none; padding: 0; color: var(--ink-2); }
+
+  @media (max-width: 720px) {
+    .facts { grid-template-columns: 1fr; }
+    .scenarios { grid-template-columns: 1fr; }
+    .page { padding: 36px 18px 72px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="eyebrow">Finsight · servidor MCP local · mudança <span>mcp-stdio-launcher</span></p>
+    <h1>Como o agente alcança o Finsight com o app aberto ou fechado</h1>
+    <p class="lede">O mesmo executável que abre a janela passa a ter um segundo modo, <code>--mcp</code>, que o cliente MCP lança e encerra por conta própria. Não existe segundo instalável, serviço em segundo plano nem item de login.</p>
+    <div class="rule">
+      <span class="k">a regra</span>
+      <p>Há no máximo um dono do banco por vez, e enquanto a janela está aberta o dono é ela. Quem não é dono encaminha a chamada em vez de executar.</p>
+    </div>
+    <ul class="facts">
+      <li><b>Funciona fechado</b><span>Sem janela, o processo <code>--mcp</code> abre o banco e serve sozinho. Sobrevive a "Sair" e ao reboot porque nada precisa ficar rodando.</span></li>
+      <li><b>Continua reativo aberto</b><span>Com a janela aberta, a escrita é executada por ela, e a tela atualiza como hoje, sem navegar.</span></li>
+      <li><b>O app manda</b><span>Interruptor, permissões, token e registro de atividade seguem decididos na seção de configurações e valem nos dois modos.</span></li>
+    </ul>
+  </header>
+
+  <section>
+    <h2>O que muda</h2>
+    <div class="prose">
+      <p>Hoje o servidor é um Ktor dentro do processo da janela, escutando em <code>127.0.0.1:8477</code>. Quando a janela fecha, a superfície MCP deixa de existir, e a seção de configurações precisa avisar isso. Também é um transporte que o Claude Desktop não aceita para servidor local sem um adaptador de terceiros.</p>
+      <p>Com a mudança, o cliente lança <code>Finsight --mcp</code> e conversa com ele por stdio, que é o transporte que a spec do MCP recomenda para servidores locais e que os sete agentes pesquisados suportam nativamente. Esse processo decide, a cada chamada, se executa no próprio grafo ou se encaminha para a janela. O servidor HTTP continua existindo, agora como backend do encaminhamento e como a segunda das duas formas de conectar que a seção oferece.</p>
+    </div>
+    <figure>
+      <div class="figwrap">
+        <svg viewBox="0 0 900 330" role="img" aria-label="Hoje, o cliente fala HTTP com o servidor dentro da janela e nada responde com ela fechada. Com a mudança, o cliente lança o processo Finsight --mcp por stdio, que encaminha à janela quando ela está aberta e executa direto no banco quando ela está fechada.">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker>
+            <marker id="ah-win" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head win"/></marker>
+            <marker id="ah-std" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head std"/></marker>
+          </defs>
+
+          <!-- HOJE -->
+          <text x="20" y="28" class="tag">HOJE</text>
+          <rect x="20" y="120" width="120" height="52" rx="3" class="box"/>
+          <text x="80" y="142" text-anchor="middle" class="title">Cliente MCP</text>
+          <text x="80" y="160" text-anchor="middle" class="lbl">Claude, Cursor…</text>
+
+          <line x1="140" y1="146" x2="236" y2="146" class="edge win" marker-end="url(#ah-win)"/>
+          <text x="188" y="136" text-anchor="middle" class="lbl">HTTP + token</text>
+
+          <rect x="238" y="88" width="160" height="116" rx="3" class="box win"/>
+          <text x="318" y="110" text-anchor="middle" class="title">Janela do app</text>
+          <rect x="252" y="122" width="132" height="30" rx="2" class="box"/>
+          <text x="318" y="141" text-anchor="middle">servidor embutido</text>
+          <rect x="252" y="160" width="132" height="30" rx="2" class="box db"/>
+          <text x="318" y="179" text-anchor="middle">Room · telas · banco</text>
+
+          <text x="318" y="240" text-anchor="middle" class="lbl">janela fechada = ninguém responde</text>
+          <line x1="20" y1="290" x2="398" y2="290" class="edge dim"/>
+          <text x="20" y="312" class="lbl">O Claude Desktop só chega aqui com um adaptador.</text>
+
+          <line x1="450" y1="20" x2="450" y2="320" class="edge dim"/>
+
+          <!-- DEPOIS -->
+          <text x="480" y="28" class="tag">COM A MUDANÇA</text>
+          <rect x="480" y="120" width="110" height="52" rx="3" class="box"/>
+          <text x="535" y="142" text-anchor="middle" class="title">Cliente MCP</text>
+          <text x="535" y="160" text-anchor="middle" class="lbl">lança e encerra</text>
+
+          <line x1="590" y1="146" x2="646" y2="146" class="edge std" marker-end="url(#ah-std)"/>
+          <text x="618" y="136" text-anchor="middle" class="lbl">stdio</text>
+
+          <rect x="648" y="112" width="112" height="68" rx="3" class="box std"/>
+          <text x="704" y="136" text-anchor="middle" class="title mono">Finsight --mcp</text>
+          <text x="704" y="154" text-anchor="middle" class="lbl">decide por chamada</text>
+          <text x="704" y="169" text-anchor="middle" class="lbl">quem executa</text>
+
+          <!-- to window -->
+          <path d="M760,130 C790,130 790,70 812,70" class="edge win" marker-end="url(#ah-win)"/>
+          <text x="786" y="52" text-anchor="middle" class="lbl">janela aberta:</text>
+          <text x="786" y="66" text-anchor="middle" class="lbl">encaminha</text>
+          <rect x="814" y="44" width="76" height="52" rx="3" class="box win"/>
+          <text x="852" y="66" text-anchor="middle" class="title">Janela</text>
+          <text x="852" y="84" text-anchor="middle" class="lbl">dona do banco</text>
+
+          <!-- to db -->
+          <path d="M760,162 C790,162 790,240 812,240" class="edge std" marker-end="url(#ah-std)"/>
+          <text x="786" y="262" text-anchor="middle" class="lbl">janela fechada:</text>
+          <text x="786" y="276" text-anchor="middle" class="lbl">executa</text>
+          <rect x="814" y="214" width="76" height="52" rx="3" class="box db"/>
+          <text x="852" y="236" text-anchor="middle" class="title">Banco</text>
+          <text x="852" y="254" text-anchor="middle" class="lbl mono">finsight.db</text>
+
+          <!-- window owns db -->
+          <line x1="852" y1="96" x2="852" y2="212" class="edge win" marker-end="url(#ah-win)"/>
+          <text x="862" y="158" class="lbl">é dona</text>
+        </svg>
+      </div>
+      <figcaption>À esquerda, o desenho atual: um só processo, que precisa estar aberto. À direita, o cliente lança o mesmo binário em modo stdio, e esse processo escolhe entre encaminhar à janela e executar direto no banco.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Por que a janela precisa executar quando está aberta</h2>
+    <div class="prose">
+      <p>A tela do Finsight é reativa: cada lista e cada saldo observa um <code>Flow</code> do Room, e o Room acorda esses fluxos por gatilhos que ele instala na própria conexão do processo, numa tabela temporária. Uma escrita feita por outro processo no mesmo arquivo não dispara gatilho algum na janela, e não existe API pública para avisá-la. Isso foi verificado no jar do Room 2.8.4 e é a razão de o servidor ter nascido dentro da janela.</p>
+      <p>A mudança não briga com esse fato. Ela só separa duas coisas que hoje moram no mesmo lugar: quem fala o protocolo e quem é dono do banco. O processo <code>--mcp</code> fala o protocolo sempre. Quem executa é quem é dono naquele instante, e a janela é dona sempre que está aberta.</p>
+    </div>
+    <h3>A posse é um lock de arquivo, não uma convenção</h3>
+    <div class="prose">
+      <p>A janela toma um lock exclusivo do sistema operacional num arquivo ao lado do banco antes de montar qualquer coisa, e segura o lock até sair. O processo <code>--mcp</code> tenta o mesmo lock antes de cada execução local e solta ao terminar. Se não consegue, a janela está aberta ou abrindo, e a chamada vai pelo encaminhamento. Quem impõe a exclusão é o kernel, e o lock cobre também o intervalo em que a janela já coleta fluxos mas ainda não vinculou a porta.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como cada chamada é decidida</h2>
+    <div class="prose">
+      <p>A decisão é por chamada, não por processo. É isso que permite a janela abrir ou fechar no meio de uma conversa sem que o cliente perceba: a sessão stdio é a mesma, só muda quem executa.</p>
+    </div>
+    <figure>
+      <div class="figwrap">
+        <svg viewBox="0 0 900 380" role="img" aria-label="Fluxo de decisão de uma chamada: se o lock está livre, o processo toma a posse, executa localmente e solta. Se não está, lê a preferência: servidor desligado recusa na hora; ligado tenta a porta da janela, encaminha se ela responde, e espera até cinco segundos antes de dizer que o app está iniciando.">
+          <defs>
+            <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker>
+            <marker id="ah2-win" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head win"/></marker>
+            <marker id="ah2-std" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head std"/></marker>
+          </defs>
+
+          <rect x="20" y="150" width="130" height="50" rx="3" class="box std"/>
+          <text x="85" y="172" text-anchor="middle" class="title mono">tools/call</text>
+          <text x="85" y="189" text-anchor="middle" class="lbl">chega pelo stdio</text>
+
+          <line x1="150" y1="175" x2="206" y2="175" class="edge" marker-end="url(#ah2)"/>
+
+          <rect x="208" y="150" width="130" height="50" rx="3" class="box"/>
+          <text x="273" y="172" text-anchor="middle" class="title">Lock livre?</text>
+          <text x="273" y="189" text-anchor="middle" class="lbl">tryLock no arquivo</text>
+
+          <!-- yes: local -->
+          <path d="M273,150 L273,80 L400,80" class="edge std" marker-end="url(#ah2-std)"/>
+          <text x="283" y="112" class="lbl">sim</text>
+          <rect x="402" y="52" width="230" height="56" rx="3" class="box std"/>
+          <text x="517" y="74" text-anchor="middle" class="title">Executa localmente</text>
+          <text x="517" y="92" text-anchor="middle" class="lbl">toma a posse · use case · registro · solta</text>
+
+          <!-- no: preference -->
+          <path d="M273,200 L273,270 L400,270" class="edge" marker-end="url(#ah2)"/>
+          <text x="283" y="240" class="lbl">não: a janela é dona</text>
+          <rect x="402" y="242" width="150" height="56" rx="3" class="box"/>
+          <text x="477" y="264" text-anchor="middle" class="title">Servidor ligado?</text>
+          <text x="477" y="282" text-anchor="middle" class="lbl">preferência, com sync()</text>
+
+          <!-- disabled -->
+          <path d="M477,298 L477,340 L600,340" class="edge" marker-end="url(#ah2)"/>
+          <text x="487" y="324" class="lbl">não</text>
+          <rect x="602" y="316" width="180" height="46" rx="3" class="box ref"/>
+          <text x="692" y="335" text-anchor="middle" class="title">Recusa na hora</text>
+          <text x="692" y="352" text-anchor="middle" class="lbl">"desligado nas configurações"</text>
+
+          <!-- enabled -->
+          <line x1="552" y1="270" x2="600" y2="270" class="edge" marker-end="url(#ah2)"/>
+          <text x="576" y="262" text-anchor="middle" class="lbl">sim</text>
+          <rect x="602" y="242" width="150" height="56" rx="3" class="box"/>
+          <text x="677" y="264" text-anchor="middle" class="title">Porta responde?</text>
+          <text x="677" y="282" text-anchor="middle" class="lbl">127.0.0.1 + token</text>
+
+          <!-- forward -->
+          <path d="M677,242 L677,190 L800,190" class="edge win" marker-end="url(#ah2-win)"/>
+          <text x="687" y="220" class="lbl">sim</text>
+          <rect x="802" y="162" width="88" height="56" rx="3" class="box win"/>
+          <text x="846" y="184" text-anchor="middle" class="title">Encaminha</text>
+          <text x="846" y="202" text-anchor="middle" class="lbl">a janela executa</text>
+
+          <!-- starting -->
+          <line x1="752" y1="270" x2="800" y2="270" class="edge" marker-end="url(#ah2)"/>
+          <text x="776" y="262" text-anchor="middle" class="lbl">não</text>
+          <rect x="802" y="242" width="88" height="56" rx="3" class="box ref"/>
+          <text x="846" y="262" text-anchor="middle" class="title">Espera ≤ 5 s</text>
+          <text x="846" y="278" text-anchor="middle" class="lbl">depois: "o app</text>
+          <text x="846" y="291" text-anchor="middle" class="lbl">está iniciando"</text>
+        </svg>
+      </div>
+      <figcaption>O lock decide primeiro. Só quando a janela é dona é que a preferência gravada e a porta entram na conta, para distinguir "desligado no app" de "app iniciando".</figcaption>
+    </figure>
+    <div class="prose">
+      <p>Dois detalhes vieram de verificações feitas antes de escrever código. As preferências do app são gravadas por <code>java.util.prefs</code>, e no macOS e no Linux o JDK leva até 60 segundos para pôr uma escolha no disco. Por isso a janela passa a fazer <code>flush()</code> a cada escrita, e o processo <code>--mcp</code> faz <code>sync()</code> antes de ler. E a posse tem precedência sobre a preferência: com a janela aberta, a chamada é sempre encaminhada, e é a janela que aplica a escolha viva.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Nos cenários que importam</h2>
+    <figure>
+      <div class="figwrap">
+        <svg viewBox="0 0 900 250" role="img" aria-label="Linha do tempo de uma sessão stdio: com a janela fechada o processo --mcp é o dono do banco; quando a janela abre a posse passa para ela e as chamadas são encaminhadas; quando a janela fecha a posse volta ao processo. A sessão do cliente atravessa tudo sem interrupção.">
+          <!-- lanes -->
+          <text x="20" y="66" class="title">Sessão do cliente</text>
+          <text x="20" y="126" class="title">Janela do app</text>
+          <text x="20" y="186" class="title">Finsight --mcp</text>
+
+          <!-- session bar -->
+          <rect x="180" y="52" width="700" height="18" rx="2" class="bar dim"/>
+          <text x="530" y="66" text-anchor="middle" class="lbl">uma sessão stdio, do início ao fim</text>
+
+          <!-- window bar -->
+          <rect x="400" y="112" width="270" height="18" rx="2" class="bar win"/>
+          <text x="535" y="126" text-anchor="middle" style="fill: var(--surface); font-weight: 600;">dona do banco · executa</text>
+          <text x="290" y="126" text-anchor="middle" class="lbl">fechada</text>
+          <text x="775" y="126" text-anchor="middle" class="lbl">fechada</text>
+
+          <!-- stdio bar -->
+          <rect x="180" y="172" width="220" height="18" rx="2" class="bar std"/>
+          <text x="290" y="186" text-anchor="middle" style="fill: var(--surface); font-weight: 600;">dono · executa</text>
+          <rect x="400" y="172" width="270" height="18" rx="2" class="bar dim"/>
+          <text x="535" y="186" text-anchor="middle" class="lbl">encaminha à janela</text>
+          <rect x="670" y="172" width="210" height="18" rx="2" class="bar std"/>
+          <text x="775" y="186" text-anchor="middle" style="fill: var(--surface); font-weight: 600;">dono · executa</text>
+
+          <!-- events -->
+          <line x1="400" y1="40" x2="400" y2="200" class="tick"/>
+          <text x="400" y="222" text-anchor="middle" class="lbl">usuário abre o app</text>
+          <text x="400" y="236" text-anchor="middle" class="lbl">(lock passa à janela)</text>
+          <line x1="670" y1="40" x2="670" y2="200" class="tick"/>
+          <text x="670" y="222" text-anchor="middle" class="lbl">usuário fecha o app</text>
+          <text x="670" y="236" text-anchor="middle" class="lbl">(lock volta ao processo)</text>
+          <line x1="180" y1="40" x2="180" y2="200" class="tick"/>
+          <text x="180" y="222" text-anchor="middle" class="lbl">cliente lança</text>
+          <text x="180" y="236" text-anchor="middle" class="lbl">--mcp</text>
+          <line x1="880" y1="40" x2="880" y2="200" class="tick"/>
+          <text x="880" y="222" text-anchor="middle" class="lbl">cliente</text>
+          <text x="880" y="236" text-anchor="middle" class="lbl">encerra</text>
+        </svg>
+      </div>
+      <figcaption>A posse do banco troca de mão duas vezes, e o cliente atravessa as duas trocas na mesma sessão. Uma chamada que estava em voo no exato momento da troca volta como erro e é repetida pelo agente.</figcaption>
+    </figure>
+
+    <ul class="scenarios">
+      <li>
+        <div class="when">app fechado · consulta ou escrita</div>
+        <span class="who std">executa o --mcp</span>
+        <p>O processo abre o banco pelo mesmo builder da janela, com as mesmas migrações e a mesma cópia pré-migração do cofre. Escritas passam pelos mesmos use cases e deixam o mesmo registro de atividade, que o usuário vê na próxima vez que abrir o app.</p>
+      </li>
+      <li>
+        <div class="when">app aberto · escrita</div>
+        <span class="who win">executa a janela</span>
+        <p>O processo encaminha por HTTP em loopback com o token gravado. A janela executa, e a lista de transações ou o saldo em tela atualizam sem que o usuário navegue, exatamente como acontece hoje.</p>
+      </li>
+      <li>
+        <div class="when">app abre no meio da sessão</div>
+        <span class="who win">passa a encaminhar</span>
+        <p>Na chamada seguinte o lock está tomado. Se a porta ainda não responde, o processo espera até 5 segundos; se a janela demorar mais, responde que o app está iniciando e pede para repetir.</p>
+      </li>
+      <li>
+        <div class="when">app fecha no meio da sessão</div>
+        <span class="who std">volta a executar</span>
+        <p>A chamada em voo volta como erro; a seguinte encontra o lock livre e executa localmente. O cliente continua na mesma sessão.</p>
+      </li>
+      <li>
+        <div class="when">servidor desligado na seção</div>
+        <span class="who ref">recusa</span>
+        <p>O processo ainda fala o protocolo, para que o agente leia um motivo em vez de um processo morto: não anuncia ferramenta alguma e recusa cada chamada dizendo que o servidor está desligado nas configurações do app. Com a janela aberta, recusa na hora, sem esperar.</p>
+      </li>
+      <li>
+        <div class="when">dois clientes · app fechado</div>
+        <span class="who std">os dois executam</span>
+        <p>Dois processos <code>--mcp</code> serializam as chamadas no mesmo lock. O Room já aplica <code>busy_timeout</code> de 3 segundos em toda conexão, e sem janela não há fluxo a atualizar. Uma migração pendente roda uma vez, sob o lock.</p>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>O que o usuário configura</h2>
+    <div class="prose">
+      <p>A seção do servidor nas configurações passa a mostrar o comando como instrução principal, com o caminho absoluto do executável desta instalação. O caminho vem de <code>jpackage.app-path</code>, uma propriedade que o launcher empacotado define, verificada no binário gerado. O endereço HTTP e o token continuam disponíveis, na outra de duas abas lado a lado, para quem preferir <code>url</code>; a seção abre na do comando. Como abas apresentam os dois caminhos como iguais, cada uma diz o que a distingue: o comando responde com o app aberto ou fechado, o endereço só com ele aberto.</p>
+    </div>
+
+    <div class="settings-mock" aria-label="Como a seção de configurações vai apresentar a conexão">
+      <div class="row"><span class="k">Servidor MCP</span><span class="pill">habilitado</span></div>
+      <div class="tabs"><span class="on">Comando</span><span>Endereço HTTP</span></div>
+      <div class="row"><span class="k">Comando para o cliente</span><span class="btn">copiar</span></div>
+      <pre><code>{
+  "mcpServers": {
+    "finsight": {
+      "command": "/Applications/Finsight.app/Contents/MacOS/Finsight",
+      "args": ["--mcp"]
+    }
+  }
+}</code></pre>
+      <div class="row"><span class="k">Claude Code, em uma linha</span><span class="btn">copiar</span></div>
+      <pre><code>claude mcp add finsight -- "/Applications/Finsight.app/Contents/MacOS/Finsight" --mcp</code></pre>
+      <p class="note">Funciona com o app aberto ou fechado. Qualquer cliente que fale MCP por stdio conecta com esta configuração.</p>
+      <p class="note">Na aba <em>Endereço HTTP</em>, para clientes que usam <code>url</code>: o endereço e o
+      token, que só respondem com o app aberto. O token fica mascarado até o usuário pedir para vê-lo.</p>
+      <pre><code>{ "type": "http", "url": "http://127.0.0.1:8477/mcp",
+  "headers": { "Authorization": "Bearer ••••••••" } }</code></pre>
+    </div>
+
+    <h3>Onde o executável fica em cada sistema</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Sistema</th><th>Caminho que a seção mostra</th></tr></thead>
+        <tbody>
+          <tr><td>macOS</td><td><code>/Applications/Finsight.app/Contents/MacOS/Finsight</code></td></tr>
+          <tr><td>Windows</td><td><code>C:\Users\&lt;usuário&gt;\AppData\Local\Finsight\Finsight.exe</code> (instalação por usuário)</td></tr>
+          <tr><td>Linux</td><td><code>/opt/finsight/bin/Finsight</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p style="margin-top:14px">Reinstalar em outro lugar muda o caminho; a seção sempre mostra o atual, e a linha de abertura que o processo escreve em <code>stderr</code> diz qual versão respondeu. Os clientes exibem <code>stderr</code>, então é ali que mora o diagnóstico.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Garantias e limites</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Ponto</th><th>Como fica</th></tr></thead>
+        <tbody>
+          <tr><td>Um instalável</td><td>O modo <code>--mcp</code> vive no mesmo executável. O teste que hoje prova que o servidor está na distribuição passa a exigir também o artefato cliente, e uma tarefa Gradle lança o launcher empacotado com <code>--mcp</code> e completa <code>initialize</code> e <code>tools/list</code>.</td></tr>
+          <tr><td>Sobrevive a Sair e ao reboot</td><td>Trivialmente: não existe processo residente. O cliente lança o binário instalado a cada sessão, sempre na versão atual.</td></tr>
+          <tr><td>macOS, Windows, Linux</td><td>O mesmo código; a única diferença por sistema é o caminho do executável. Nenhuma integração de serviço ou item de login.</td></tr>
+          <tr><td>Clientes atendidos</td><td>Todo cliente que lança um comando stdio: Claude Desktop, Claude Code, Cursor, VS Code, Windsurf, Gemini CLI, Codex CLI. O ChatGPT Desktop exige túnel público mesmo para uso local e fica fora de qualquer desenho local.</td></tr>
+          <tr><td>Cliente só-HTTP com o app fechado</td><td>Não é atendido. Nenhum dos agentes pesquisados está nesse caso, e atendê-lo exigiria um serviço em segundo plano.</td></tr>
+          <tr><td>stdout</td><td>Reservado ao protocolo. A primeira instrução do processo redireciona <code>System.out</code> para <code>stderr</code>; um <code>println</code> de qualquer biblioteca corromperia a sessão em silêncio.</td></tr>
+          <tr><td>Custo por sessão</td><td>Um boot de JVM, em torno de 1 a 2 segundos e 100 MB, uma vez por sessão do cliente, sem Compose nem Firebase carregados.</td></tr>
+          <tr><td>Segurança</td><td>Com o app fechado, o perímetro é o processo lançado pelo cliente, no usuário do cliente, sem socket. Com o app aberto, o encaminhamento apresenta o mesmo token ao mesmo servidor em loopback de hoje.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>O que não muda</h2>
+    <div class="prose">
+      <p>As 58 ferramentas, as quatro permissões por eixo, o registro de atividade e as recusas continuam os mesmos, montados pelo mesmo código nos dois transportes. O servidor HTTP embutido, a porta editável, o token e a validação de origem seguem como estão. Não há tabela nova nem migração de banco. Uma pessoa que já configurou um cliente por HTTP continua funcionando com o app aberto; a seção apenas passa a recomendar o comando.</p>
+    </div>
+  </section>
+
+  <footer>
+    Fonte: mudança OpenSpec <code>mcp-stdio-launcher</code> (proposta, design com onze decisões, três specs e 41 tarefas), commits <code>c561869ab</code>, <code>3516a7c14</code> e <code>2e057f389</code> na branch <code>feature/local-mcp-server</code>. As afirmações sobre Room, jpackage, preferências e o artefato cliente foram verificadas contra os jars e o binário gerado antes de a mudança ser escrita.
+  </footer>
+</div>

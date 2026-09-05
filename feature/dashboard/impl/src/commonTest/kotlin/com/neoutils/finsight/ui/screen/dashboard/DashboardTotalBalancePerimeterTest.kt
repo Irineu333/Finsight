@@ -19,6 +19,8 @@ import com.neoutils.finsight.domain.usecase.GetRecurringCyclesUseCase
 import com.neoutils.finsight.domain.usecase.GetUnhandledRecurringUseCase
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.Limit
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.InvoiceUi
 import kotlinx.coroutines.flow.Flow
@@ -56,8 +58,15 @@ class DashboardTotalBalancePerimeterTest {
         getPendingRecurringUseCase = GetPendingRecurringUseCase(GetRecurringCyclesUseCase(GetUnhandledRecurringUseCase())),
         getUnhandledRecurringUseCase = GetUnhandledRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
-            override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
-                throw NotImplementedError()
+            override suspend fun toUi(
+                invoice: Invoice,
+                cardInvoices: List<Invoice>,
+                limit: Limit,
+            ): InvoiceUi = throw NotImplementedError()
+        },
+        calculateAvailableLimit = object : CalculateAvailableLimitUseCase {
+            override suspend fun invoke(creditCardIds: Collection<Long>): Map<Long, Limit> =
+                emptyMap()
         },
         entryRepository = ledger,
         accountRepository = FakeAccountRepository(),
@@ -167,6 +176,7 @@ private class PerimeterEntryRepository(
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun accountFlows(month: YearMonth, accountId: Long, yieldDimensionId: Long?): AccountFlows = throw NotImplementedError()
     override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth) = throw NotImplementedError()
+    override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
     override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?) = throw NotImplementedError()
     override suspend fun accountBalanceUpTo(accountId: Long, target: LocalDate): Double = throw NotImplementedError()
     override suspend fun naturalBalanceUpToByCurrency(target: YearMonth, type: AccountType, excludedAccountIds: Set<Long>): MoneyByCurrency = throw NotImplementedError()

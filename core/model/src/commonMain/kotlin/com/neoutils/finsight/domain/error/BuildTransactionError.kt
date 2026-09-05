@@ -2,8 +2,8 @@ package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.build_transaction_error_account_required
+import com.neoutils.finsight.resources.build_transaction_error_amount_not_positive
 import com.neoutils.finsight.resources.build_transaction_error_amount_required
-import com.neoutils.finsight.resources.build_transaction_error_amount_zero
 import com.neoutils.finsight.resources.build_transaction_error_closed_invoice
 import com.neoutils.finsight.resources.build_transaction_error_closed_selection
 import com.neoutils.finsight.resources.build_transaction_error_credit_card_expense_only
@@ -30,8 +30,8 @@ sealed class BuildTransactionError(val message: String) {
         message = "Amount is required."
     )
 
-    data object AmountZero : BuildTransactionError(
-        message = "Amount cannot be zero."
+    data object AmountNotPositive : BuildTransactionError(
+        message = "Amount must be greater than zero."
     )
 
     data object DateRequired : BuildTransactionError(
@@ -86,7 +86,7 @@ sealed class BuildTransactionError(val message: String) {
 
 fun BuildTransactionError.toUiText(): UiText = when (this) {
     BuildTransactionError.AmountRequired -> UiText.Res(Res.string.build_transaction_error_amount_required)
-    BuildTransactionError.AmountZero -> UiText.Res(Res.string.build_transaction_error_amount_zero)
+    BuildTransactionError.AmountNotPositive -> UiText.Res(Res.string.build_transaction_error_amount_not_positive)
     BuildTransactionError.DateRequired -> UiText.Res(Res.string.build_transaction_error_date_required)
     BuildTransactionError.DateInvalid -> UiText.Res(Res.string.build_transaction_error_date_invalid)
     BuildTransactionError.DateFuture -> UiText.Res(Res.string.build_transaction_error_date_future)

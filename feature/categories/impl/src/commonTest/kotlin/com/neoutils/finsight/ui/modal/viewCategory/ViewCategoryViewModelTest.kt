@@ -27,8 +27,9 @@ import com.neoutils.finsight.domain.usecase.CalculateCategoryOverviewUseCase
 import com.neoutils.finsight.domain.usecase.ConsolidateMoneyUseCase
 import com.neoutils.finsight.domain.usecase.GetAccountCurrenciesUseCase
 import com.neoutils.finsight.domain.usecase.ObserveConsolidationChangesUseCase
-import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCaseImpl
 import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCaseImpl
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.extension.currentYearMonth
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
@@ -99,15 +100,16 @@ class ViewCategoryViewModelTest {
 
     private class FakeCategoryRepository : ICategoryRepository {
         private val byId = MutableSharedFlow<Category?>(replay = 1)
+        private var current: Category? = null
         val unarchived = mutableListOf<Long>()
-        fun emit(category: Category?) { byId.tryEmit(category) }
+        fun emit(category: Category?) { current = category; byId.tryEmit(category) }
         override fun observeCategoryById(id: Long): Flow<Category?> = byId
         override fun observeAllCategories(): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getAllCategories(): List<Category> = throw NotImplementedError()
         override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
-        override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+        override suspend fun getCategoryById(id: Long): Category? = current?.takeIf { it.id == id }
         override suspend fun getCategoryBySystemKey(systemKey: String): Category? = null
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override suspend fun archive(id: Long) = Unit
@@ -156,6 +158,7 @@ class ViewCategoryViewModelTest {
         override suspend fun owedByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, MoneyByCurrency> = throw NotImplementedError()
         override suspend fun flowsByDimensionByCurrency(dimensionIds: Collection<Long>): Map<Long, DimensionFlowsByCurrency> = throw NotImplementedError()
         override suspend fun liabilityMonthFlowsByCurrency(month: YearMonth): LiabilityMonthFlowsByCurrency = throw NotImplementedError()
+        override suspend fun netWorthByCurrency(): MoneyByCurrency = throw NotImplementedError()
         override suspend fun assetMonthFlowsByCurrency(month: YearMonth, yieldDimensionId: Long?): AssetMonthFlowsByCurrency = throw NotImplementedError()
         override suspend fun totalsByDimensionByCurrency(
             nominalType: AccountType,
@@ -200,7 +203,7 @@ class ViewCategoryViewModelTest {
         entryRepository: FakeEntryRepository = FakeEntryRepository(),
         recurringRepository: IRecurringRepository = FakeRecurringRepository(),
         budgetRepository: IBudgetRepository = FakeBudgetRepository(),
-        unarchiveCategory: UnarchiveCategoryUseCase = UnarchiveCategoryUseCase(categoryRepository),
+        unarchiveCategory: UnarchiveCategoryUseCase = UnarchiveCategoryUseCaseImpl(categoryRepository),
     ) = ViewCategoryViewModel(
         categoryId = 1L,
         categoryRepository = categoryRepository,
@@ -213,7 +216,8 @@ class ViewCategoryViewModelTest {
             ),
             clock = clock,
         ),
-        resolveRetirability = ResolveCategoryRetirabilityUseCase(
+        resolveRetirability = ResolveCategoryRetirabilityUseCaseImpl(
+            categoryRepository = categoryRepository,
             entryRepository = entryRepository,
             budgetRepository = budgetRepository,
             recurringRepository = recurringRepository,

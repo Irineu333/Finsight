@@ -6,6 +6,11 @@ import arrow.core.right
 import com.neoutils.finsight.domain.error.BudgetError
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 
+/**
+ * The single owner of what a budget title is: non-blank, and taken by no other budget,
+ * case aside. It answers the **stored** form of the title — trimmed — so that the title
+ * a caller writes down is the one this validated, and not the raw input beside it.
+ */
 class ValidateBudgetTitleUseCase(
     private val repository: IBudgetRepository,
 ) {
@@ -21,7 +26,7 @@ class ValidateBudgetTitleUseCase(
             return BudgetError.ALREADY_EXIST.left()
         }
 
-        return title.right()
+        return title.trim().right()
     }
 
     private suspend fun hasDuplicateTitle(

@@ -89,10 +89,13 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
   cliente guarda esses valores onde quiser —, e a frase de que ele funciona com o app aberto ou
   fechado. O caminho entra no bloco como texto JSON: o executável do Windows mora atrás de
   contrabarras, e copiado como está faria o cliente recusar o arquivo inteiro em vez da linha. O
-  endereço e o token, que só respondem com a janela aberta, ficam recolhidos sob "avançado", para o
-  cliente que prefere uma `url` — e desdobrá-los não revela o token: o bloco os esconde sob a mesma
-  máscara da linha acima dele e copia o segredo inteiro, porque uma captura de tela não pode revelar
-  o que a máscara logo acima protege e configurar um cliente pede o token de verdade. Quantos
+  endereço e o token, que só respondem com a janela aberta, ficam na outra de duas **abas lado a
+  lado**, para o cliente que prefere uma `url`; a seção abre na do comando. Como abas apresentam os
+  dois caminhos como iguais, cada uma diz em texto o que a distingue — e onde não há comando a
+  oferecer não há abas, porque uma aba só não é escolha alguma. Escolher a aba do endereço não
+  revela o token: o bloco o esconde sob a mesma máscara da linha acima dele e copia o segredo
+  inteiro, porque uma captura de tela não pode revelar o que a máscara logo acima protege e
+  configurar um cliente pede o token de verdade. Quantos
   clientes estão conectados **agora** e o botão que os desconecta sem baixar o servidor continuam à
   vista.
 - A seção **é um grafo dentro do de Ajustes**, como o backup: estar sob Ajustes e ser alcançada por

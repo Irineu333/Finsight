@@ -74,21 +74,6 @@
 > significa "não há janela". O lock volta ao kernel quando o último detentor solta.
 - [x] 4.6 `McpStdioOverTheProtocolTest` (6 casos) sobre `java.nio.channels.Pipe` reais, com o `Client` e o `StdioClientTransport` do SDK: handshake e `tools/list` sem janela; consulta e escrita com a janela fechada, com a linha no registro de atividade; desabilitado não anuncia e recusa; a linha de abertura em `stderr`; e o teste do `println`, que é o único que serve pela chamada de produção (`serve()` sem argumentos) com `System.in`/`System.out` apontados para os mesmos pipes, como o SO faz. **O caso das duas escritas simultâneas é de duas sessões no mesmo processo**, que compartilham a única reivindicação do JVM — a exclusão *entre* processos é assunto de `DatabaseOwnershipTest`, no módulo que possui o lock. `TheStdioModeExecutesOnlyUnderTheOwnershipTest` cobre a outra metade com um processo de verdade (`ArchiveHolder`): sem a posse não executa nada, e a chamada seguinte da **mesma** sessão executa assim que o outro processo solta.
 - [x] 4.7 `TheStdioModeOpensTheArchiveTheWindowWouldTest`: arquivo escrito por este build e deixado declarando a versão anterior — o que um app atualizado encontra —, aberto pela primeira vez dentro do `tools/call`, por `getDatabaseBuilder(path, captureInto)`, que é a função que `databasePlatformModule` chama. A cópia sai com a versão antiga e as linhas do usuário, e o arquivo termina na versão atual. Mora em `feature/mcp/impl/jvmTest` porque `appModules` vive em `:app:shared`, fora do alcance de um `impl`; o que o grafo garante (mesmo builder nos dois modos) é D5, e o que o teste acrescenta é que a abertura é **preguiçosa** — nada da sessão toca o arquivo antes de uma chamada.
-- [x] 4.8 **A garantia que o harness prometia e não dava**, encontrada na verificação da mudança.
-  `servedOverStdio` (`OverStdio.kt`) fecha o stdin e espera a sessão com `withTimeoutOrNull`,
-  dizendo em comentário que o limite faz "uma sessão que não percebeu falhar a run" — mas
-  `withTimeoutOrNull` expira **em silêncio**, e o `serving.cancel()` da linha seguinte apagava o
-  rastro: uma sessão que nunca terminasse passaria calada em toda conversa, e o cenário "Encerra
-  com o cliente" não tinha asserção alguma em `jvmTest` (só a `verifyMcpLauncher` de 8.2, que é de
-  mão). O limite passou a ser **respondido**. O corpo da conversa é guardado num `runCatching` e
-  **relançado antes** da asserção, porque um teste que falhou no que veio afirmar tem de reportar
-  isso e não a sessão que ele deixou para trás — uma asserção dentro do `finally` teria substituído
-  a exceção de verdade. E o cenário ganhou um caso com o nome dele (`the session ends when the
-  client closes the input`), montado à mão e não pelo ajudante: provar pelo ajudante que prova
-  seria não provar nada, e uma promessa que a spec nomeia tem de ser achável por quem procura o
-  nome. **Provado por sabotagem nos dois lados**: com a sessão presa num `delay` os 10 casos da
-  classe falham, e nenhum deles falhava antes; com a sessão presa **e** o `SERVER_NAME` trocado, o
-  caso reporta a comparação do corpo e não o fim da sessão.
 
 ## 5. Ponte para a janela aberta (`mcp-stdio-mode`: "Com a janela aberta, o modo stdio encaminha")
 
@@ -153,15 +138,6 @@
   `--mcp` ao fim de todas elas; e o rótulo que continua a frase em vez de ser uma. Provado por
   sabotagem em dois deles.
 
-> **Quatro chaves que 7.2 nomeia não existem mais, e não é engano dela.** `mcp_command_claude_label`
-> e `mcp_command_claude_copy` entraram com 7.2 e saíram em 7.4, quando o rótulo deixou de nomear um
-> cliente e passou a perguntar qual — hoje são `mcp_command_line_label`, `mcp_command_line_copy` e
-> `mcp_command_line_target`. `mcp_advanced_title` e `mcp_advanced_body` saíram com as abas, que
-> desfizeram o "caminho avançado" em duas abas iguais — `mcp_connection_tab_command` e
-> `mcp_connection_tab_address`. Fica dito porque 7.2 é onde alguém procura o nome de uma chave, e
-> quatro dos que ela lista não achariam nada. A paridade segue inteira: **72 chaves `mcp_*` em cada
-> língua**, e as duas frases que a mudança tornou falsas continuam fora das duas.
-
 ## 8. Distribuição e verificação (design D11)
 
 - [x] 8.1 `McpServerReachesTheDistributionTest` passa a exigir também `io.modelcontextprotocol:kotlin-sdk-client` na distribuição — e o motor do cliente que 5.1 declarar, porque um cliente empacotado sem motor sobre o qual falar é uma ponte que só falha na máquina do usuário. O motor é `io.ktor:ktor-client-okhttp` (`McpBridge.kt:76`, `HttpClient(OkHttp)`); o manifesto de `writeDistributionManifest` traz `io.modelcontextprotocol:kotlin-sdk-client-jvm:0.14.0` e `io.ktor:ktor-client-okhttp-jvm:3.4.3`.
@@ -170,7 +146,7 @@
 - [x] 8.5 **Corrigida a corrida que 8.3 encontrou**, porque um `tools/list` vazio em metade dos lançamentos torna a entrega inútil para um cliente real. O transporte passa a ser entregue ao `createSession` **não iniciado** e é iniciado depois que os handlers desta montagem estão no lugar (`McpSessionFactory.openSession`): o intervalo do SDK continua existindo e passa a não conter mensagem alguma, em vez de conter uma que o handler errado responde. Nada é enfileirado nem segurado — não há o que segurar se nada começou a ser lido. Descartado repopular o registro com `addTool`: o handler nativo devolve o registro inteiro **sem** o filtro por eixo, o que trocaria um defeito visível por um vazamento de permissão. A consequência que era inferência virou observação: o teste devolveu `Tool list_accounts not found` sobre uma operação que o app tem. **O HTTP não estava exposto**, e não por latência — toda rota do SDK entrega o corpo ao transporte só depois de `createSession` retornar (`KtorServer.kt:384-386`), enquanto `StdioServerTransport.start()` lança os pumps de leitura e retorna (linha 148). Provado por um teste determinístico que entrega a primeira mensagem de dentro do `start()` — falhava nos dois casos antes da correção — e **reverificado no binário empacotado: 8 de 8 lançamentos anunciaram as 58 ferramentas**, contra os 11 de 20 vazios de antes.
 - [x] 8.6 **A única promessa da spec que nenhum teste via**: "o lock é tomado antes de o banco ser aberto". `DatabaseOwnershipTest` prova o lock e `HeadlessGraphCarriesNoUiTest` prova o grafo headless; a **ordem** das duas linhas no ponto de entrada não era de ninguém, e é o que o intervalo invisível depende — tomada depois do grafo, a janela já lê o acervo enquanto um processo headless ainda pode escrevê-lo, e as duas coisas funcionam. `TheWindowOwnsTheArchiveBeforeItOpensItTest` (`:app:desktop`, 3 casos) lê os fontes do módulo, acha o arquivo **pelo que ele nomeia** e não pelo caminho — extrair o corpo da janela leva a asserção junto —, e afirma três coisas: um só lugar toma a posse, ela é tomada antes do `startKoin`, e é devolvida na saída. Os imports são descartados antes de comparar, porque em ordem alfabética todo nome aparece uma vez e nenhum está sendo chamado — o primeiro esboço media exatamente isso e falhou. Provado por sabotagem: com a posse movida para depois do grafo, o caso da ordem falha.
 
-- [x] 8.4 `./gradlew jvmTest` verde, com a contagem conferida contra os **2485 casos** da linha de base do cabeçalho e pelo método que ela descreve: o total final é ela mais o que cada grupo acrescentou, e uma diferença que não se explique assim é um teste que sumiu. Fechamento: **2543 = 2485 + 58**, distribuídos em 10 (grupo 2) + 5 (grupo 1) + 10 (grupo 4) + 15 (grupo 5) + 10 (grupo 6) + 6 (grupo 7) + 2 (a corrida de 8.5). **0 falhas.** A conta seguiu andando depois desse fechamento e continua fechando pelo mesmo método: **2555 = 2543 + 5** (as abas da seção, fora desta mudança) **+ 1** (5.6) **+ 3** (a ordem no ponto de entrada, 8.6) **+ 3** (a escolha do cliente, 7.4) **+ 1** (o fim da sessão, 4.8). Quem recontar parte daqui. A suíte Android continua com as 4 falhas que já eram dela antes desta mudança (ver o cabeçalho).
+- [x] 8.4 `./gradlew jvmTest` verde, com a contagem conferida contra os **2485 casos** da linha de base do cabeçalho e pelo método que ela descreve: o total final é ela mais o que cada grupo acrescentou, e uma diferença que não se explique assim é um teste que sumiu. Fechamento: **2543 = 2485 + 58**, distribuídos em 10 (grupo 2) + 5 (grupo 1) + 10 (grupo 4) + 15 (grupo 5) + 10 (grupo 6) + 6 (grupo 7) + 2 (a corrida de 8.5). **0 falhas.** A conta seguiu andando depois desse fechamento e continua fechando pelo mesmo método: **2556 = 2543 + 5** (as abas da seção, fora desta mudança) **+ 1** (5.6) **+ 3** (a ordem no ponto de entrada, 8.6) **+ 3** (a escolha do cliente, 7.4) **+ 1** (o fim da sessão, 10.1). Quem recontar parte daqui. A suíte Android continua com as 4 falhas que já eram dela antes desta mudança (ver o cabeçalho).
 
 ## 9. Documentação e registro
 
@@ -178,16 +154,56 @@
 - [x] 9.2 `feature/README.md` e o KDoc de `McpServerController`: a superfície tem dois modos e uma regra de posse; sem narrar a mudança. E registrar a exceção que 4.4 abriu: "Notas de plataforma" (`feature/README.md:271-274`) diz que source set de plataforma é exceção justificada **no `impl`**, e `McpStdout` é o primeiro num `api` — porque o ponto de entrada e a implementação estão em lados opostos do app e só se encontram ali, e um `:core:*` não pode nomear uma feature. A exceção fica escrita com a razão, ou a regra passa a ser desmentida em silêncio pelo código. **Como ficou.** `feature/README.md` ganhou "A superfície MCP: dois modos e um dono do banco" sob "Notas de plataforma" — a tabela dos dois transportes com o contrato de cada um, a montagem única que os dois usam, e a regra de posse com o motivo de ela ser do kernel. A exceção do source set ficou como **regra**, não como relato: source set de plataforma numa `api` vale quando o tipo é consumido por um módulo `app/` que não enxerga `impl` e implementado por um `impl`, com o mecanismo que sustenta a impossibilidade citado (`:app:shared` publica cada `api` com `api(...)` e cada `impl` com `implementation(...)`, e `:app:desktop` depende só de `:app:shared`) e com a razão de um `:core:*` não servir. O KDoc de `McpServerController` deixou de descrever um mundo de um modo só: o socket é uma das duas formas, `McpStdioSession` é a outra, e o que o controlador guarda — interruptor, porta, token, eixos — é a autoridade do app sobre as duas. `launchCommand` não foi tocado. **`core/ledger/README.md` foi conferido e não ficou falso**: não menciona MCP, processo, janela nem posse (a única palavra "processo" ali é sobre o binding de `RoomDatabase`). `CLAUDE.md` teve as duas linhas que a mudança tornou incompletas — o `:app:desktop`, que agora despacha por argumento, e o `:core:database`, que agora carrega `DatabaseOwnership` no `jvmMain`; a seção de comandos não mudou, porque nenhuma tarefa Gradle nova existe (a `verifyMcpLauncher` de 8.2 não está no `app/desktop/build.gradle.kts`). **Duas defasagens anteriores a esta mudança ficam registradas e não foram corrigidas**, por serem dívida de outras changes: `CLAUDE.md` lista `home` entre as features, que `feature/README.md:170-173` diz não existir mais (virou `feature/shell`), e não lista `mcp` em lugar nenhum.
 - [x] 9.3 Deltas aplicadas às specs principais: os 3 requisitos MODIFIED em `mcp-server` (que mantém os seus 9 requisitos e tinha 37 cenários quando a delta foi aplicada; hoje são **40**, porque as abas trocaram o cenário do caminho avançado por três e 7.4 acrescentou o do cliente escolhido) e os 3 em `mcp-permissions` (6 e 20), e `mcp-stdio-mode` nasce com os seus 6. O `## Purpose` de `mcp-server` também foi reescrito — dizia que o servidor sobe e desce com o processo do app "sem segundo executável" e nada mais, que é a metade que a mudança desfaz; agora nomeia as duas formas da mesma superfície e o registro valendo nos dois modos. `openspec validate --specs` → 57 passaram, 0 falharam; `--changes` → 1 passou.
 
-> **A cláusula que a spec pedia e o código não dá, resolvida a favor do código.** O requisito
-> "`stdout` pertence ao protocolo" listava quatro itens na linha de diagnóstico — versão, modo,
-> **se encontrou a janela aberta**, interruptor — e 4.4 imprime três, com a razão escrita contra o
-> design D6. A razão vale igualmente contra a spec, e ela ficou lá: um requisito que o código
-> desmente em silêncio. O quarto item saiu, e a sua ausência virou norma no próprio requisito, com
-> o porquê. **O argumento de 4.4 sozinho não bastava** — "seria falso um milissegundo depois" vale
-> igual para o interruptor, que está na linha e que a spec exige. O que separa os dois é que o
-> interruptor explica a sessão (por que nada foi anunciado) e a janela não explica nada, porque o
-> processo atende nos dois casos; e que a janela só é obtenível por `tryAcquire()`, cuja resposta
-> negativa significa tanto *a janela é dona* quanto *não há lock neste sistema de arquivos*
-> (`DatabaseOwnership` o documenta) — uma linha de diagnóstico que a afirmasse a partir disso
-> poderia estar mentindo, o que é pior que não a dizer. O cenário `Diagnóstico ao iniciar` já pedia
-> os três e não mudou.
+## 10. Ajustes após a implementação
+
+> **O que a verificação da mudança encontrou depois de os nove grupos fecharem.** Nenhum destes é
+> escopo novo, e nenhum é uma tarefa que o plano tenha esquecido: são três lugares em que a mudança
+> passou a divergir **de si mesma** — uma spec que o código desmente, um comentário que promete uma
+> asserção que não existe, e um registro que nomeia coisas que deixaram de existir. Ficam juntos, e
+> não dentro do grupo que cada um corrige, porque o que os une é *quando* foram feitos: depois de o
+> plano fechar, por uma leitura que o plano não previu. Quem verificar esta mudança de novo começa
+> por aqui, e quem acrescentar um ajuste acrescenta abaixo.
+
+- [x] 10.1 **A garantia que o harness prometia e não dava**, encontrada na verificação da mudança.
+  `servedOverStdio` (`OverStdio.kt`) fecha o stdin e espera a sessão com `withTimeoutOrNull`,
+  dizendo em comentário que o limite faz "uma sessão que não percebeu falhar a run" — mas
+  `withTimeoutOrNull` expira **em silêncio**, e o `serving.cancel()` da linha seguinte apagava o
+  rastro: uma sessão que nunca terminasse passaria calada em toda conversa, e o cenário "Encerra
+  com o cliente" não tinha asserção alguma em `jvmTest` (só a `verifyMcpLauncher` de 8.2, que é de
+  mão). O limite passou a ser **respondido**. O corpo da conversa é guardado num `runCatching` e
+  **relançado antes** da asserção, porque um teste que falhou no que veio afirmar tem de reportar
+  isso e não a sessão que ele deixou para trás — uma asserção dentro do `finally` teria substituído
+  a exceção de verdade. E o cenário ganhou um caso com o nome dele (`the session ends when the
+  client closes the input`), montado à mão e não pelo ajudante: provar pelo ajudante que prova
+  seria não provar nada, e uma promessa que a spec nomeia tem de ser achável por quem procura o
+  nome. **Provado por sabotagem nos dois lados**: com a sessão presa num `delay` os 10 casos da
+  classe falham, e nenhum deles falhava antes; com a sessão presa **e** o `SERVER_NAME` trocado, o
+  caso reporta a comparação do corpo e não o fim da sessão.
+
+- [x] 10.2 **A cláusula que a spec pedia e o código não dá, resolvida a favor do código.** O
+  requisito "`stdout` pertence ao protocolo" listava quatro itens na linha de diagnóstico — versão,
+  modo, **se encontrou a janela aberta**, interruptor — e 4.4 imprime três, com a razão escrita
+  contra o design D6. A razão vale igualmente contra a spec, e ela ficou lá: um requisito que o
+  código desmente em silêncio. O quarto item saiu, e a sua ausência virou **norma no próprio
+  requisito**, com o porquê, porque apagar quatro palavras sem dizer por quê convida a
+  reintroduzi-las. **O argumento de 4.4 sozinho não bastava** — "seria falso um milissegundo depois"
+  vale igual para o interruptor, que está na linha e que a spec exige. O que separa os dois é que o
+  interruptor explica a sessão (por que nada foi anunciado) e a janela não explica nada, porque o
+  processo atende nos dois casos; e que a janela só é obtenível por `tryAcquire()`, cuja resposta
+  negativa significa tanto *a janela é dona* quanto *não há lock neste sistema de arquivos*
+  (`DatabaseOwnership` o documenta) — uma linha que a afirmasse a partir disso poderia estar
+  mentindo, o que é pior que não a dizer. Aplicado à spec principal e à delta, para que o próximo
+  sync não a traga de volta; o cenário `Diagnóstico ao iniciar` já pedia os três e não mudou.
+
+- [x] 10.3 **O registro apontando para chaves e contagens que já não existem.** Quatro chaves que
+  7.2 nomeia saíram dentro do próprio grupo 7, e 7.2 é onde alguém procura o nome de uma chave:
+  `mcp_command_claude_label` e `mcp_command_claude_copy` entraram com ela e saíram em 7.4, quando o
+  rótulo deixou de nomear um cliente e passou a perguntar qual — hoje são `mcp_command_line_label`,
+  `mcp_command_line_copy` e `mcp_command_line_target`; `mcp_advanced_title` e `mcp_advanced_body`
+  saíram com as abas, que desfizeram o "caminho avançado" em duas abas iguais
+  (`mcp_connection_tab_command`, `mcp_connection_tab_address`). Nada disso mexeu na paridade, que
+  segue inteira — **72 chaves `mcp_*` em cada língua**, e as duas frases que a mudança tornou falsas
+  continuam fora das duas. E `mcp-server` deixou de ter os **37** cenários que 9.3 registrou: as
+  abas trocaram o cenário do caminho avançado por três e 7.4 acrescentou o do cliente escolhido, de
+  modo que são **40** contra os mesmos 9 requisitos. O número foi corrigido na própria 9.3, que é
+  onde ele é lido; esta linha diz apenas o que o moveu.

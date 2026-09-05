@@ -20,11 +20,11 @@ declarado.
 
 **Nenhum número foi subido ainda**: `versionCode` 34 e `versionName` 1.10.0 continuam nos três
 lugares onde a versão vive — `app/android/build.gradle.kts:20-21`, `iosApp/project.yml:22-23` e
-`app/desktop/build.gradle.kts:107`. Esquema do banco: **14 → 15**, uma migração — a menor do
+`app/desktop/build.gradle.kts:459`. Esquema do banco: **14 → 15**, uma migração — a menor do
 projeto: um `CREATE TABLE`, um índice, e nenhuma instrução que leia ou escreva o que já existia.
-São os **277 commits** alcançáveis a partir de `feature/local-mcp-server` — que já carrega o `main`
+São os **320 commits** alcançáveis a partir de `feature/local-mcp-server` — que já carrega o `main`
 mesclado — e não a partir de `16559741e`, o commit que subiu 1.10.0. Escritos entre 15/08/2026 e
-03/09/2026, porque os ramos do servidor MCP e do backup local foram abertos durante o ciclo de
+05/09/2026, porque os ramos do servidor MCP e do backup local foram abertos durante o ciclo de
 1.10.0 e fechados depois dele.
 
 O ciclo em que o acervo passou a caber num arquivo, o app passou a guardar cópias dele sozinho, e
@@ -51,12 +51,15 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
   de atividade. A troca de dono acontece no meio de uma conversa sem que o cliente perceba: quem
   responde muda, a sessão não. Quem impõe a exclusão é o sistema operacional, e não um acordo entre
   os dois processos, porque a janela já está coletando `Flow`s antes de haver porta que sondar.
-- **O interruptor continua sendo do app, também com ele fechado.** O processo lançado pelo cliente lê
-  a escolha gravada e a relê a cada pedido, de modo que ligar ou desligar o servidor alcança quem já
-  está no meio de uma conversa. Desligado, ele ainda fala o protocolo — mas não anuncia ferramenta
-  alguma e recusa qualquer chamada dizendo que o servidor está desligado nas configurações do app.
-  Um processo que simplesmente morresse seria lido como um app quebrado, e não como um app que o
-  dono desligou.
+- **O interruptor e as permissões continuam sendo do app, também com ele fechado.** O processo
+  lançado pelo cliente lê a escolha gravada e a relê a cada pedido — o interruptor e os quatro eixos,
+  nos três pontos que decidem: o aperto de mão, a lista e a chamada —, de modo que ligar, desligar ou
+  retirar uma capacidade alcança quem já está no meio de uma conversa. Ler uma vez ao subir seria
+  ficar preso à permissão que valia quando o cliente conectou, e é a janela, que o agente não está
+  vendo, quem escreve essa escolha. Desligado, ele ainda fala o protocolo — mas não anuncia
+  ferramenta alguma e recusa qualquer chamada dizendo que o servidor está desligado nas configurações
+  do app. Um processo que simplesmente morresse seria lido como um app quebrado, e não como um app
+  que o dono desligou.
 - **Só no desktop, e pelo eixo de plataforma.** Um servidor local é alcançado por um cliente na
   mesma máquina, e Android e iOS não têm nem esse cliente, nem um processo que o usuário deixe
   escutando, nem um executável que um cliente possa lançar — então a porta de entrada não é
@@ -385,8 +388,8 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
   nasce vazia e só enche quando um agente age, então um aparelho que nunca liga o servidor carrega
   oito colunas vazias e mais nada. As colunas de referência não têm chave estrangeira, de propósito.
 - **Sete testes estruturais**, no lugar de regras que nada mais tem como impor: nenhum `Scaffold` de
-  feature declara `floatingActionButton`; toda chave de string existe nos dois idiomas — são 1.057
-  em cada, 62 delas do servidor MCP; o backup mora sob Ajustes, com as duas telas dentro do próprio
+  feature declara `floatingActionButton`; toda chave de string existe nos dois idiomas — são 1.070
+  em cada, 72 delas do servidor MCP; o backup mora sob Ajustes, com as duas telas dentro do próprio
   grafo; a seção MCP também, com o grafo dela construído dentro do de Ajustes a partir dos módulos
   que o app publica; a forma canônica de todo use case público é a por id, com as isenções nomeadas
   uma a uma e conferidas nos dois sentidos; nenhum ViewModel escreve direto num repositório, exceto
@@ -399,8 +402,8 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
   três telas com menu passaram a exigir. O servidor MCP **não tem fluxo**: ele é desktop-only e a
   suíte dirige o app Android. Não houve rodada da suíte neste ciclo depois do último commit; o que
   está registrado são as rodadas de cada change, nas suas tarefas.
-- `./gradlew jvmTest` verde: **2.452 testes, 0 falhas**, rodado neste estado da árvore com os
-  resultados anteriores apagados, para que nenhuma tarefa fosse dada por atualizada sem executar.
+- `./gradlew jvmTest` verde: **2.534 testes, 0 falhas**, rodado neste estado da árvore com
+  `--rerun-tasks`, para que nenhuma tarefa fosse dada por atualizada sem executar.
 - Passar não é cobrir, e o que **não** é verificado está escrito nominalmente em
   `docs/mcp-tool-surface.md`, com o motivo de cada limite: nenhum teste de ferramenta exercita a
   implementação de produção de um use case de escrita (a regra de dependência impede o `impl` do MCP
@@ -408,14 +411,19 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
   sobre um navegador de verdade, o teste de loopback usa esta máquina como substituta de uma
   segunda, e **nada do que se desenha na tela** é verificado — o projeto não tem infraestrutura de
   teste de Compose, então o estado e o ViewModel da seção têm teste e a renderização deles não.
-- O backlog ganhou **57 entradas** no ciclo — as do backup e da varredura de cromagem, as da revisão
+- O backlog ganhou **60 entradas** no ciclo — as do backup e da varredura de cromagem, as da revisão
   adversarial do ramo do servidor, as que só a simulação contra o app rodando encontrou, as duas que
-  esta própria passagem pelas notas levantou, e a que a correção das guardas de data revelou —, das
-  quais **35** foram corrigidas e arquivadas dentro do próprio ciclo. Saiu de 65 abertos e 9
-  arquivados, no commit que subiu 1.10.0, para **87 abertos e 44 arquivados**. Um bug anterior ao
-  ciclo foi fechado nele, e só um: `adjust-balance-has-no-domain-guard-against-a-future-date`,
+  esta própria passagem pelas notas levantou, a que a correção das guardas de data revelou, e as
+  quatro que o lançador stdio trouxe: o comando que a seção oferece fora de uma instalação, o
+  endereço de loopback soletrado uma segunda vez pela tela, um teste de UI compartilhado que passa no
+  JVM e morre no alvo Android, e a janela que deixa o banco aberto onde o modo headless o fecha —,
+  das quais **37** foram corrigidas e arquivadas dentro do próprio ciclo. Saiu de 66 abertos e 9
+  arquivados, no commit que subiu 1.10.0, para **89 abertos e 46 arquivados**. Três bugs anteriores
+  ao ciclo foram fechados nele: `adjust-balance-has-no-domain-guard-against-a-future-date`,
   registrado em 21/08 e fechado junto das duas guardas de data irmãs, que eram a mesma classe de
-  defeito. As outras 34 nasceram e morreram aqui.
+  defeito; e os dois de documentação que a passagem do stdio pelos comandos e pelos módulos acertou —
+  os documentos de arquitetura descrevendo uma feature `home` que não existe mais, e o comando de
+  teste documentado que não alcançava o módulo desktop. As outras 34 nasceram e morreram aqui.
 
 ### Correções
 

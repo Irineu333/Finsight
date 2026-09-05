@@ -14,10 +14,16 @@ import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.LocalDate
+import kotlinx.io.asSink
+import kotlinx.io.asSource
+import kotlinx.io.buffered
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -65,6 +71,47 @@ class McpStdioOverTheProtocolTest {
                     listOf(tool.name),
                     client.listTools().tools.map { it.name },
                     "The stdio session did not announce the tool the app offers.",
+                )
+            }
+        }
+    }
+
+    /**
+     * The end of a stdio session, which is also the end of the process: the client closes the input
+     * and the app stops serving.
+     *
+     * **Assembled by hand rather than through `servedOverStdio`.** That helper hangs up and holds
+     * every conversation to the same answer, so this would be asking the thing that already asks —
+     * and a promise the specs name deserves somewhere a reader can find it by its own name, rather
+     * than a line inside a helper nobody opens looking for it.
+     *
+     * Nothing is said down the pipe first: a client that starts a server and goes away without a
+     * word is the case that leaves a process behind, and it is answered by the stream ending and
+     * not by anything the protocol carried.
+     */
+    @Test
+    fun `the session ends when the client closes the input`() = runBlocking {
+        McpServerHarness().use { harness ->
+            harness.serverSettings.setEnabled(true)
+
+            StdioPipes().use { pipes ->
+                val session = harness.stdioSession()
+                val serving = launch(Dispatchers.IO) {
+                    session.serve(
+                        input = pipes.serverIn.asSource().buffered(),
+                        output = pipes.serverOut.asSink().buffered(),
+                    )
+                }
+
+                pipes.hangUp()
+
+                val ended = withTimeoutOrNull(HANG_UP_MILLIS) { serving.join() }
+                serving.cancel()
+
+                assertNotNull(
+                    ended,
+                    "The session was still serving $HANG_UP_MILLIS ms after the client closed the " +
+                        "input, so a process of it would be left running with nobody on the far end.",
                 )
             }
         }

@@ -17,6 +17,7 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.nio.channels.Channels
 import java.nio.channels.Pipe
+import kotlin.test.assertNotNull
 
 /**
  * The two pipes a client and a stdio server hold between them, in this process.
@@ -86,7 +87,10 @@ internal suspend fun DesktopMcpStdioSession.servedOverStdio(
     }
 
     val client = Client(Implementation(name = "finsight-stdio-test", version = "1"))
-    try {
+
+    // Held rather than thrown, so that the hang-up below happens whatever the conversation did and
+    // the session is asked the same question in either case.
+    val conversation = runCatching {
         client.connect(
             StdioClientTransport(
                 input = pipes.clientIn.asSource().buffered(),
@@ -94,15 +98,27 @@ internal suspend fun DesktopMcpStdioSession.servedOverStdio(
             ),
         )
         block(client)
-    } finally {
-        runCatching { client.close() }
-        pipes.hangUp()
-        // The session ends when the input does. A limit rather than a plain join so a session that
-        // failed to notice fails the run instead of hanging it.
-        withTimeoutOrNull(HANG_UP_MILLIS) { serving.join() }
-        serving.cancel()
-        pipes.close()
     }
+
+    runCatching { client.close() }
+    pipes.hangUp()
+    // A limit rather than a plain join, so that a session which failed to notice the hang-up ends
+    // the run instead of holding it — and the limit is *answered*, below, because
+    // `withTimeoutOrNull` expiring is silent and a suite that cancelled its way past this would
+    // prove nothing about a process ending with its client.
+    val ended = withTimeoutOrNull(HANG_UP_MILLIS) { serving.join() }
+    serving.cancel()
+    pipes.close()
+
+    // The conversation's own failure first, and before the assertion below: a test that failed on
+    // what it came to assert must report that, not the session it then left behind.
+    conversation.getOrThrow()
+
+    assertNotNull(
+        ended,
+        "the session was still serving $HANG_UP_MILLIS ms after the client closed the input — a " +
+            "stdio process that does not end with its client is one the client leaves running",
+    )
 }
 
 /**
@@ -161,5 +177,5 @@ internal suspend fun McpServerHarness.closeTheWindow(window: ArchiveHolder) {
     window.close()
 }
 
-/** How long the session is given to notice that the client hung up. */
-private const val HANG_UP_MILLIS = 10_000L
+/** How long a session is given to notice that the client hung up. */
+internal const val HANG_UP_MILLIS = 10_000L

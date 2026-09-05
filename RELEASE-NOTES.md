@@ -86,8 +86,9 @@ um agente passou a ler e escrever no razão pela mesma porta que a tela.
   ela mostra **o comando**: o caminho absoluto deste executável com `--mcp`, no bloco `command` +
   `args` que a maior parte dos clientes cola e também numa linha só, para quem configura por linha
   de comando — dito como convenção e não como contrato, porque o servidor fala o protocolo e cada
-  cliente guarda esses valores onde quiser —, e a frase de que ele funciona com o app aberto ou
-  fechado. O caminho entra no bloco como texto JSON: o executável do Windows mora atrás de
+  cliente guarda esses valores onde quiser. Qual cliente essa linha fala é escolha de quem lê: o
+  rótulo dela é um seletor entre Claude Code, Gemini CLI e Codex CLI, que é o conjunto de CLIs que
+  aceita um servidor num comando só. E a frase de que ele funciona com o app aberto ou fechado. O caminho entra no bloco como texto JSON: o executável do Windows mora atrás de
   contrabarras, e copiado como está faria o cliente recusar o arquivo inteiro em vez da linha. O
   endereço e o token, que só respondem com a janela aberta, ficam na outra de duas **abas lado a
   lado**, para o cliente que prefere uma `url`; a seção abre na do comando. Como abas apresentam os

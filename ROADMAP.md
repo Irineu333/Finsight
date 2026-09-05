@@ -16,8 +16,7 @@ estão no `main`, escritas e testadas, e não saíram em release nenhuma.
 | **Cartões de crédito**          | Múltiplos cartões e ciclo de faturas (abrir/fechar/pagar/reabrir)                     | Funcionalidade | 1.0.0         |
 | **Parcelamentos**               | Acompanhamento de compras parceladas ao longo das faturas                             | Funcionalidade | 1.0.0         |
 | **Categorias**                  | Gestão com ícones e acompanhamento de gastos                                          | Funcionalidade | 1.0.0         |
-| **Base arquitetural**           | Clean Architecture + MVI/MVVM, Compose Multiplatform, Room, Arrow (Either)            | Arquitetura    | 1.0.0         |
-| **iOS via XcodeGen**            | Geração do projeto iOS por XcodeGen                                                   | Arquitetura    | 1.0.0         |
+| **Base arquitetural**           | Clean Architecture + MVI/MVVM, Compose Multiplatform, Room, Arrow, iOS por XcodeGen   | Arquitetura    | 1.0.0         |
 | **Orçamentos (Budgets)**        | Progresso de gasto por categoria                                                      | Funcionalidade | 1.2.0         |
 | **i18n**                        | Suporte a inglês, Compose Resources e moeda por locale                                | Arquitetura    | 1.3.0         |
 | **Recorrentes**                 | Transações recorrentes (confirmar/pular/parar/reativar)                               | Funcionalidade | 1.4.0         |
@@ -28,41 +27,27 @@ estão no `main`, escritas e testadas, e não saíram em release nenhuma.
 | **Telemetria**                  | Analytics e Crashlytics (Firebase)                                                    | Arquitetura    | 1.8.0         |
 | **Modularização**               | `core:*`, feature `api`/`impl`, split `app/{shared,android,desktop,ios}`              | Arquitetura    | 1.9.0         |
 | **Navegação adaptativa**        | Navigation rail + detail pane conforme a largura da janela                            | Funcionalidade | 1.9.0         |
-| **Desktop Support**             | Estado de janela, empacotamento e Suporte via Firebase                                | Funcionalidade | 1.9.0         |
+| **Desktop**                     | Janela persistida, instalador, ícones e empacotamento em CI, com Suporte ligado       | Funcionalidade | 1.9.0         |
 | **Ledger de partidas dobradas** | Razão de dupla entrada como fonte única de verdade; migração v7→v10 (`:core:ledger`)  | Arquitetura    | 1.9.0         |
 | **Arquivar/desarquivar**        | Retire/unarchive de contas, cartões, categorias e recorrentes, com arquivados         | Funcionalidade | 1.9.0         |
 | **Redesign de Categorias**      | Filtro por chip, seções e visão de arquivados                                         | Funcionalidade | 1.9.0         |
 | **Redesign de Recorrentes**     | Arquivar no lugar de parar, filtro único e confirmação atômica do ciclo               | Funcionalidade | 1.9.0         |
 | **Perímetro de saldo**          | Escopo contas/cartões/tudo no resumo de transações e nos widgets do dashboard         | Funcionalidade | 1.9.0         |
 | **Estados vazios**              | Transações, contas, cartões e faturas dizem o que está vazio                          | Funcionalidade | 1.9.0         |
-| **Política de sinal**           | `DisplayAmount` como dono único do sinal exibido, em item e em resumo                 | Arquitetura    | 1.9.0         |
 | **E2E com Maestro**             | Suíte de fluxos em `.maestro/`, com dispositivo fixado e alcance por `testTag`        | Arquitetura    | 1.9.0         |
-| **Multimoeda**                  | Moeda por conta/cartão, intenção entre moedas completada no razão e leitura por moeda | Funcionalidade | 1.10.0        |
-| **Consolidação e moeda base**   | Moeda base como preferência de exibição, redutor único e marca de aproximação         | Arquitetura    | 1.10.0        |
-| **Arquivo de taxas de câmbio**  | Taxas datadas por par, editáveis nos ajustes e agrupadas por data                     | Funcionalidade | 1.10.0        |
-| **Sincronização de taxas**      | Fonte remota alimentando o arquivo local, limitada por par                            | Funcionalidade | 1.10.0        |
-| **Registro de moedas**          | O usuário registra e arquiva as moedas, em vez de receber uma lista pronta            | Funcionalidade | 1.10.0        |
+| **Multimoeda**                  | Moeda por conta/cartão, moeda base e arquivo de taxas datadas, com sincronização      | Funcionalidade | 1.10.0        |
 | **Rendimento de conta**         | Lançamento do que o dinheiro rendeu sozinho, separado das demais receitas             | Funcionalidade | 1.10.0        |
 | **Faturas retroativas**         | Criar a fatura de qualquer mês e deixar a fatura escolhida posicionar a data          | Funcionalidade | 1.10.0        |
-| **Ajuste de saldo datado**      | Um único ajuste, alvo numa data, no lugar de saldo atual/final/inicial                | Funcionalidade | 1.10.0        |
+| **Ajuste de saldo datado**      | Um único ajuste, alvo numa data, aberto no mesmo detalhe de qualquer operação         | Funcionalidade | 1.10.0        |
 | **Detalhe por pernas**          | Detalhe da transação como um card por perna monetária, sem escolher uma ponta         | Funcionalidade | 1.10.0        |
 | **Orçamentos sobrepostos**      | Uma categoria medida por quantos orçamentos o usuário quiser                          | Funcionalidade | 1.10.0        |
-| **Recorrentes sem redigitar**   | Nascer recorrente no próprio lançamento e confirmar o ciclo com título e categoria    | Funcionalidade | 1.10.0        |
 | **Contas fora do total**        | Desmarcar uma conta no widget de saldo a retira do total, sem alterar a conta         | Funcionalidade | 1.10.0        |
-| **Ícone sugerido**              | Conta nova abre com o primeiro ícone do catálogo que nenhuma conta aberta usa         | Funcionalidade | 1.10.0        |
-| **Gasto sem categoria**         | Linha e fatia próprias para o não classificado, no dashboard e no relatório           | Funcionalidade | 1.10.0        |
-| **Filtro sem categoria**        | As cinco listas que filtram por categoria recortam também o que não tem nenhuma       | Funcionalidade | 1.10.0        |
+| **Sem categoria**               | Linha, fatia e filtro próprios para o que não tem categoria                           | Funcionalidade | 1.10.0        |
 | **A liquidar este mês**         | Recorrentes do mês e faturas por pagar somadas em "A entrar" e "A sair"               | Funcionalidade | 1.10.0        |
-| **Backlog de bugs**             | Bugs como arquivos em `issues/`, com regra de entrada, correção e arquivamento        | Arquitetura    | 1.10.0        |
-| **Transferência editável**      | Corrigir uma transferência no lugar, pelo mesmo formulário que a registrou            | Funcionalidade | 1.10.0        |
-| **Título na transferência**     | A transferência guarda o motivo do movimento, sob a cadeia título > categoria > forma | Funcionalidade | 1.10.0        |
-| **Pagamento de fatura único**   | Um formulário que nomeia a fatura; o estado decide o modo, e a retroativa é pagável   | Funcionalidade | 1.10.0        |
-| **Pagamento corrigível**        | Corrigir um pagamento parcial de fatura no lugar, sem apagar e refazer                | Funcionalidade | 1.10.0        |
+| **Transferência editável**      | Corrigir no lugar e guardar o motivo, sob a cadeia título > categoria > forma         | Funcionalidade | 1.10.0        |
+| **Pagamento de fatura único**   | Um formulário que registra e corrige o pagamento, com a retroativa pagável            | Funcionalidade | 1.10.0        |
 | **Categoria contra a média**    | O mês de uma categoria lido contra a média de 12 meses fechados, sem navegar no tempo | Funcionalidade | 1.10.0        |
-| **Recorrentes por ciclo**       | Os ciclos do mês em quatro estados, com resumo do mês e arquivadas em tela própria    | Funcionalidade | 1.10.0        |
-| **Listas em linha**             | Recorrentes e Orçamentos trocam a ficha pela linha: de ~180 e ~232dp para 64 e ~62dp  | Funcionalidade | 1.10.0        |
-| **Ajuste no detalhe único**     | Um ajuste abre o mesmo detalhe de qualquer operação, nomeado pelo alvo que corrige    | Funcionalidade | 1.10.0        |
-| **Telemetria de arquivar**      | Arquivar deixou de ser reportado como apagar, e reabrir deixou de não ser reportado   | Arquitetura    | 1.10.0        |
+| **Recorrentes por ciclo**       | Os ciclos do mês em quatro estados, e nascer recorrente no próprio lançamento         | Funcionalidade | 1.10.0        |
 | **Backup**                      | Exportar e restaurar o acervo à mão, e cópias automáticas por três gatilhos           | Funcionalidade | —             |
 | **Botão de ação único**         | Um FAB para o app: a tela publica as ações, a casca decide a forma e a posição        | Funcionalidade | —             |
 | **Servidor MCP**                | Ferramentas para um agente num servidor local (permissão por eixo, registro, stdio)   | Funcionalidade | —             |
